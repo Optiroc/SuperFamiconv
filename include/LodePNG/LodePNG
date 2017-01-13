@@ -1,0 +1,7 @@
+#ifndef LODEPNG_COMBINED
+#define LODEPNG_COMBINED
+
+#include "lodepng.h"
+#include "lodepng_util.h"
+
+#endif
