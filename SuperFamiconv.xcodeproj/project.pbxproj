@@ -548,7 +548,7 @@
 		2AD683911E28D50E0049C1F2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				DEVELOPMENT_TEAM = 4227DL484S;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -561,7 +561,7 @@
 		2AD683921E28D50E0049C1F2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				DEVELOPMENT_TEAM = 4227DL484S;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;

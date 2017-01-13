@@ -30,7 +30,6 @@ namespace sfc {
         Map(Mode mode = Mode::snes, unsigned map_width = 32, unsigned map_height = 32)
         : _mode(mode), _map_width(map_width), _map_height(map_height) {
             _entries.resize(map_width * map_height);
-            //_entries.assign(map_width * map_height, Mapentry());
         };
 
         void add(const sfc::Image& image, const sfc::Tileset& tileset, const sfc::Palette& palette, unsigned bpp, unsigned pos_x, unsigned pos_y);

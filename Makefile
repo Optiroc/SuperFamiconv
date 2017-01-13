@@ -3,7 +3,7 @@ INC_DIR     := include
 BIN_DIR     := bin
 OBJ_DIR     := .build
 
-CXX_FLAGS   := -std=c++14 -O3 -Wall -I$(INC_DIR)
+CXX_FLAGS   := -std=gnu++11 -O3 -Wall -I$(INC_DIR)
 CC_FLAGS    := -std=gnu99 -O3 -Wall -I$(INC_DIR)
 LD_FLAGS    :=
 

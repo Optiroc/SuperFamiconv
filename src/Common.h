@@ -553,8 +553,8 @@ namespace sfc {
     }
 
     template<typename T>
-    auto split_vector(const T& v, unsigned split_size) {
-        std::vector<T> rtn;
+    std::vector<T> split_vector(const T& v, unsigned split_size) {
+        std::vector<T> sv;
         typename T::const_iterator it = v.cbegin();
         const typename T::const_iterator end = v.cend();
 
@@ -563,10 +563,10 @@ namespace sfc {
             std::back_insert_iterator<T> inserter(v);
             const auto num_to_copy = std::min(static_cast<unsigned>(std::distance(it, end)), split_size);
             std::copy(it, it + num_to_copy, inserter);
-            rtn.push_back(std::move(v));
+            sv.push_back(std::move(v));
             std::advance(it, num_to_copy);
         }
-        return rtn;
+        return sv;
     }
 
 }

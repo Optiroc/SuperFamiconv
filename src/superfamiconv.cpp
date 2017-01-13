@@ -51,7 +51,7 @@ int superfamiconv(int argc, char* argv[]) {
         options.IndentDescription = sfc::Constants::options_indent;
 
         options.Header =
-        "Usage: superfamicom <command> [<options>]\n\n"
+        "Usage: superfamiconv <command> [<options>]\n\n"
 
         "Available commands: palette, tiles, map or blank for \"shorthand mode\"\n"
         "Invoke with <command> --help for further help\n\n"
@@ -109,7 +109,7 @@ int superfamiconv(int argc, char* argv[]) {
         sfc::Image in_image(settings.in_image);
         if (verbose) std::cout << "Loaded image from \"" << settings.in_image << "\" (" << in_image << ")\n";
 
-
+        // Make palette
         sfc::Palette palette;
         {
             unsigned colors_per_palette = sfc::palette_size_at_bpp(settings.bpp);
@@ -146,7 +146,7 @@ int superfamiconv(int argc, char* argv[]) {
             palette.pad();
         }
 
-
+        // Make tileset
         sfc::Tileset tileset(settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_discard, settings.no_flip);
         {
             std::vector<sfc::Image> crops = in_image.crops(settings.tile_w, settings.tile_h);
@@ -162,6 +162,7 @@ int superfamiconv(int argc, char* argv[]) {
         }
 
 
+        // Make map
         if (settings.map_w == 0) settings.map_w = sfc::div_ceil(in_image.width(), settings.tile_w);
         if (settings.map_h == 0) settings.map_h = sfc::div_ceil(in_image.height(), settings.tile_h);
 
@@ -179,7 +180,7 @@ int superfamiconv(int argc, char* argv[]) {
             }
         }
 
-
+        // Write data
         if (!settings.out_palette.empty()) {
             palette.save(settings.out_palette);
             if (verbose) std::cout << "Saved native palette data to \"" << settings.out_palette << "\"\n";
