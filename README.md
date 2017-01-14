@@ -88,7 +88,6 @@ For more flexibility use the sub commands, which have the following options resp
 	-p --in-palette       Input: palette (native/json)
 	-d --out-data         Output: native data
 	-o --out-image        Output: image
-	-7 --out-m7-data      Output: zero interleaved data
 	
 	-M --mode             Mode <default: snes>
 	-B --bpp              Bits per pixel <default: 4>
