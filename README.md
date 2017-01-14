@@ -11,7 +11,7 @@ A C++11 capable compiler.
 
 	superfamiconv <command> [<options>]
 
-Where <command> is either `palette`, `tiles`, `map` or left blank for a simpler "short hand" operation.
+Where `<command>` is either `palette`, `tiles`, `map` or left blank for a simpler "short hand" operation.
 
 In short hand mode, the following options are available:
 
@@ -22,7 +22,6 @@ In short hand mode, the following options are available:
 	--out-palette-image   Output: palette image
 	--out-tiles-image     Output: tiles image
 
-	Settings:
 	-M --mode             Mode <default: snes>
 	-B --bpp              Bits per pixel <default: 4>
 	--tile-width          Tile width <default: 8>
@@ -39,7 +38,12 @@ In short hand mode, the following options are available:
 
 This command mode accepts one image (either indexed, RGB or RGBA mode PNG – which are the formats supported for all image inputs) and outputs palette, tile and/or map data.
 
-The `mode` option, which is common for all commands, takes the following arguments: `snes` and `snes_mode7`. More will be added as I (or you!) need them.
+The `mode` option, which is common for all commands, affects the color space handling and binary output format. It takes one of the following arguments: 
+
+* `snes` 
+* `snes_mode7` 
+
+More will be added as I (or you!) need them.
 
 Example:
 
