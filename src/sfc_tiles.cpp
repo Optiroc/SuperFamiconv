@@ -14,7 +14,6 @@ struct Settings {
     std::string in_palette;
     std::string out_data;
     std::string out_image;
-    std::string out_m7_data;
 
     sfc::Mode mode;
     unsigned bpp;
@@ -59,7 +58,6 @@ int main(int argc, char* argv[]) {
         options.Add(settings.in_palette,         'p', "in-palette",     "Input: palette (native/json)");
         options.Add(settings.out_data,           'd', "out-data",       "Output: native data");
         options.Add(settings.out_image,          'o', "out-image",      "Output: image");
-        options.Add(settings.out_m7_data,        '7', "out-m7-data",    "Output: zero interleaved data");
 
         options.Add(mode_str,                    'M', "mode",           "Mode",                              std::string("snes"), "Settings");
         options.Add(settings.bpp,                'B', "bpp",            "Bits per pixel",                    unsigned(4),         "Settings");
@@ -158,14 +156,6 @@ int main(int argc, char* argv[]) {
             sfc::Image tileset_image(tileset);
             tileset_image.save(settings.out_image);
             if (verbose) std::cout << "Saved tileset image to \"" << settings.out_image << "\"\n";
-        }
-
-        if (!settings.out_m7_data.empty()) {
-            std::vector<uint8_t> td = tileset.native_data();
-            std::vector<uint8_t> zd = std::vector<uint8_t>(td.size() * 2);
-            for (int i = 0; i < td.size(); ++i) zd[(i << 1) + 1] = td[i];
-            sfc::write_file(settings.out_m7_data, zd);
-            if (verbose) std::cout << "Saved zero interleaved data to \"" << settings.out_m7_data << "\"\n";
         }
 
     } catch (const std::exception& e) {
