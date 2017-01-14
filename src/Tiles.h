@@ -58,7 +58,7 @@ namespace sfc {
         unsigned tile_width() const { return _tile_width; }
         unsigned tile_height() const { return _tile_height; }
         unsigned size() const { return (unsigned)_tiles.size(); }
-        bool is_full() const { return _tiles.size() == _max_tiles; }
+        bool is_full() const { return _max_tiles > 0 && _tiles.size() >= _max_tiles; }
         const std::vector<Tile>& tiles() const { return _tiles; }
 
         void add(const Image& image, const Palette* palette = nullptr);
