@@ -170,7 +170,6 @@ namespace sfc {
         Tile tile;
 
         if (_no_remap) {
-            if (is_full()) throw std::runtime_error("Tileset reached maximum size");
             tile = Tile(image, _mode, _bpp, _no_flip);
         } else {
             if (palette == nullptr) throw std::runtime_error("Can't remap tile without palette");
@@ -179,9 +178,11 @@ namespace sfc {
        }
 
         if (_no_discard) {
+            if (is_full()) throw std::runtime_error("Tileset reached maximum size");
             _tiles.push_back(tile);
         } else {
             if (std::find(_tiles.begin(), _tiles.end(), tile) == _tiles.end()) {
+                if (is_full()) throw std::runtime_error("Tileset reached maximum size");
                 _tiles.push_back(tile);
             } else {
                 ++discarded_tiles;
