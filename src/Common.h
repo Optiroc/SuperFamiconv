@@ -490,7 +490,7 @@ inline std::vector<T> mirror(const std::vector<T>& source, unsigned width, bool 
   auto m = source;
   unsigned height = (unsigned)(source.size() / width);
   if ((source.size() % width != 0) || (source.size() != width * height))
-    throw std::runtime_error("Can't mirror non-rectangular vector");
+    throw std::runtime_error("Can't mirror non-square image vector");
 
   if (horizontal) {
     for (int row = 0; row < height; ++row) std::reverse(m.begin() + (row * width), m.begin() + (row * width) + width);
@@ -563,7 +563,7 @@ inline std::vector<uint8_t> read_binary(const std::string& path) {
   std::ifstream ifs(path, std::ios::binary);
   if (ifs.fail()) {
     std::stringstream ss;
-    ss << "File '" << path << "' could not be opened";
+    ss << "File \"" << path << "\" could not be opened";
     throw std::runtime_error(ss.str());
   }
   return std::vector<uint8_t>((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
