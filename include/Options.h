@@ -43,7 +43,7 @@ private:
     void set(T& var, std::string optarg);
 
     template <typename T>
-    void add_entry(struct option& op, char flag, std::string long_flag, T& default_val, std::string description, std::string group);
+    void add_entry(struct option& op, char flag, std::string long_flag, T& default_val, std::string description, std::string group, bool req_arg = false);
 
     template <typename T>
     std::string get_default(T& default_val);
@@ -54,9 +54,8 @@ private:
 template <typename T>
 inline void Options::Add(T& var, char flag, std::string long_flag, std::string description, T default_val, std::string group) {
     struct option op;
-    this->add_entry(op, flag, long_flag, default_val, description, group);
+    this->add_entry(op, flag, long_flag, default_val, description, group, true);
 
-    this->optstr += ":";
     op.has_arg = required_argument;
     var = default_val;
 
@@ -79,7 +78,7 @@ inline void Options::AddSwitch(bool& var, char flag, std::string long_flag, std:
 }
 
 inline bool Options::Parse(int argc, char** argv) {
-    this->options.push_back({NULL, 0, NULL, 0});
+    this->options.push_back({0, 0, 0, 0});
     int ch;
     while ((ch = getopt_long(argc, argv, this->optstr.c_str(), &this->options[0], NULL)) != -1) {
         auto it = this->setters.find(ch);
@@ -106,7 +105,7 @@ inline std::string Options::Usage() {
 
 
 template <typename T>
-inline void Options::add_entry(struct option& opt, char flag, std::string long_flag, T& default_val, std::string description, std::string group) {
+inline void Options::add_entry(struct option& opt, char flag, std::string long_flag, T& default_val, std::string description, std::string group, bool req_arg) {
     if (!flag && !long_flag.size()) return;
 
     if (flag) {
@@ -116,6 +115,8 @@ inline void Options::add_entry(struct option& opt, char flag, std::string long_f
             throw std::runtime_error(ss.str());
         }
         this->optstr += flag;
+        if (req_arg) this->optstr += ":";
+
         opt.val = flag;
     } else {
         opt.val = this->optval++;
