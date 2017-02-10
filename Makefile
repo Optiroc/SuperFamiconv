@@ -1,3 +1,6 @@
+CC          := gcc
+CXX         := g++
+
 SRC_DIR     := src
 INC_DIR     := include
 BIN_DIR     := bin
@@ -31,28 +34,28 @@ sfc_map: $(BIN_DIR)/sfc_map
 superfamiconv: $(BIN_DIR)/superfamiconv
 
 $(BIN_DIR)/sfc_palette : $(OBJ_DIR)/sfc_palette.o $(COMMON_OBJ) | $(BIN_DIR)
-	g++ $(LD_FLAGS) $^ -o $@
+	$(CXX) $(LD_FLAGS) $^ -o $@
 
 $(BIN_DIR)/sfc_tiles : $(OBJ_DIR)/sfc_tiles.o $(COMMON_OBJ) | $(BIN_DIR)
-	g++ $(LD_FLAGS) $^ -o $@
+	$(CXX) $(LD_FLAGS) $^ -o $@
 
 $(BIN_DIR)/sfc_map : $(OBJ_DIR)/sfc_map.o $(COMMON_OBJ) | $(BIN_DIR)
-	g++ $(LD_FLAGS) $^ -o $@
+	$(CXX) $(LD_FLAGS) $^ -o $@
 
 $(BIN_DIR)/superfamiconv : $(OBJ_DIR)/superfamiconv.o $(OBJ_DIR)/sfc_palette.om $(OBJ_DIR)/sfc_tiles.om $(OBJ_DIR)/sfc_map.om $(COMMON_OBJ) | $(BIN_DIR)
-	g++ $(LD_FLAGS) -D SFC_MONOLITH $^ -o $@
+	$(CXX) $(LD_FLAGS) -D SFC_MONOLITH $^ -o $@
 
 $(OBJ_DIR)/%.o : ./**/%.cpp $(HEADERS)
 	@mkdir -pv $(dir $@)
-	g++ $(CXX_FLAGS) -c $< -o $@
+	$(CXX) $(CXX_FLAGS) -c $< -o $@
 
 $(OBJ_DIR)/%.om : ./**/%.cpp $(HEADERS)
 	@mkdir -pv $(dir $@)
-	g++ -D SFC_MONOLITH $(CXX_FLAGS) -c $< -o $@
+	$(CXX) -D SFC_MONOLITH $(CXX_FLAGS) -c $< -o $@
 
 $(OBJ_DIR)/%.o : ./**/%.c $(HEADERS)
 	@mkdir -pv $(dir $@)
-	gcc $(CC_FLAGS) -c $< -o $@
+	$(CC) $(CC_FLAGS) -c $< -o $@
 
 $(BIN_DIR):
 	@mkdir -pv $@
