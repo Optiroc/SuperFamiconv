@@ -9,6 +9,7 @@
 #include "Palette.h"
 #include "Tiles.h"
 
+namespace SfcTiles {
 struct Settings {
   std::string in_image;
   std::string in_palette;
@@ -24,6 +25,7 @@ struct Settings {
   bool no_remap;
   unsigned max_tiles;
 };
+};
 
 #ifdef SFC_MONOLITH
 int sfc_tiles(int argc, char* argv[]) {
@@ -31,7 +33,7 @@ int sfc_tiles(int argc, char* argv[]) {
 int main(int argc, char* argv[]) {
 #endif
 
-  Settings settings = {};
+  SfcTiles::Settings settings = {};
   bool verbose = false;
   bool dummy = false;
 

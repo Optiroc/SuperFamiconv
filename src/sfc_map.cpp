@@ -10,6 +10,7 @@
 #include "Palette.h"
 #include "Tiles.h"
 
+namespace SfcMap {
 struct Settings {
   std::string in_image;
   std::string in_palette;
@@ -30,6 +31,7 @@ struct Settings {
   unsigned map_split_h;
   bool column_order;
 };
+};
 
 #ifdef SFC_MONOLITH
 int sfc_map(int argc, char* argv[]) {
@@ -37,7 +39,7 @@ int sfc_map(int argc, char* argv[]) {
 int main(int argc, char* argv[]) {
 #endif
 
-  Settings settings = {};
+  SfcMap::Settings settings = {};
   bool verbose = false;
   bool dummy = false;
 

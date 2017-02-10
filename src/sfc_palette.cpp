@@ -8,6 +8,7 @@
 #include "Image.h"
 #include "Palette.h"
 
+namespace SfcPalette {
 struct Settings {
   std::string in_image;
   std::string out_data;
@@ -23,6 +24,7 @@ struct Settings {
   bool forced_zero;
   rgba_t color_zero;
 };
+};
 
 
 #ifdef SFC_MONOLITH
@@ -31,7 +33,7 @@ int sfc_palette(int argc, char* argv[]) {
 int main(int argc, char* argv[]) {
 #endif
 
-  Settings settings = {};
+  SfcPalette::Settings settings = {};
   bool verbose = false;
   bool dummy = false;
 
