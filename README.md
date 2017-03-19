@@ -1,13 +1,13 @@
-#superfamiconv
+# superfamiconv
 A tile graphics converter with flexible and composable command line options.
 
 Developed by David Lindecrantz and distributed under the terms of the [MIT license](./LICENSE).
 
 
-##dependencies
+## dependencies
 A C++11 capable compiler.
 
-##operation
+## operation
 
 	superfamiconv <command> [<options>]
 
@@ -127,12 +127,12 @@ For more flexibility use the sub commands, which have the following options resp
 	-h --help             Show this help <switch>
 
 
-##future work
+## future work
 * More output formats
 * Error diagnostics
 * Better documentation and example usage
 
-##acknowledgments
+## acknowledgments
 superfamiconv uses the following libraries:
 
 * [LodePNG](http://lodev.org/lodepng/) by Lode Vandevenne
