@@ -1,22 +1,35 @@
-CC          := gcc
-CXX         := g++
+SRC_DIR := src
+INC_DIR := include
+BIN_DIR := bin
+OBJ_DIR := .build
 
-SRC_DIR     := src
-INC_DIR     := include
-BIN_DIR     := bin
-OBJ_DIR     := .build
+CC  := gcc
+CXX := g++
 
-CXX_FLAGS   := -std=gnu++11 -Wall -I$(INC_DIR)
-CC_FLAGS    := -std=gnu99 -Wall -I$(INC_DIR)
-LD_FLAGS    :=
+FLAGS     := -Wall -Wno-sign-compare -I$(INC_DIR)
+CXX_FLAGS := -std=gnu++11 $(FLAGS)
+CC_FLAGS  := -std=gnu99 $(FLAGS)
+LD_FLAGS  :=
+
+ifeq ($(OS),Windows_NT)
+  CC := x86_64-w64-mingw32-gcc
+  CXX := x86_64-w64-mingw32-g++
+  LD_FLAGS += -static -static-libgcc -static-libstdc++
+endif
 
 ifeq ($(DEBUG), 1)
   CXX_FLAGS += -O0 -g
   CC_FLAGS += -O0 -g
 else
-  CXX_FLAGS += -O3 -flto
-  CC_FLAGS += -O3 -flto
+  ifeq ($(OS),Windows_NT)
+    CXX_FLAGS += -O3
+    CC_FLAGS += -O3
+  else
+    CXX_FLAGS += -O3 -flto
+    CC_FLAGS += -O3 -flto
+  endif
 endif
+
 
 COMMON_OBJ  := $(OBJ_DIR)/Image.o $(OBJ_DIR)/Palette.o $(OBJ_DIR)/Tiles.o $(OBJ_DIR)/Map.o
 COMMON_OBJ  += $(OBJ_DIR)/LodePNG/lodepng.o

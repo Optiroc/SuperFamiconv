@@ -2,8 +2,13 @@
 #define OPTIONS_H
 
 #include <getopt.h>
-#include <sys/ioctl.h>
 #include <unistd.h>
+
+#ifdef WIN32
+#include <winsock.h>
+#else
+#include <sys/ioctl.h>
+#endif
 
 #include <string>
 #include <iostream>
@@ -209,6 +214,8 @@ inline int Options::tty_width() {
     struct winsize ts;
     ioctl(STDIN_FILENO, TIOCGWINSZ, &ts);
     return ts.ws_col >= 40 ? ts.ws_col : 80;
+#else
+	return 80;
 #endif
 }
 
