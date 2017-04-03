@@ -126,6 +126,8 @@ inline std::string mode(Mode mode) {
     return std::string("snes");
   case Mode::snes_mode7:
     return std::string("snes_mode7");
+  default:
+    return std::string();
   }
 }
 
@@ -135,6 +137,8 @@ inline bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
     return (bpp == 2) || (bpp == 4) || (bpp == 8);
   case Mode::snes_mode7:
     return bpp == 8;
+  default:
+    return false;
   }
 }
 
@@ -144,6 +148,8 @@ inline bool tile_width_allowed_for_mode(unsigned width, Mode mode) {
     return (width == 8) || (width == 16);
   case Mode::snes_mode7:
     return width == 8;
+  default:
+    return false;
   }
 }
 
@@ -153,13 +159,14 @@ inline bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
     return (height == 8) || (height == 16);
   case Mode::snes_mode7:
     return height == 8;
+  default:
+    return false;
   }
 }
 
 inline unsigned default_tile_size_for_mode(Mode mode) {
   switch (mode) {
-  case Mode::snes:
-  case Mode::snes_mode7:
+  default:
     return 8;
   }
 }
@@ -170,6 +177,8 @@ inline unsigned default_map_size_for_mode(Mode mode) {
     return 32;
   case Mode::snes_mode7:
     return 128;
+  default:
+    return 32;
   }
 }
 
@@ -355,6 +364,8 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
       return (scaled & 0x00ffffff) + 0xff000000;
     }
     break;
+  default:
+    return 0;
   }
 }
 
@@ -367,15 +378,17 @@ inline std::vector<rgba_t> reduce_colors(const std::vector<rgba_t>& colors, Mode
 
 // scale color from system specific range to 8bpc RGBA range
 inline rgba_t normalize_color(const rgba_t color, Mode from_mode) {
+  rgba_color c(color);
   switch (from_mode) {
   case Mode::snes:
   case Mode::snes_mode7:
-    rgba_color c(color);
     c.r = scale_up(c.r, 3);
     c.g = scale_up(c.g, 3);
     c.b = scale_up(c.b, 3);
     c.a = scale_up(c.a, 3);
     return c;
+  default: 
+    return 0;
   }
 }
 
