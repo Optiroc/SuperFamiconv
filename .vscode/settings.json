@@ -1,0 +1,19 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+    "files.associations": {
+      "*.make": "makefile",
+      "cstdint": "cpp",
+      "unordered_set": "cpp",
+      "*hpp*h*h*h*h*hexception": "cpp",
+      "*hhashtable": "cpp",
+      "*harray": "cpp",
+      "type_traits": "cpp",
+      "new": "cpp",
+      "*h*htypeinfo": "cpp",
+      "*hpp*hpp*hpp*h*h*h*h*h*h*h*h*h*hhashtable": "cpp",
+      "hashtable": "cpp",
+      "array": "cpp",
+      "*hpp*h*h*h*h*h*hhashtable": "cpp",
+      "*hpp*hpp*hpp*hpp*hpp*hpp*hpp*hpp*h*harray": "cpp"
+    }
+  }
