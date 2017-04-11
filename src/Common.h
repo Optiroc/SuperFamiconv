@@ -329,7 +329,7 @@ inline bool rgba_color::operator>(const rgba_color& o) const {
   int lo = (int)(segments * sqrt(0.241f * o.r + 0.691f * o.g + 0.068f * o.b));
   int vo = (int)(segments * hsva_o.v);
 
-  return (h > ho) ? true : (l > lo) ? true : (v > vo) ? true : false;
+  return std::tie(h, l, v) > std::tie(ho, lo, vo);
 }
 
 inline void sort_colors(std::vector<rgba_t>& colors) {
