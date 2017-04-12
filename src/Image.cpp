@@ -18,7 +18,7 @@ Image::Image(const std::string& path) {
 
   if (state.info_raw.colortype == LCT_PALETTE) {
     _indexed_data = _data;
-    for (int i = 0; i < state.info_raw.palettesize * 4; i += 4) {
+    for (unsigned i = 0; i < state.info_raw.palettesize * 4; i += 4) {
       uint32_t color = (state.info_raw.palette[i]) + (state.info_raw.palette[i + 1] << 8) +
                        (state.info_raw.palette[i + 2] << 16) + (state.info_raw.palette[i + 3] << 24);
       _palette.push_back(color);
@@ -96,7 +96,7 @@ Image::Image(const Image& image, const sfc::Subpalette& subpalette) {
   _indexed_data.resize(size);
   _data.resize(size * 4);
 
-  for (int i = 0; i < size; ++i) {
+  for (unsigned i = 0; i < size; ++i) {
     rgba_t color = sfc::normalize_color(sfc::reduce_color(image.rgba_color_at(i), mode), mode);
     if (color == transparent_color) {
       _indexed_data[i] = 0;
@@ -137,13 +137,13 @@ Image Image::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_hei
   unsigned blit_width = (x + crop_width > _width) ? _width - x : crop_width;
   unsigned blit_height = (y + crop_height > _height) ? _height - y : crop_height;
 
-  for (int iy = 0; iy < blit_height; ++iy) {
+  for (unsigned iy = 0; iy < blit_height; ++iy) {
     std::memcpy(&img._data[iy * img._width * 4], &_data[(x * 4) + ((iy + y) * _width * 4)], blit_width * 4);
   }
 
   if (_indexed_data.size()) {
     img._indexed_data.resize(crop_width * crop_height);
-    for (int iy = 0; iy < blit_height; ++iy) {
+    for (unsigned iy = 0; iy < blit_height; ++iy) {
       std::memcpy(&img._indexed_data[iy * img._width], &_indexed_data[x + ((iy + y) * _width)], blit_width);
     }
   }

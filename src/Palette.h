@@ -13,7 +13,8 @@ struct Image;
 
 struct Subpalette {
   Subpalette(Mode mode, unsigned max_colors)
-  : _max_colors(max_colors){};
+  : _mode(mode),
+    _max_colors(max_colors){};
 
   rgba_t color_at(unsigned index) const { return _colors[index]; }
   const std::vector<rgba_t> colors() const { return _colors; }

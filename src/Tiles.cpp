@@ -56,10 +56,10 @@ Tile::Tile(const std::vector<Tile>& metatile, bool no_flip, unsigned width, unsi
   const unsigned metatiles_h = width / metatile_dim;
   const unsigned metatiles_v = height / metatile_dim;
 
-  int metatile_index = 0;
-  for (int my = 0; my < metatiles_v; ++my) {
-    for (int mx = 0; mx < metatiles_h; ++mx) {
-      for (int blit_y = 0; blit_y < metatile_dim; ++blit_y) {
+  unsigned metatile_index = 0;
+  for (unsigned my = 0; my < metatiles_v; ++my) {
+    for (unsigned mx = 0; mx < metatiles_h; ++mx) {
+      for (unsigned blit_y = 0; blit_y < metatile_dim; ++blit_y) {
         std::memcpy(&_data[((blit_y + (my * metatile_dim)) * width) + (mx * metatile_dim)],
                     &metatile[metatile_index]._data[blit_y * metatile_dim], metatile_dim);
       }
@@ -112,7 +112,7 @@ Tile Tile::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_heigh
   } else {
     unsigned blit_width = (x + crop_width > _width) ? _width - x : crop_width;
     unsigned blit_height = (y + crop_height > _height) ? _height - y : crop_height;
-    for (int iy = 0; iy < blit_height; ++iy) {
+    for (unsigned iy = 0; iy < blit_height; ++iy) {
       std::memcpy(&t._data[iy * t._width], &_data[(x) + ((iy + y) * _width)], blit_width);
     }
   }
@@ -245,16 +245,16 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
     const unsigned cells_per_tile_v = _tile_height / 8;
     const unsigned cells_per_row = 16;
     const unsigned tiles_per_row = cells_per_row / cells_per_tile_h;
-    const unsigned cell_rows = div_ceil((int)_tiles.size(), tiles_per_row) * cells_per_tile_v;
+    const unsigned cell_rows = div_ceil((int)tiles.size(), tiles_per_row) * cells_per_tile_v;
 
     tv.resize(cells_per_row * cell_rows);
 
-    for (int i = 0; i < _tiles.size(); ++i) {
+    for (unsigned i = 0; i < tiles.size(); ++i) {
       unsigned base_pos = (((i / tiles_per_row) * cells_per_tile_v) * cells_per_row) +
                           ((i % tiles_per_row) << (cells_per_tile_h - 1));
-      auto ct = _tiles[i].crops(8, 8);
-      for (int cy = 0; cy < cells_per_tile_v; ++cy) {
-        for (int cx = 0; cx < cells_per_tile_h; ++cx) {
+      auto ct = tiles[i].crops(8, 8);
+      for (unsigned cy = 0; cy < cells_per_tile_v; ++cy) {
+        for (unsigned cx = 0; cx < cells_per_tile_h; ++cx) {
           tv[base_pos + (cy * cells_per_row) + cx] = ct[(cy * cells_per_tile_v) + cx];
         }
       }
@@ -278,10 +278,10 @@ std::vector<Tile> Tileset::remap_tiles_for_input(const std::vector<Tile>& tiles,
     const unsigned cells_per_tile_h = _tile_width / 8;
     const unsigned cells_per_tile_v = _tile_height / 8;
 
-    for (int i = 0; i < _tiles.size(); ++i) {
+    for (unsigned i = 0; i < _tiles.size(); ++i) {
       std::vector<Tile> metatile;
-      for (int yo = 0; yo < cells_per_tile_v; ++yo) {
-        for (int xo = 0; xo < cells_per_tile_h; ++xo) {
+      for (unsigned yo = 0; yo < cells_per_tile_v; ++yo) {
+        for (unsigned xo = 0; xo < cells_per_tile_h; ++xo) {
           if ((i + (yo * 16) + xo) < tiles.size()) metatile.push_back(tiles[i + (yo * 16) + xo]);
         }
       }

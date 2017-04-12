@@ -88,10 +88,10 @@ std::vector<std::vector<Mapentry>> Map::collect_entries(bool column_order, unsig
   } else {
     unsigned columns = (div_ceil(_map_width, split_w) == 0) ? 1 : div_ceil(_map_width, split_w);
     unsigned rows = (div_ceil(_map_height, split_h) == 0) ? 1 : div_ceil(_map_height, split_h);
-    for (int col = 0; col < columns; ++col) {
-      for (int row = 0; row < rows; ++row) {
+    for (unsigned col = 0; col < columns; ++col) {
+      for (unsigned row = 0; row < rows; ++row) {
         std::vector<Mapentry> vm;
-        for (int pos = 0; pos < split_w * split_h; ++pos) {
+        for (unsigned pos = 0; pos < split_w * split_h; ++pos) {
           vm.push_back(entry_at((col * split_w) + (pos % split_w), (row * split_h) + (pos / split_w)));
         }
         vvm.push_back(vm);
@@ -101,9 +101,9 @@ std::vector<std::vector<Mapentry>> Map::collect_entries(bool column_order, unsig
 
   if (column_order) {
     std::vector<std::vector<Mapentry>> vvmo;
-    for (int vmi = 0; vmi < vvm.size(); ++vmi) {
+    for (unsigned vmi = 0; vmi < vvm.size(); ++vmi) {
       vvmo.push_back(std::vector<Mapentry>());
-      for (int pos = 0; pos < vvm[vmi].size(); ++pos) {
+      for (unsigned pos = 0; pos < vvm[vmi].size(); ++pos) {
         vvmo.back().push_back(vvm[vmi][((pos * split_w) + (pos / split_h)) % (split_w * split_h)]);
       }
     }

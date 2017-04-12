@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
     if (verbose) std::cout << "Mapping " << crops.size() << " " << settings.tile_w << "x" << settings.tile_h << " image slices\n";
 
     sfc::Map map(settings.mode, settings.map_w, settings.map_h);
-    for (int i = 0; i < crops.size(); ++i) {
+    for (unsigned i = 0; i < crops.size(); ++i) {
       map.add(crops[i], tileset, palette, settings.bpp, i % settings.map_w, i / settings.map_w);
     }
 
@@ -166,8 +166,8 @@ int main(int argc, char* argv[]) {
 
       size_t sz = (td.size() > md.size()) ? td.size() : md.size();
       std::vector<uint8_t> id = std::vector<uint8_t>(sz * 2);
-      for (int i = 0; i < md.size(); ++i) id[(i << 1)] = md[i];
-      for (int i = 0; i < td.size(); ++i) id[(i << 1) + 1] = td[i];
+      for (unsigned i = 0; i < md.size(); ++i) id[(i << 1)] = md[i];
+      for (unsigned i = 0; i < td.size(); ++i) id[(i << 1) + 1] = td[i];
 
       sfc::write_file(settings.out_m7_data, id);
       if (verbose) std::cout << "Saved interleaved data to \"" << settings.out_m7_data << "\"\n";

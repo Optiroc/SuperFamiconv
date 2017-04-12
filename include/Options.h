@@ -153,7 +153,7 @@ inline void Options::add_entry(struct option& opt, char flag, std::string long_f
         unsigned column_width = width - desc_pos;
         if (desc_pos == IndentFlag + 2) ss << '\n';
 
-        for (int i = 0; i < desc.size(); i += column_width) {
+        for (unsigned i = 0; i < desc.size(); i += column_width) {
             while (desc.substr(i, 1) == std::string(" ")) ++i;
             if (i + column_width < desc.size()) {
                 ss << desc.substr(i, column_width) << '\n' << std::string(desc_pos, ' ');
@@ -161,20 +161,20 @@ inline void Options::add_entry(struct option& opt, char flag, std::string long_f
                 ss << desc.substr(i);
             }
         }
-        
+
         this->usage[group].push_back(ss.str());
     }
 }
 
 template <typename T>
-inline void Options::set(T& var, std::string optarg) {
-    std::stringstream ss(optarg);
+inline void Options::set(T& var, std::string opt_arg) {
+    std::stringstream ss(opt_arg);
     ss >> var;
 }
 
 template <>
-inline void Options::set<std::string>(std::string& var, std::string optarg) {
-    var = optarg;
+inline void Options::set<std::string>(std::string& var, std::string opt_arg) {
+    var = opt_arg;
 }
 
 

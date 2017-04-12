@@ -177,7 +177,7 @@ int superfamiconv(int argc, char* argv[]) {
       std::vector<sfc::Image> crops = in_image.crops(settings.tile_w, settings.tile_h);
       if (verbose) std::cout << "Mapping " << crops.size() << " " << settings.tile_w << "x" << settings.tile_h << " image slices\n";
 
-      for (int i = 0; i < crops.size(); ++i) {
+      for (unsigned i = 0; i < crops.size(); ++i) {
         map.add(crops[i], tileset, palette, settings.bpp, i % settings.map_w, i / settings.map_w);
       }
     }

@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
       if (verbose) std::cout << "Remapping tile data from palette \"" << settings.in_palette << "\" (" << palette << ")\n";
     }
 
-    for (auto& image : crops) tileset.add(image, &palette);
+    for (auto& img : crops) tileset.add(img, &palette);
     if (verbose) {
       if (settings.no_discard) {
         std::cout << "Created tileset with " << tileset.size() << " tiles\n";

@@ -6,7 +6,7 @@ OBJ_DIR := .build
 CC  := gcc
 CXX := g++
 
-FLAGS     := -Wall -Wno-sign-compare -I$(INC_DIR)
+FLAGS     := -Wextra -I$(INC_DIR)
 CXX_FLAGS := -std=gnu++11 $(FLAGS)
 CC_FLAGS  := -std=gnu99 $(FLAGS)
 LD_FLAGS  :=

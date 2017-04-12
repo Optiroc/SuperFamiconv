@@ -99,7 +99,7 @@ Subpalette& Palette::first_nonempty_subpalette() {
 }
 
 int Palette::index_of(const Subpalette& subpalette) const {
-  for (int i = 0; i < _subpalettes.size(); ++i) {
+  for (int i = 0; i < (int)_subpalettes.size(); ++i) {
     if (subpalette.colors() == _subpalettes[i].colors()) return i;
   }
   return -1;

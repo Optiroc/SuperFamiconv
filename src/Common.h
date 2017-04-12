@@ -184,20 +184,20 @@ inline unsigned default_map_size_for_mode(Mode mode) {
 
 inline unsigned palette_size_at_bpp(unsigned bpp) {
   unsigned s = 1;
-  for (int i = 0; i < bpp; ++i) s = s << 1;
+  for (unsigned i = 0; i < bpp; ++i) s = s << 1;
   return s;
 }
 
 inline index_t bitmask_at_bpp(unsigned bpp) {
   unsigned m = 1;
-  for (int i = 1; i < bpp; ++i) m |= m << 1;
+  for (unsigned i = 1; i < bpp; ++i) m |= m << 1;
   return (index_t)m;
 }
 
 inline std::vector<rgba_t> to_rgba(std::vector<channel_t> data) {
   if (data.size() % 4 != 0) throw std::runtime_error("RGBA vector size not a multiple of 4");
   std::vector<rgba_t> v(data.size() >> 2);
-  for (int i = 0; i < v.size(); ++i) {
+  for (unsigned i = 0; i < v.size(); ++i) {
     v[i] = (data[i * 4]) + (data[(i * 4) + 1] << 8) + (data[(i * 4) + 2] << 16) + (data[(i * 4) + 3] << 24);
   }
   return v;
@@ -387,7 +387,7 @@ inline rgba_t normalize_color(const rgba_t color, Mode from_mode) {
     c.b = scale_up(c.b, 3);
     c.a = scale_up(c.a, 3);
     return c;
-  default: 
+  default:
     return 0;
   }
 }
@@ -440,16 +440,16 @@ inline std::vector<uint8_t> pack_native_tile(const std::vector<index_t>& data, M
     if (in_data.empty()) return p;
 
     index_t mask0 = 1;
-    int shift0 = 0;
-    for (int i = 0; i < plane_index; ++i) {
+    unsigned shift0 = 0;
+    for (unsigned i = 0; i < plane_index; ++i) {
       mask0 = mask0 << 1;
       ++shift0;
     }
     index_t mask1 = mask0 << 1;
-    int shift1 = shift0 + 1;
+    unsigned shift1 = shift0 + 1;
 
-    for (int y = 0; y < 8; ++y) {
-      for (int x = 0; x < 8; ++x) {
+    for (unsigned y = 0; y < 8; ++y) {
+      for (unsigned x = 0; x < 8; ++x) {
         p[y * 2 + 0] |= ((in_data[y * 8 + x] & mask0) >> shift0) << (7 - x);
         p[y * 2 + 1] |= ((in_data[y * 8 + x] & mask1) >> shift1) << (7 - x);
       }
@@ -460,7 +460,7 @@ inline std::vector<uint8_t> pack_native_tile(const std::vector<index_t>& data, M
   if (mode == Mode::snes) {
     if (width != 8 || height != 8) throw std::runtime_error("Programmer error");
     unsigned planes = bpp >> 1;
-    for (int i = 0; i < planes; ++i) {
+    for (unsigned i = 0; i < planes; ++i) {
       auto plane = make_nintendo_2bit_data(data, i * 2);
       nd.insert(nd.end(), plane.begin(), plane.end());
     }
@@ -489,7 +489,7 @@ inline std::vector<index_t> unpack_native_tile(const std::vector<uint8_t>& data,
 
   if (mode == Mode::snes) {
     if (width != 8 || height != 8) throw std::runtime_error("Programmer error");
-    for (int i = 0; i < bpp; ++i) add_nintendo_1bit_plane(ud, data, i);
+    for (unsigned i = 0; i < bpp; ++i) add_nintendo_1bit_plane(ud, data, i);
   } else if (mode == Mode::snes_mode7) {
     ud = data;
   }
@@ -506,13 +506,13 @@ inline std::vector<T> mirror(const std::vector<T>& source, unsigned width, bool 
     throw std::runtime_error("Can't mirror non-square image vector");
 
   if (horizontal) {
-    for (int row = 0; row < height; ++row) std::reverse(m.begin() + (row * width), m.begin() + (row * width) + width);
+    for (unsigned row = 0; row < height; ++row) std::reverse(m.begin() + (row * width), m.begin() + (row * width) + width);
   }
 
   if (vertical) {
     std::vector<T> mv;
     for (int row = height - 1; row >= 0; --row) {
-      for (int column = 0; column < width; ++column) mv.push_back(m[(row * width) + column]);
+      for (unsigned column = 0; column < width; ++column) mv.push_back(m[(row * width) + column]);
     }
     m = mv;
   }
@@ -604,10 +604,10 @@ inline int div_ceil(int numerator, int denominator) {
 }
 
 template <typename T>
-std::vector<T> split_vector(const T& v, unsigned split_size) {
+std::vector<T> split_vector(const T& vect, unsigned split_size) {
   std::vector<T> sv;
-  typename T::const_iterator it = v.cbegin();
-  const typename T::const_iterator end = v.cend();
+  typename T::const_iterator it = vect.cbegin();
+  const typename T::const_iterator end = vect.cend();
 
   while (it != end) {
     T v;
