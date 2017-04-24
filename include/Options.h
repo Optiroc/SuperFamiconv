@@ -1,13 +1,19 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#include <getopt.h>
-#include <unistd.h>
 
-#ifdef WIN32
-#include <winsock.h>
+#ifdef _MSC_VER // visual c++
+  #include <io.h>
+  #include <winsock.h>
+  #include "getoptw/getoptw.h"
 #else
-#include <sys/ioctl.h>
+  #include <unistd.h>
+  #include <getopt.h>
+  #ifdef _WIN32 // mingw/cygwin
+    #include <winsock.h>
+  #else // everything else
+    #include <sys/ioctl.h>
+  #endif
 #endif
 
 #include <string>
