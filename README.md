@@ -5,7 +5,7 @@ Developed by David Lindecrantz and distributed under the terms of the [MIT licen
 
 
 ## dependencies
-A C++11 capable compiler.
+CMake and a C++11 capable compiler.
 
 ## operation
 
