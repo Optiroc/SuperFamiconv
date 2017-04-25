@@ -134,7 +134,7 @@ inline std::string mode(Mode mode) {
 inline bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
   switch (mode) {
   case Mode::snes:
-    return (bpp == 2) || (bpp == 4) || (bpp == 8);
+    return bpp == 2 || bpp == 4 || bpp == 8;
   case Mode::snes_mode7:
     return bpp == 8;
   default:
@@ -145,7 +145,7 @@ inline bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
 inline bool tile_width_allowed_for_mode(unsigned width, Mode mode) {
   switch (mode) {
   case Mode::snes:
-    return (width == 8) || (width == 16);
+    return width == 8 || width == 16;
   case Mode::snes_mode7:
     return width == 8;
   default:
@@ -156,7 +156,7 @@ inline bool tile_width_allowed_for_mode(unsigned width, Mode mode) {
 inline bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
   switch (mode) {
   case Mode::snes:
-    return (height == 8) || (height == 16);
+    return height == 8 || height == 16;
   case Mode::snes_mode7:
     return height == 8;
   default:
@@ -168,6 +168,17 @@ inline unsigned default_tile_size_for_mode(Mode mode) {
   switch (mode) {
   default:
     return 8;
+  }
+}
+
+inline unsigned default_bpp_for_mode(Mode mode) {
+  switch (mode) {
+    case Mode::snes:
+      return 4;
+    case Mode::snes_mode7:
+      return 8;
+    default:
+      return 4;
   }
 }
 

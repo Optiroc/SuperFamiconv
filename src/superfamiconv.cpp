@@ -95,6 +95,11 @@ int superfamiconv(int argc, char* argv[]) {
 
     settings.mode = sfc::mode(mode_str);
 
+    if (settings.mode == sfc::Mode::snes_mode7 && settings.bpp != 8) {
+      settings.bpp = sfc::default_bpp_for_mode(sfc::Mode::snes_mode7);
+      if (verbose) std::cout << "Defaulting to 8 bpp for snes_mode7\n";
+    }
+
     if (!czero_str.empty()) {
       settings.color_zero = sfc::from_hexstring(czero_str);
       settings.forced_zero = true;
