@@ -19,6 +19,7 @@ struct Settings {
   std::string out_tiles;
   std::string out_map;
   std::string out_palette_image;
+  std::string out_palette_act;
   std::string out_tiles_image;
 
   sfc::Mode mode;
@@ -63,6 +64,7 @@ int superfamiconv(int argc, char* argv[]) {
     options.Add(settings.out_tiles,          't', "out-tiles",         "Output: tile data");
     options.Add(settings.out_map,            'm', "out-map",           "Output: map data");
     options.Add(settings.out_palette_image, '\0', "out-palette-image", "Output: palette image");
+    options.Add(settings.out_palette_act,   '\0', "out-palette-act",   "Output: act palette");
     options.Add(settings.out_tiles_image,   '\0', "out-tiles-image",   "Output: tiles image");
 
     options.Add(mode_str,                    'M', "mode",              "Mode",                              std::string("snes"), "Settings");
@@ -207,6 +209,11 @@ int superfamiconv(int argc, char* argv[]) {
       sfc::Image palette_image(palette);
       palette_image.save(settings.out_palette_image);
       if (verbose) std::cout << "Saved palette image to \"" << settings.out_palette_image << "\"\n";
+    }
+
+    if (!settings.out_palette_act.empty()) {
+      palette.save_act(settings.out_palette_act);
+      if (verbose) std::cout << "Saved act palette to \"" << settings.out_palette_act << "\"\n";
     }
 
     if (!settings.out_tiles_image.empty()) {

@@ -190,6 +190,27 @@ void Palette::save(const std::string& path) const {
   write_file(path, data);
 }
 
+void Palette::save_act(const std::string& path) const {
+  std::vector<uint8_t> data((256 * 3) + 4);
+  int count = 0;
+
+  for (auto& sp : _subpalettes) {
+    std::vector<rgba_t> colors = sp.get_normalized_colors();
+    for (auto c : colors) {
+      rgba_color rgba(c);
+      data[count * 3 + 0] = rgba.r;
+      data[count * 3 + 1] = rgba.g;
+      data[count * 3 + 2] = rgba.b;
+      if (++count > 256) goto done;
+    }
+  }
+
+  done:
+  data[0x301] = count & 0xff;
+  data[0x302] = data[0x303] = 0xff;
+  write_file(path, data);
+}
+
 // print info
 std::ostream& operator<<(std::ostream& os, Palette const& p) {
   auto v = p.colors();

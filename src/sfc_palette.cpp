@@ -12,6 +12,7 @@ namespace SfcPalette {
 struct Settings {
   std::string in_image;
   std::string out_data;
+  std::string out_act;
   std::string out_json;
   std::string out_image;
 
@@ -60,6 +61,7 @@ int main(int argc, char* argv[]) {
     // clang-format off
     options.Add(settings.in_image,           'i', "in-image",       "Input: image");
     options.Add(settings.out_data,           'd', "out-data",       "Output: native data");
+    options.Add(settings.out_act,            'a', "out-act",        "Output: act palette");
     options.Add(settings.out_json,           'j', "out-json",       "Output: json");
     options.Add(settings.out_image,          'o', "out-image",      "Output: image");
 
@@ -163,6 +165,11 @@ int main(int argc, char* argv[]) {
     if (!settings.out_data.empty()) {
       palette.save(settings.out_data);
       if (verbose) std::cout << "Saved native palette data to \"" << settings.out_data << "\"\n";
+    }
+
+    if (!settings.out_act.empty()) {
+      palette.save_act(settings.out_act);
+      if (verbose) std::cout << "Saved act palette to \"" << settings.out_act << "\"\n";
     }
 
     if (!settings.out_image.empty()) {

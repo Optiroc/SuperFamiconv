@@ -104,6 +104,7 @@ struct Palette {
 
   const std::string to_json() const;
   void save(const std::string& path) const;
+  void save_act(const std::string& path) const;
 
 private:
   Mode _mode = Mode::snes;
