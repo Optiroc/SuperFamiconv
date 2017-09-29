@@ -206,6 +206,7 @@ void Palette::save_act(const std::string& path) const {
   }
 
   done:
+  data[0x300] = 0x00;
   data[0x301] = count & 0xff;
   data[0x302] = data[0x303] = 0xff;
   write_file(path, data);
