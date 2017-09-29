@@ -77,10 +77,17 @@ Image::Image(const sfc::Tileset& tileset) {
   _height = rows * tileset.tile_height();
   _data.resize(_width * _height * 4);
   std::fill(_data.begin(), _data.end(), 0);
+  _indexed_data.resize(_width * _height);
+  std::fill(_indexed_data.begin(), _indexed_data.end(), 0);
+  if (_data.empty()) return;
+
+  _palette = tileset.tiles()[0].palette();
 
   for (unsigned tile_index = 0; tile_index < tiles.size(); ++tile_index) {
     auto tile_rgba = tiles[tile_index].rgba_data();
     blit(tile_rgba, (tile_index % tiles_per_row) * tile_width, (tile_index / tiles_per_row) * tile_height, tile_width);
+    auto tile_data = tiles[tile_index].data();
+    blit_indexed(tile_data, (tile_index % tiles_per_row) * tile_width, (tile_index / tiles_per_row) * tile_height, tile_width);
   }
 }
 
@@ -201,13 +208,31 @@ void Image::save(const std::string& path) const {
   if (error) throw std::runtime_error(lodepng_error_text(error));
 }
 
+void Image::save_indexed(const std::string& path) {
+  if (_palette.empty()) set_default_palette();
+
+  lodepng::State state;
+  for (const auto& c : _palette) {
+    rgba_color rgba(c);
+    lodepng_palette_add(&state.info_png.color, rgba.r, rgba.g, rgba.b, rgba.a);
+    lodepng_palette_add(&state.info_raw, rgba.r, rgba.g, rgba.b, rgba.a);
+  }
+  state.info_png.color.colortype = state.info_raw.colortype = LCT_PALETTE;
+  state.info_png.color.bitdepth = state.info_raw.bitdepth = 8;
+  state.encoder.auto_convert = 0;
+
+  std::vector<uint8_t> buffer;
+  unsigned error = lodepng::encode(buffer, _indexed_data, _width, _height, state);
+  if (error) throw std::runtime_error(lodepng_error_text(error));
+  lodepng::save_file(buffer, path.c_str());
+}
+
 std::ostream& operator<<(std::ostream& os, const Image& img) {
   std::stringstream ss;
   ss << img.width() << "x" << img.height() << ", " << (img.palette_size() ? "indexed color" : "rgb color");
   return os << ss.str();
 }
 
-// nb! set_pixel & blit doesn't affect indexed data
 inline void Image::set_pixel(const rgba_t color, const unsigned index) {
   const unsigned offset = index * 4;
   if ((offset + 3) > _data.size()) return;
@@ -228,6 +253,30 @@ inline void Image::set_pixel(const rgba_t color, const unsigned x, const unsigne
 
 void Image::blit(const std::vector<rgba_t>& rgba_data, const unsigned x, const unsigned y, const unsigned width) {
   for (unsigned i = 0; i < rgba_data.size(); ++i) set_pixel(rgba_data[i], (i % width) + x, (i / width) + y);
+}
+
+inline void Image::set_pixel_indexed(const index_t color, const unsigned index) {
+  if ((index) > _indexed_data.size()) return;
+  _indexed_data[index] = color;
+}
+
+inline void Image::set_pixel_indexed(const index_t color, const unsigned x, const unsigned y) {
+  const unsigned offset = (y * _width) + x;
+  if (offset > _indexed_data.size()) return;
+  _indexed_data[offset] = color;
+}
+
+void Image::blit_indexed(const std::vector<channel_t>& data, const unsigned x, const unsigned y, const unsigned width) {
+  for (unsigned i = 0; i < data.size(); ++i) set_pixel_indexed(data[i], (i % width) + x, (i / width) + y);
+}
+
+void Image::set_default_palette(const unsigned indices) {
+  _palette.resize(indices);
+  channel_t add = 0x100 / _palette.size();
+  for (unsigned i = 0; i < _palette.size(); ++i) {
+    channel_t value = add * i;
+    _palette[i] = (rgba_t)(0xff000000 + value + (value << 8) + (value << 16));
+  }
 }
 
 } /* namespace sfc */

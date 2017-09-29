@@ -12,6 +12,7 @@
 namespace SfcTiles {
 struct Settings {
   std::string in_image;
+  std::string in_data;
   std::string in_palette;
   std::string out_data;
   std::string out_image;
@@ -58,6 +59,7 @@ int main(int argc, char* argv[]) {
 
     // clang-format off
     options.Add(settings.in_image,           'i', "in-image",       "Input: image");
+    options.Add(settings.in_data,            'n', "in-data",        "Input: native data");
     options.Add(settings.in_palette,         'p', "in-palette",     "Input: palette (native/json)");
     options.Add(settings.out_data,           'd', "out-data",       "Output: native data");
     options.Add(settings.out_image,          'o', "out-image",      "Output: image");
@@ -122,35 +124,45 @@ int main(int argc, char* argv[]) {
   }
 
   try {
-    if (settings.in_image.empty()) throw std::runtime_error("Input image required");
+    if (settings.in_image.empty() && settings.in_data.empty()) throw std::runtime_error("Input image or native data required");
 
-    sfc::Image image(settings.in_image);
-    if (verbose) std::cout << "Loaded image from \"" << settings.in_image << "\" (" << image << ")\n";
+    sfc::Tileset tileset;
 
-    std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
-    if (verbose) std::cout << "Image sliced into " << crops.size() << " " << settings.tile_w << "x" << settings.tile_h << " tiles\n";
-
-    sfc::Palette palette;
-    sfc::Tileset tileset(settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_discard,
-                         settings.no_flip, settings.no_remap, settings.max_tiles);
-
-    if (settings.no_remap) {
-      if (image.palette_size() == 0) throw std::runtime_error("\"--no-remap\" requires indexed color image");
-      if (verbose) std::cout << "Creating tile data straight from color indices\n";
+    if (!settings.in_data.empty()) {
+      // Native data input
+      tileset = sfc::Tileset(sfc::read_binary(settings.in_data), settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_flip);
+      if (verbose) std::cout << "Loaded tiles from \"" << settings.in_data << "\" (" << tileset.size() << " tiles)\n";
 
     } else {
-      if (settings.in_palette.empty()) throw std::runtime_error("Input palette required (except in --no-remap mode)");
-      palette = sfc::Palette(settings.in_palette, settings.mode, sfc::palette_size_at_bpp(settings.bpp));
-      if (verbose) std::cout << "Remapping tile data from palette \"" << settings.in_palette << "\" (" << palette << ")\n";
-    }
+      // Image input
+      sfc::Image image(settings.in_image);
+      if (verbose) std::cout << "Loaded image from \"" << settings.in_image << "\" (" << image << ")\n";
 
-    for (auto& img : crops) tileset.add(img, &palette);
-    if (verbose) {
-      if (settings.no_discard) {
-        std::cout << "Created tileset with " << tileset.size() << " tiles\n";
+      std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
+      if (verbose) std::cout << "Image sliced into " << crops.size() << " " << settings.tile_w << "x" << settings.tile_h << " tiles\n";
+
+      sfc::Palette palette;
+      tileset = sfc::Tileset(settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_discard,
+                             settings.no_flip, settings.no_remap, settings.max_tiles);
+
+      if (settings.no_remap) {
+        if (image.palette_size() == 0) throw std::runtime_error("\"--no-remap\" requires indexed color image");
+        if (verbose) std::cout << "Creating tile data straight from color indices\n";
+
       } else {
-        std::cout << "Created optimized tileset with " << tileset.size()
-                  << " tiles (discarded " << tileset.discarded_tiles << " redudant tiles)\n";
+        if (settings.in_palette.empty()) throw std::runtime_error("Input palette required (except in --no-remap mode)");
+        palette = sfc::Palette(settings.in_palette, settings.mode, sfc::palette_size_at_bpp(settings.bpp));
+        if (verbose) std::cout << "Remapping tile data from palette \"" << settings.in_palette << "\" (" << palette << ")\n";
+      }
+
+      for (auto& img : crops) tileset.add(img, &palette);
+      if (verbose) {
+        if (settings.no_discard) {
+          std::cout << "Created tileset with " << tileset.size() << " tiles\n";
+        } else {
+          std::cout << "Created optimized tileset with " << tileset.size()
+                    << " tiles (discarded " << tileset.discarded_tiles << " redudant tiles)\n";
+        }
       }
     }
 
@@ -161,7 +173,11 @@ int main(int argc, char* argv[]) {
 
     if (!settings.out_image.empty()) {
       sfc::Image tileset_image(tileset);
-      tileset_image.save(settings.out_image);
+      if (!settings.in_data.empty()) {
+        tileset_image.save_indexed(settings.out_image);
+      } else {
+        tileset_image.save(settings.out_image);
+      }
       if (verbose) std::cout << "Saved tileset image to \"" << settings.out_image << "\"\n";
     }
 

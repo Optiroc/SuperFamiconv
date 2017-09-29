@@ -33,6 +33,7 @@ struct Tile {
   Tile(){};
 
   const std::vector<index_t>& data() const { return _data; }
+  const std::vector<rgba_t>& palette() const { return _palette; }
   std::vector<uint8_t> native_data() const;
   std::vector<rgba_t> rgba_data() const;
 

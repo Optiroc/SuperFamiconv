@@ -41,6 +41,7 @@ struct Image {
   std::vector<std::vector<index_t>> indexed_crops(unsigned tile_width, unsigned tile_height) const;
 
   void save(const std::string& path) const;
+  void save_indexed(const std::string& path);
 
 private:
   unsigned _width;
@@ -49,10 +50,14 @@ private:
   std::vector<index_t> _indexed_data;
   std::vector<rgba_t> _palette;
 
-  // nb! set_pixel and blit won't touch indexed data
   void set_pixel(const rgba_t color, const unsigned index);
   void set_pixel(const rgba_t color, const unsigned x, const unsigned y);
   void blit(const std::vector<rgba_t>& rgba_data, const unsigned x, const unsigned y, const unsigned width);
+  void set_pixel_indexed(const index_t color, const unsigned index);
+  void set_pixel_indexed(const index_t color, const unsigned x, const unsigned y);
+  void blit_indexed(const std::vector<index_t>& data, const unsigned x, const unsigned y, const unsigned width);
+
+  void set_default_palette(const unsigned indices = 256);
 };
 
 std::ostream& operator<<(std::ostream& os, const Image& img);
