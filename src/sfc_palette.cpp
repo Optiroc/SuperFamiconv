@@ -128,7 +128,7 @@ int main(int argc, char* argv[]) {
       palette.add_noremap(image.palette());
 
     } else {
-      if (verbose) std::cout << "Mapping optimized palette (" << settings.palettes << "x" << settings.colors << " color palettes, "
+      if (verbose) std::cout << "Mapping optimized palette (" << settings.palettes << "x" << settings.colors << " entries for "
                              << settings.tile_w << "x" << settings.tile_h << " tiles)\n";
 
       palette = sfc::Palette(settings.mode, settings.palettes, settings.colors);

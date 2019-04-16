@@ -193,6 +193,21 @@ inline unsigned default_map_size_for_mode(Mode mode) {
   }
 }
 
+inline unsigned max_palette_count_for_mode(Mode mode) {
+  switch (mode) {
+    case Mode::snes:
+      return 8;
+    case Mode::snes_mode7:
+      return 1;
+    default:
+      return 8;
+  }
+}
+
+inline unsigned palette_count_for_mode(Mode mode, unsigned colors_per_palette) {
+  return std::min(max_palette_count_for_mode(mode), 256 / colors_per_palette);
+}
+
 inline unsigned palette_size_at_bpp(unsigned bpp) {
   unsigned s = 1;
   for (unsigned i = 0; i < bpp; ++i) s = s << 1;

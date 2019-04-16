@@ -122,9 +122,9 @@ int superfamiconv(int argc, char* argv[]) {
     sfc::Palette palette;
     {
       unsigned colors_per_palette = sfc::palette_size_at_bpp(settings.bpp);
-      unsigned palette_count = 256 / colors_per_palette;
+      unsigned palette_count = sfc::palette_count_for_mode(settings.mode, colors_per_palette);
 
-      if (verbose) std::cout << "Mapping optimized palette (" << palette_count << "x" << colors_per_palette << " color palettes, "
+      if (verbose) std::cout << "Mapping optimized palette (" << palette_count << "x" << colors_per_palette << " entries for "
                              << settings.tile_w << "x" << settings.tile_h << " tiles)\n";
 
       palette = sfc::Palette(settings.mode, palette_count, colors_per_palette);
