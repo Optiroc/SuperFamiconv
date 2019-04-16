@@ -548,7 +548,7 @@ inline std::string to_hexstring(rgba_t value, bool pound = true, bool alpha = fa
 inline rgba_t from_hexstring(std::string str) {
   if (str.at(0) == '#') str.erase(0, 1);
   if (str.size() == 6) str.insert(6, 2, 'f');
-  if (str.size() != 8) throw;
+  if (str.size() != 8) throw std::runtime_error("Argument color-zero not a 6 or 8 character hex-string");
   uint32_t i;
   sscanf(str.c_str(), "%x", &i);
   return reverse_bytes(i);
