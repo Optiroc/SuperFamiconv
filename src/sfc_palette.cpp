@@ -138,21 +138,23 @@ int main(int argc, char* argv[]) {
       palette.add(color_zero);
 
       // sort tiles by number of unique colors and add to palette(s) in that order
-      std::vector<std::vector<rgba_t>> reduced_tiles;
-      {
-        std::vector<std::vector<rgba_t>> tiles = image.rgba_crops(settings.tile_w, settings.tile_h);
-        for (const auto& tile : tiles) {
-          std::unordered_set<rgba_t> rt;
-          for (const auto& color : tile) rt.insert(color);
-          reduced_tiles.push_back(std::vector<rgba_t>(rt.begin(), rt.end()));
+      std::vector<sfc::ImageTileRGBA> palette_tiles = image.rgba_tile_crops(settings.tile_w, settings.tile_h);
+
+      for (auto& tile : palette_tiles) tile.reduce_rgba_to_palette();
+
+      std::sort(palette_tiles.begin(), palette_tiles.end(), [](const sfc::ImageTileRGBA& a, const sfc::ImageTileRGBA& b) -> bool {
+        return a.data.size() > b.data.size();
+      });
+
+      for (auto& t : palette_tiles) {
+        try {
+          palette.add(t.data);
+        } catch (...) {
+          std::stringstream ss;
+          ss << "Too many colors in tile [" << (unsigned)(t.coord_x() / t.width()) << "," << (unsigned)(t.coord_y() / t.height()) << "] (at " << t.coord_x() << "," << t.coord_y() << " in source image)";
+          throw std::runtime_error(ss.str());
         }
-
-        std::sort(reduced_tiles.begin(), reduced_tiles.end(), [](const std::vector<rgba_t>& a, const std::vector<rgba_t>& b) -> bool {
-          return a.size() > b.size();
-        });
       }
-
-      for (auto& t : reduced_tiles) palette.add(t);
     }
 
     if (verbose) std::cout << "Generated palette with " << palette << '\n';

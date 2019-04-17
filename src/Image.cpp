@@ -187,6 +187,21 @@ std::vector<std::vector<rgba_t>> Image::rgba_crops(unsigned tile_width, unsigned
   return v;
 }
 
+std::vector<ImageTileRGBA> Image::rgba_tile_crops(unsigned tile_width, unsigned tile_height) const {
+  std::vector<ImageTileRGBA> v;
+  unsigned x = 0;
+  unsigned y = 0;
+  while (y < _height) {
+    while (x < _width) {
+      v.push_back(ImageTileRGBA(crop(x, y, tile_width, tile_height).rgba_data(), tile_width, tile_height, x, y));
+      x += tile_width;
+    }
+    x = 0;
+    y += tile_width;
+  }
+  return v;
+}
+
 std::vector<std::vector<index_t>> Image::indexed_crops(unsigned tile_width, unsigned tile_height) const {
   if (!_indexed_data.size()) throw std::runtime_error("No indexed data in image");
   std::vector<std::vector<index_t>> v;

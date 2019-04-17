@@ -14,6 +14,7 @@ namespace sfc {
 struct Subpalette;
 struct Palette;
 struct Tileset;
+struct ImageTileRGBA;
 
 struct Image {
   Image(){};
@@ -38,6 +39,7 @@ struct Image {
   Image crop(unsigned x, unsigned y, unsigned width, unsigned height) const;
   std::vector<Image> crops(unsigned tile_width, unsigned tile_height) const;
   std::vector<std::vector<rgba_t>> rgba_crops(unsigned tile_width, unsigned tile_height) const;
+  std::vector<ImageTileRGBA> rgba_tile_crops(unsigned tile_width, unsigned tile_height) const;
   std::vector<std::vector<index_t>> indexed_crops(unsigned tile_width, unsigned tile_height) const;
 
   void save(const std::string& path) const;
@@ -61,5 +63,36 @@ private:
 };
 
 std::ostream& operator<<(std::ostream& os, const Image& img);
+
+
+struct ImageTileRGBA {
+  ImageTileRGBA(){};
+  ImageTileRGBA(const std::vector<rgba_t>& rgba_data, unsigned width, unsigned height, unsigned coord_x, unsigned coord_y) {
+    data = rgba_data;
+    _width = width;
+    _height = height;
+    _coord_x = coord_x;
+    _coord_y = coord_y;
+  }
+
+  unsigned width() const { return _width; }
+  unsigned height() const { return _height; }
+  unsigned coord_x() const { return _coord_x; }
+  unsigned coord_y() const { return _coord_y; }
+
+  std::vector<rgba_t> data;
+
+  void reduce_rgba_to_palette() {
+    std::unordered_set<rgba_t> reduced;
+    for (const auto& color : data) reduced.insert(color);
+    data = std::vector<rgba_t>(reduced.begin(), reduced.end());
+  }
+
+private:
+  unsigned _width;
+  unsigned _height;
+  unsigned _coord_x;
+  unsigned _coord_y;
+};
 
 } /* namespace sfc */
