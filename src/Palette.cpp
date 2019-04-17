@@ -12,7 +12,7 @@ void Palette::add(const std::vector<rgba_t>& colors) {
   auto rc = reduce_colors(colors, _mode);
   std::set<rgba_t> cs(rc.begin(), rc.end());
   cs.erase(transparent_color);
-  if (cs.size() > _max_colors_per_subpalette) throw std::runtime_error("Colors don't fit in palette"); // TODO: catch and report position
+  if (cs.size() > _max_colors_per_subpalette) throw std::runtime_error("Colors don't fit in palette");
 
   Subpalette* best_candidate = nullptr;
   unsigned best_diff = UINT_MAX;

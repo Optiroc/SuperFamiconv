@@ -146,15 +146,18 @@ int main(int argc, char* argv[]) {
         return a.data.size() > b.data.size();
       });
 
+      unsigned palette_errors = 0;
+
       for (auto& t : palette_tiles) {
         try {
           palette.add(t.data);
         } catch (...) {
-          std::stringstream ss;
-          ss << "Too many colors in tile [" << (unsigned)(t.coord_x() / t.width()) << "," << (unsigned)(t.coord_y() / t.height()) << "] (at " << t.coord_x() << "," << t.coord_y() << " in source image)";
-          throw std::runtime_error(ss.str());
+          std::cout << "Can't fit colors for tile [" << (unsigned)(t.coord_x() / t.width()) << "," << (unsigned)(t.coord_y() / t.height()) << "] in available palettes (at " << t.coord_x() << "," << t.coord_y() << " in source image)\n";
+          ++palette_errors;
         }
       }
+
+      if (palette_errors > 0) throw std::runtime_error("Colors in image do not fit in available palettes. Aborting.");
     }
 
     if (verbose) std::cout << "Generated palette with " << palette << '\n';
