@@ -7,7 +7,7 @@ CC  := gcc
 CXX := g++
 
 FLAGS     := -Wextra -I$(INC_DIR)
-CXX_FLAGS := -std=gnu++11 $(FLAGS)
+CXX_FLAGS := -std=gnu++14 $(FLAGS)
 CC_FLAGS  := -std=gnu99 $(FLAGS)
 LD_FLAGS  :=
 

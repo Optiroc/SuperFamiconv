@@ -1,14 +1,14 @@
 cmake_minimum_required (VERSION 3.3)
 project (superfamiconv)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 add_definitions(-DSFC_MONOLITH)
 include_directories(include)
 
 
 if(MSVC)
   set(SOURCES include/LodePNG/lodepng.cpp include/getoptw/getoptw.c src/superfamiconv.cpp src/sfc_palette.cpp src/sfc_tiles.cpp src/sfc_map.cpp src/Image.cpp src/Map.cpp src/Palette.cpp src/Tiles.cpp)
-else(MSVC) 
+else(MSVC)
 # gcc, clang
   set(SOURCES include/LodePNG/lodepng.cpp src/superfamiconv.cpp src/sfc_palette.cpp src/sfc_tiles.cpp src/sfc_map.cpp src/Image.cpp src/Map.cpp src/Palette.cpp src/Tiles.cpp)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
