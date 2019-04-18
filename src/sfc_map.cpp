@@ -19,6 +19,7 @@ struct Settings {
   std::string out_data;
   std::string out_json;
   std::string out_m7_data;
+  std::string out_gbc_bank;
 
   sfc::Mode mode;
   unsigned bpp;
@@ -68,7 +69,8 @@ int main(int argc, char* argv[]) {
     options.Add(settings.in_tileset,          't', "in-tiles",       "Input: tiles (native)");
     options.Add(settings.out_data,            'd', "out-data",       "Output: native data");
     options.Add(settings.out_json,            'j', "out-json",       "Output: json");
-    options.Add(settings.out_m7_data,         '7', "out-m7-data",    "Output: interleaved map/tile data");
+    options.Add(settings.out_m7_data,         '7', "out-m7-data",    "Output: interleaved map/tile data (snes_mode7)");
+    options.Add(settings.out_gbc_bank,       '\0', "out-gbc-bank",   "Output: banked map data (gbc)");
 
     options.Add(mode_str,                     'M', "mode",           "Mode",                              std::string("snes"),  "Settings");
     options.Add(settings.bpp,                 'B', "bpp",            "Bits per pixel",                    unsigned(4),          "Settings");
@@ -172,6 +174,11 @@ int main(int argc, char* argv[]) {
 
       sfc::write_file(settings.out_m7_data, id);
       if (verbose) std::cout << "Saved interleaved data to \"" << settings.out_m7_data << "\"\n";
+    }
+
+    if (settings.mode == sfc::Mode::gbc && !settings.out_gbc_bank.empty()) {
+      sfc::write_file(settings.out_gbc_bank, map.gbc_banked_data());
+      if (verbose) std::cout << "Saved banked GBC map data to \"" << settings.out_gbc_bank << "\"\n";
     }
 
   } catch (const std::exception& e) {

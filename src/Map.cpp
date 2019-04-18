@@ -53,6 +53,18 @@ std::vector<uint8_t> Map::native_data(bool column_order, unsigned split_w, unsig
   return data;
 }
 
+std::vector<uint8_t> Map::gbc_banked_data() const {
+  if ((width() % 32) || (height() % 32))
+    throw std::runtime_error("out-gbc-bank requires map dimensions to be multiplies of 32");
+
+  auto linear_data = native_data();
+  auto banked_data = std::vector<uint8_t>(linear_data.size());
+  for (unsigned i = 0; i < linear_data.size(); ++i) {
+    banked_data[!(i % 2) ? i >> 2 : (i >> 2) + (32 * 32)] = linear_data[i];
+  }
+  return banked_data;
+}
+
 void Map::save(const std::string& path, bool column_order, unsigned split_w, unsigned split_h) const {
   sfc::write_file(path, native_data(column_order, split_w, split_h));
 }

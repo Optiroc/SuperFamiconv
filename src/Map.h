@@ -36,10 +36,14 @@ struct Map {
     _entries.resize(map_width * map_height);
   };
 
+  unsigned width() const { return _map_width; }
+  unsigned height() const { return _map_height; }
+
   void add(const Image& image, const Tileset& tileset, const Palette& palette, unsigned bpp, unsigned pos_x, unsigned pos_y);
   Mapentry entry_at(unsigned x, unsigned y) const;
 
   std::vector<uint8_t> native_data(bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
+  std::vector<uint8_t> gbc_banked_data() const;
   void save(const std::string& path, bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
   const std::string to_json(bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
 
@@ -53,20 +57,26 @@ private:
   std::vector<std::vector<Mapentry>> collect_entries(bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
 };
 
+
 inline std::vector<uint8_t> pack_native_mapentry(const Mapentry& entry, Mode mode) {
   std::vector<uint8_t> v;
   switch (mode) {
   case Mode::snes:
     v.push_back(entry.tile_index & 0xff);
-    v.push_back(((entry.tile_index >> 8) & 0xff) | ((entry.palette_index << 2) & 0x1c) | (entry.flip_h << 6) | (entry.flip_v << 7));
+    v.push_back(((entry.tile_index >> 8) & 0x03) | ((entry.palette_index << 2) & 0x1c) | (entry.flip_h << 6) | (entry.flip_v << 7));
     break;
 
   case Mode::snes_mode7:
     v.push_back(entry.tile_index & 0xff);
     break;
+
   case Mode::gb:
+    v.push_back(entry.tile_index & 0xff);
+    break;
+
   case Mode::gbc:
-    // TODO
+    v.push_back(entry.tile_index & 0xff);
+    v.push_back(((entry.palette_index) & 0x07) | ((entry.tile_index >> 5) & 0x08) | (entry.flip_h << 5) | (entry.flip_v << 6));
     break;
   }
   return v;
