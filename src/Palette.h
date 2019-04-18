@@ -10,6 +10,7 @@
 namespace sfc {
 
 struct Image;
+struct ImageCrop;
 
 struct Subpalette {
   Subpalette(Mode mode, unsigned max_colors)
@@ -88,6 +89,7 @@ struct Palette {
 
   void add(const rgba_t color);
   void add(const std::vector<rgba_t>& colors);
+  void add(std::vector<sfc::ImageCrop>);
   void add_noremap(const std::vector<rgba_t>& colors, bool reduce = true);
 
   const Subpalette& subpalette_at(unsigned index) const;

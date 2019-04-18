@@ -134,27 +134,8 @@ int superfamiconv(int argc, char* argv[]) {
       if (verbose) std::cout << "Setting color zero to " << sfc::to_hexstring(color_zero, true, true) << '\n';
       palette.add(color_zero);
 
-      // sort tiles by number of unique colors and add to palette(s) in that order
-      std::vector<sfc::ImageCrop> palette_tiles = in_image.rgba_tile_crops(settings.tile_w, settings.tile_h);
+      palette.add(in_image.image_crops(settings.tile_w, settings.tile_h));
 
-      for (auto& tile : palette_tiles) tile.reduce_rgba_to_palette();
-
-      std::sort(palette_tiles.begin(), palette_tiles.end(), [](const sfc::ImageCrop& a, const sfc::ImageCrop& b) -> bool {
-        return a.data.size() > b.data.size();
-      });
-
-      unsigned palette_errors = 0;
-
-      for (auto& t : palette_tiles) {
-        try {
-          palette.add(t.data);
-        } catch (...) {
-          std::cout << "Can't fit colors for tile [" << (unsigned)(t.coord_x() / t.width()) << "," << (unsigned)(t.coord_y() / t.height()) << "] in available palettes (at " << t.coord_x() << "," << t.coord_y() << " in source image)\n";
-          ++palette_errors;
-        }
-      }
-
-      if (palette_errors > 0) throw std::runtime_error("Colors in image do not fit in available palettes. Aborting.");
       if (verbose) std::cout << "Generated palette with " << palette << '\n';
 
       palette.sort();

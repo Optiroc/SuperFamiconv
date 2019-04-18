@@ -39,8 +39,8 @@ struct Image {
   Image crop(unsigned x, unsigned y, unsigned width, unsigned height) const;
   std::vector<Image> crops(unsigned tile_width, unsigned tile_height) const;
   std::vector<std::vector<rgba_t>> rgba_crops(unsigned tile_width, unsigned tile_height) const;
-  std::vector<ImageCrop> rgba_tile_crops(unsigned tile_width, unsigned tile_height) const;
   std::vector<std::vector<index_t>> indexed_crops(unsigned tile_width, unsigned tile_height) const;
+  std::vector<ImageCrop> image_crops(unsigned tile_width, unsigned tile_height) const;
 
   void save(const std::string& path) const;
   void save_indexed(const std::string& path);

@@ -43,6 +43,29 @@ void Palette::add(const std::vector<rgba_t>& colors) {
   }
 }
 
+// add colors from ImageCrops
+void Palette::add(std::vector<sfc::ImageCrop> palette_tiles) {
+  // reduce tiles to unique colors
+  for (auto& tile : palette_tiles) tile.reduce_rgba_to_palette();
+
+  std::sort(palette_tiles.begin(), palette_tiles.end(), [](const sfc::ImageCrop& a, const sfc::ImageCrop& b) -> bool {
+    return a.data.size() > b.data.size();
+  });
+
+  unsigned palette_errors = 0;
+
+  for (auto& t : palette_tiles) {
+    try {
+      add(t.data);
+    } catch (...) {
+      std::cout << "Can't fit colors for tile [" << (unsigned)(t.coord_x() / t.width()) << "," << (unsigned)(t.coord_y() / t.height()) << "] in available palettes (at " << t.coord_x() << "," << t.coord_y() << " in source image)\n";
+      ++palette_errors;
+    }
+  }
+
+  if (palette_errors > 0) throw std::runtime_error("Colors in image do not fit in available palettes. Aborting.");
+}
+
 // add colors without reordering or discarding duplicates
 void Palette::add_noremap(const std::vector<rgba_t>& colors, bool reduce) {
   auto rc = colors;

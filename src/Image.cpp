@@ -206,7 +206,7 @@ std::vector<std::vector<rgba_t>> Image::rgba_crops(unsigned tile_width, unsigned
   return v;
 }
 
-std::vector<ImageCrop> Image::rgba_tile_crops(unsigned tile_width, unsigned tile_height) const {
+std::vector<ImageCrop> Image::image_crops(unsigned tile_width, unsigned tile_height) const {
   std::vector<ImageCrop> v;
   unsigned x = 0;
   unsigned y = 0;
