@@ -29,7 +29,7 @@ typedef uint8_t index_t;   // color index (typedefd in case more than 8 bits are
 namespace sfc {
 
 constexpr const char* VERSION =
-  "0.4.5";
+  "0.5.0";
 
 constexpr const char* COPYRIGHT =
   "Copyright (c) 2017-2019 David Lindecrantz";
