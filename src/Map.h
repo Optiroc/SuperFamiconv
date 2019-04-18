@@ -28,6 +28,7 @@ struct Mapentry {
   bool flip_v = false;
 };
 
+
 struct Map {
   Map(Mode mode = Mode::snes, unsigned map_width = 32, unsigned map_height = 32)
   : _mode(mode),

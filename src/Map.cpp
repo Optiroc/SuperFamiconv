@@ -3,7 +3,8 @@
 namespace sfc {
 
 void Map::add(const sfc::Image& image, const sfc::Tileset& tileset, const sfc::Palette& palette, unsigned bpp, unsigned pos_x, unsigned pos_y) {
-  if (((pos_y * _map_width) + pos_x) > _entries.size()) throw std::runtime_error("Map entry out of bounds");
+  if (((pos_y * _map_width) + pos_x) > _entries.size())
+    throw std::runtime_error("Map entry out of bounds");
 
   int tileset_index = -1;
   int palette_index = -1;
@@ -26,9 +27,10 @@ void Map::add(const sfc::Image& image, const sfc::Tileset& tileset, const sfc::P
   if (tileset_index == -1) {
     _entries[(pos_y * _map_width) + pos_x] = Mapentry(0, 0, false, false);
   } else {
-    _entries[(pos_y * _map_width) + pos_x] = Mapentry(tileset_index, palette_index,
-                                                      tileset.tiles()[tileset_index].is_h_flipped(matched_tile),
-                                                      tileset.tiles()[tileset_index].is_v_flipped(matched_tile));
+    _entries[(pos_y * _map_width) + pos_x] =
+      Mapentry(tileset_index, palette_index,
+               tileset.tiles()[tileset_index].is_h_flipped(matched_tile),
+               tileset.tiles()[tileset_index].is_v_flipped(matched_tile));
   }
 }
 
