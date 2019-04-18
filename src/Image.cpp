@@ -17,12 +17,32 @@ Image::Image(const std::string& path) {
   bool needs_conversion = false;
 
   if (state.info_raw.colortype == LCT_PALETTE) {
-    _indexed_data = _data;
+    if (state.info_raw.bitdepth < 8) {
+      // unpack 2/4 bit data
+      _indexed_data = std::vector<index_t>(w * h);
+      unsigned shift = 0;
+      index_t mask = 0;
+      for (unsigned i = 0; i < state.info_raw.bitdepth; ++i) {
+        mask <<= 1;
+        ++mask;
+        ++shift;
+      }
+
+      for (unsigned i = 0; i < _indexed_data.size(); ++i) {
+        unsigned pack_shift = 8 - shift - ((i * shift) % 8);
+        _indexed_data[i] = mask & (_data[i >> shift] >> pack_shift);
+      }
+
+    } else {
+      _indexed_data = _data;
+    }
+
     for (unsigned i = 0; i < state.info_raw.palettesize * 4; i += 4) {
       uint32_t color = (state.info_raw.palette[i]) + (state.info_raw.palette[i + 1] << 8) +
                        (state.info_raw.palette[i + 2] << 16) + (state.info_raw.palette[i + 3] << 24);
       _palette.push_back(color);
     }
+
     needs_conversion = true;
     state.info_raw.colortype = LCT_RGBA;
   }
