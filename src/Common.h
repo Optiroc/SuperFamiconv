@@ -49,9 +49,9 @@ constexpr const char* LICENSE =
 
   "\n\n\n"
 
-  "LodePNG version 20180326"
+  "LodePNG version 20190210"
   "\n"
-  "Copyright (c) 2005-2018 Lode Vandevennen"
+  "Copyright (c) 2005-2019 Lode Vandevennen"
   "\n\n"
   "This software is provided 'as-is', without any express or implied "
   "warranty. In no event will the authors be held liable for any damages "
