@@ -103,6 +103,10 @@ int superfamiconv(int argc, char* argv[]) {
       if (verbose) std::cout << "Defaulting to 8 bpp for snes_mode7\n";
     }
 
+    // TODO: GBC
+    // Default to 2 bpp, if Mode::gb||gbc
+    // Need to query Options if bpp was set...
+
     if (!czero_str.empty()) {
       settings.color_zero = sfc::from_hexstring(czero_str);
       settings.forced_zero = true;
