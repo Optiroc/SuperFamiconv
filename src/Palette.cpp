@@ -10,6 +10,14 @@ void Palette::add(const rgba_t color) {
 // add colors by appending to first subpalette with enough free colors
 void Palette::add(const std::vector<rgba_t>& colors) {
   auto rc = reduce_colors(colors, _mode);
+
+  if (!_subpalettes.size()) {
+    // always add initial color
+    Subpalette& new_sp = add_subpalette();
+    new_sp.add(rc);
+    return;
+  }
+
   std::set<rgba_t> cs(rc.begin(), rc.end());
   cs.erase(transparent_color);
   if (cs.size() > _max_colors_per_subpalette) throw std::runtime_error("Colors don't fit in palette");

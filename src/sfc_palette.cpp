@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
       palette = sfc::Palette(settings.mode, settings.palettes, settings.colors);
 
       rgba_t color_zero = settings.forced_zero ? settings.color_zero : image.crop(0, 0, 1, 1).rgba_data()[0];
-      if (verbose) std::cout << "Setting color zero to " << sfc::to_hexstring(color_zero) << '\n';
+      if (verbose) std::cout << "Setting color zero to " << sfc::to_hexstring(color_zero, true, true) << '\n';
       palette.add(color_zero);
 
       // sort tiles by number of unique colors and add to palette(s) in that order
