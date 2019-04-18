@@ -14,7 +14,7 @@ namespace sfc {
 struct Subpalette;
 struct Palette;
 struct Tileset;
-struct ImageTileRGBA;
+struct ImageCrop;
 
 struct Image {
   Image(){};
@@ -39,7 +39,7 @@ struct Image {
   Image crop(unsigned x, unsigned y, unsigned width, unsigned height) const;
   std::vector<Image> crops(unsigned tile_width, unsigned tile_height) const;
   std::vector<std::vector<rgba_t>> rgba_crops(unsigned tile_width, unsigned tile_height) const;
-  std::vector<ImageTileRGBA> rgba_tile_crops(unsigned tile_width, unsigned tile_height) const;
+  std::vector<ImageCrop> rgba_tile_crops(unsigned tile_width, unsigned tile_height) const;
   std::vector<std::vector<index_t>> indexed_crops(unsigned tile_width, unsigned tile_height) const;
 
   void save(const std::string& path) const;
@@ -65,9 +65,9 @@ private:
 std::ostream& operator<<(std::ostream& os, const Image& img);
 
 
-struct ImageTileRGBA {
-  ImageTileRGBA(){};
-  ImageTileRGBA(const std::vector<rgba_t>& rgba_data, unsigned width, unsigned height, unsigned coord_x, unsigned coord_y) {
+struct ImageCrop {
+  ImageCrop(){};
+  ImageCrop(const std::vector<rgba_t>& rgba_data, unsigned width, unsigned height, unsigned coord_x, unsigned coord_y) {
     data = rgba_data;
     _width = width;
     _height = height;

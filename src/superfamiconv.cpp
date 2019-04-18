@@ -134,11 +134,11 @@ int superfamiconv(int argc, char* argv[]) {
       palette.add(color_zero);
 
       // sort tiles by number of unique colors and add to palette(s) in that order
-      std::vector<sfc::ImageTileRGBA> palette_tiles = in_image.rgba_tile_crops(settings.tile_w, settings.tile_h);
+      std::vector<sfc::ImageCrop> palette_tiles = in_image.rgba_tile_crops(settings.tile_w, settings.tile_h);
 
       for (auto& tile : palette_tiles) tile.reduce_rgba_to_palette();
 
-      std::sort(palette_tiles.begin(), palette_tiles.end(), [](const sfc::ImageTileRGBA& a, const sfc::ImageTileRGBA& b) -> bool {
+      std::sort(palette_tiles.begin(), palette_tiles.end(), [](const sfc::ImageCrop& a, const sfc::ImageCrop& b) -> bool {
         return a.data.size() > b.data.size();
       });
 
