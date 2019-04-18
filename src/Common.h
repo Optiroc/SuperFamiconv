@@ -28,6 +28,12 @@ typedef uint8_t index_t;   // color index (typedefd in case more than 8 bits are
 
 namespace sfc {
 
+constexpr const char* VERSION =
+  "0.4.5";
+
+constexpr const char* COPYRIGHT =
+  "Copyright (c) 2017-2019 David Lindecrantz";
+
 constexpr const char* LICENSE =
   "Permission is hereby granted, free of charge, to any person obtaining a copy "
   "of this software and associated documentation files (the \"Software\"), to deal "

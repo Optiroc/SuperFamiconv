@@ -90,8 +90,9 @@ int superfamiconv(int argc, char* argv[]) {
     }
 
     if (license) {
-      std::cout << "\nSuperFamiconv\nCopyright (C) 2017 David Lindecrantz\n\n"
-                << sfc::LICENSE << '\n';
+      std::cout << "\nSuperFamiconv " << sfc::VERSION << "\n" <<
+                sfc::COPYRIGHT << "\n\n" <<
+                sfc::LICENSE << '\n';
       return 0;
     }
 

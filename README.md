@@ -5,7 +5,7 @@ Developed by David Lindecrantz and distributed under the terms of the [MIT licen
 
 
 ## dependencies
-A C++11 capable compiler.
+A C++14 capable compiler.
 
 ## building
 In a Unix-like environment simply `make` the binary. On Windows use CMake to generate a build environment.

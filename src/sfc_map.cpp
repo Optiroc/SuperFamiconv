@@ -97,8 +97,9 @@ int main(int argc, char* argv[]) {
     }
 
     if (license) {
-      std::cout << "\nSuperFamiconv/sfc_map\nCopyright (C) 2017 David Lindecrantz\n\n"
-                << sfc::LICENSE << '\n';
+      std::cout << "\nSuperFamiconv/sfc_map " << sfc::VERSION << "\n" <<
+                sfc::COPYRIGHT << "\n\n" <<
+                sfc::LICENSE << '\n';
       return 0;
     }
 
