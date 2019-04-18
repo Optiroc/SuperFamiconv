@@ -236,11 +236,7 @@ std::vector<uint8_t> Tileset::native_data() const {
 std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles, Mode mode) const {
   std::vector<Tile> tv;
 
-  if (mode == Mode::snes) {
-    if (!(_tile_width == 8 || _tile_width == 16 || _tile_height == 8 || _tile_height == 16)) {
-      throw std::runtime_error("Programmer error (remap_tiles_for_output Mode::snes with not 16x16, 16x8 or 8x16)");
-    }
-
+  if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc) {
     const unsigned cells_per_tile_h = _tile_width / 8;
     const unsigned cells_per_tile_v = _tile_height / 8;
     const unsigned cells_per_row = 16;
@@ -261,7 +257,7 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
     }
 
   } else if (mode == Mode::snes_mode7) {
-    throw std::runtime_error("This can't be!");
+    throw std::runtime_error("Programmer error: This can't be!");
   }
 
   return tv;
@@ -271,10 +267,6 @@ std::vector<Tile> Tileset::remap_tiles_for_input(const std::vector<Tile>& tiles,
   std::vector<Tile> tv;
 
   if (mode == Mode::snes) {
-    if (!(_tile_width == 8 || _tile_width == 16 || _tile_height == 8 || _tile_height == 16)) {
-      throw std::runtime_error("Programmer error (remap_tiles_for_input Mode::snes with not 16x16, 16x8 or 8x16)");
-    }
-
     const unsigned cells_per_tile_h = _tile_width / 8;
     const unsigned cells_per_tile_v = _tile_height / 8;
 

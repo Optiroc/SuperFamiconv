@@ -161,7 +161,7 @@ int main(int argc, char* argv[]) {
       if (verbose) std::cout << "Saved json map data to \"" << settings.out_json << "\"\n";
     }
 
-    if (!settings.out_m7_data.empty()) {
+    if (settings.mode == sfc::Mode::snes_mode7 && !settings.out_m7_data.empty()) {
       std::vector<uint8_t> md = map.native_data();
       std::vector<uint8_t> td = tileset.native_data();
 

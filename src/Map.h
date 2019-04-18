@@ -64,6 +64,10 @@ inline std::vector<uint8_t> pack_native_mapentry(const Mapentry& entry, Mode mod
   case Mode::snes_mode7:
     v.push_back(entry.tile_index & 0xff);
     break;
+  case Mode::gb:
+  case Mode::gbc:
+    // TODO
+    break;
   }
   return v;
 }

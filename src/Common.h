@@ -112,7 +112,9 @@ enum Constants {
 
 enum class Mode {
   snes,
-  snes_mode7
+  snes_mode7,
+  gb,
+  gbc
 };
 
 const rgba_t transparent_color = 0x00000000;
@@ -122,6 +124,10 @@ inline Mode mode(std::string& str) {
     return Mode::snes;
   } else if (str == "snes_mode7") {
     return Mode::snes_mode7;
+  } else if (str == "gb") {
+    return Mode::gb;
+  } else if (str == "gbc") {
+    return Mode::gbc;
   }
   return Mode::snes;
 }
@@ -132,6 +138,10 @@ inline std::string mode(Mode mode) {
     return std::string("snes");
   case Mode::snes_mode7:
     return std::string("snes_mode7");
+  case Mode::gb:
+    return std::string("gb");
+  case Mode::gbc:
+    return std::string("gbc");
   default:
     return std::string();
   }
@@ -143,6 +153,9 @@ inline bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
     return bpp == 2 || bpp == 4 || bpp == 8;
   case Mode::snes_mode7:
     return bpp == 8;
+  case Mode::gb:
+  case Mode::gbc:
+    return bpp == 2;
   default:
     return false;
   }
@@ -154,6 +167,9 @@ inline bool tile_width_allowed_for_mode(unsigned width, Mode mode) {
     return width == 8 || width == 16;
   case Mode::snes_mode7:
     return width == 8;
+  case Mode::gb:
+  case Mode::gbc:
+    return width == 8;
   default:
     return false;
   }
@@ -164,6 +180,9 @@ inline bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
   case Mode::snes:
     return height == 8 || height == 16;
   case Mode::snes_mode7:
+    return height == 8;
+  case Mode::gb:
+  case Mode::gbc:
     return height == 8;
   default:
     return false;
@@ -183,6 +202,9 @@ inline unsigned default_bpp_for_mode(Mode mode) {
       return 4;
     case Mode::snes_mode7:
       return 8;
+    case Mode::gb:
+    case Mode::gbc:
+      return 4;
     default:
       return 4;
   }
@@ -194,6 +216,9 @@ inline unsigned default_map_size_for_mode(Mode mode) {
     return 32;
   case Mode::snes_mode7:
     return 128;
+  case Mode::gb:
+  case Mode::gbc:
+    return 32;
   default:
     return 32;
   }
@@ -205,6 +230,10 @@ inline unsigned max_palette_count_for_mode(Mode mode) {
       return 8;
     case Mode::snes_mode7:
       return 1;
+    case Mode::gb:
+      return 1;
+    case Mode::gbc:
+      return 8;
     default:
       return 8;
   }
@@ -396,6 +425,10 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
       return (scaled & 0x00ffffff) + 0xff000000;
     }
     break;
+  case Mode::gb:
+    // TODO
+  case Mode::gbc:
+    // TODO
   default:
     return 0;
   }
@@ -419,6 +452,10 @@ inline rgba_t normalize_color(const rgba_t color, Mode from_mode) {
     c.b = scale_up(c.b, 3);
     c.a = scale_up(c.a, 3);
     return c;
+  case Mode::gb:
+    // TODO
+  case Mode::gbc:
+    // TODO
   default:
     return 0;
   }
@@ -440,6 +477,12 @@ inline std::vector<uint8_t> pack_native_color(const rgba_t color, Mode mode) {
     v.push_back((color & 0x1f) | ((color >> 3) & 0xe0));
     v.push_back(((color >> 11) & 0x3) | ((color >> 14) & 0x7c));
     break;
+  case Mode::gb:
+    // TODO
+    break;
+  case Mode::gbc:
+    // TODO
+    break;
   }
   return v;
 }
@@ -458,6 +501,12 @@ inline std::vector<rgba_t> unpack_native_colors(const std::vector<uint8_t> color
       rgba_t nc = (cw & 0x1f) | ((cw & 0x3e0) << 3) | ((cw & 0x7c00) << 6) | 0xff000000;
       v.push_back(nc);
     }
+    break;
+  case Mode::gb:
+    // TODO
+    break;
+  case Mode::gbc:
+    // TODO
     break;
   }
   return v;
@@ -489,7 +538,7 @@ inline std::vector<uint8_t> pack_native_tile(const std::vector<index_t>& data, M
     return p;
   };
 
-  if (mode == Mode::snes) {
+  if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc) {
     if (width != 8 || height != 8) throw std::runtime_error("Programmer error");
     unsigned planes = bpp >> 1;
     for (unsigned i = 0; i < planes; ++i) {
@@ -519,7 +568,7 @@ inline std::vector<index_t> unpack_native_tile(const std::vector<uint8_t>& data,
     }
   };
 
-  if (mode == Mode::snes) {
+  if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc) {
     if (width != 8 || height != 8) throw std::runtime_error("Programmer error");
     for (unsigned i = 0; i < bpp; ++i) add_nintendo_1bit_plane(ud, data, i);
   } else if (mode == Mode::snes_mode7) {

@@ -45,6 +45,8 @@ The `mode` option, which is common for all commands, affects the color space han
 
 * `snes` 
 * `snes_mode7` 
+* `gb` 
+* `gbc` 
 
 More will be added as I (or you!) need them.
 
