@@ -414,6 +414,7 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
   switch (to_mode) {
   case Mode::snes:
   case Mode::snes_mode7:
+  case Mode::gbc:
     if (((color & 0xff000000) >> 24) < 0x80) {
       return transparent_color;
     } else {
@@ -426,8 +427,6 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
     }
     break;
   case Mode::gb:
-    // TODO
-  case Mode::gbc:
     // TODO
   default:
     return 0;
@@ -447,14 +446,13 @@ inline rgba_t normalize_color(const rgba_t color, Mode from_mode) {
   switch (from_mode) {
   case Mode::snes:
   case Mode::snes_mode7:
+  case Mode::gbc:
     c.r = scale_up(c.r, 3);
     c.g = scale_up(c.g, 3);
     c.b = scale_up(c.b, 3);
     c.a = scale_up(c.a, 3);
     return c;
   case Mode::gb:
-    // TODO
-  case Mode::gbc:
     // TODO
   default:
     return 0;
@@ -474,13 +472,11 @@ inline std::vector<uint8_t> pack_native_color(const rgba_t color, Mode mode) {
   switch (mode) {
   case Mode::snes:
   case Mode::snes_mode7:
+  case Mode::gbc:
     v.push_back((color & 0x1f) | ((color >> 3) & 0xe0));
     v.push_back(((color >> 11) & 0x3) | ((color >> 14) & 0x7c));
     break;
   case Mode::gb:
-    // TODO
-    break;
-  case Mode::gbc:
     // TODO
     break;
   }
@@ -493,6 +489,7 @@ inline std::vector<rgba_t> unpack_native_colors(const std::vector<uint8_t> color
   switch (mode) {
   case Mode::snes:
   case Mode::snes_mode7:
+  case Mode::gbc:
     if (colors.size() % 2 != 0) {
       throw std::runtime_error("SNES native color data vector size not a multiple of 2");
     }
@@ -503,9 +500,6 @@ inline std::vector<rgba_t> unpack_native_colors(const std::vector<uint8_t> color
     }
     break;
   case Mode::gb:
-    // TODO
-    break;
-  case Mode::gbc:
     // TODO
     break;
   }
