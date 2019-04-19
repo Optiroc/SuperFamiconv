@@ -191,21 +191,6 @@ std::vector<Image> Image::crops(unsigned tile_width, unsigned tile_height) const
   return v;
 }
 
-std::vector<std::vector<rgba_t>> Image::rgba_crops(unsigned tile_width, unsigned tile_height) const {
-  std::vector<std::vector<rgba_t>> v;
-  unsigned x = 0;
-  unsigned y = 0;
-  while (y < _height) {
-    while (x < _width) {
-      v.push_back(crop(x, y, tile_width, tile_height).rgba_data());
-      x += tile_width;
-    }
-    x = 0;
-    y += tile_width;
-  }
-  return v;
-}
-
 std::vector<ImageCrop> Image::image_crops(unsigned tile_width, unsigned tile_height) const {
   std::vector<ImageCrop> v;
   unsigned x = 0;
