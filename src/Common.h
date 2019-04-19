@@ -111,6 +111,7 @@ enum Constants {
 };
 
 enum class Mode {
+  none,
   snes,
   snes_mode7,
   gb,
@@ -129,7 +130,7 @@ inline Mode mode(std::string& str) {
   } else if (str == "gbc") {
     return Mode::gbc;
   }
-  return Mode::snes;
+  return Mode::none;
 }
 
 inline std::string mode(Mode mode) {
@@ -143,7 +144,7 @@ inline std::string mode(Mode mode) {
   case Mode::gbc:
     return std::string("gbc");
   default:
-    return std::string();
+    return std::string("none");
   }
 }
 
@@ -481,6 +482,8 @@ inline std::vector<uint8_t> pack_native_color(const rgba_t color, Mode mode) {
   case Mode::gb:
     // TODO: GB
     break;
+  default:
+    break;
   }
   return v;
 }
@@ -503,6 +506,8 @@ inline std::vector<rgba_t> unpack_native_colors(const std::vector<uint8_t> color
     break;
   case Mode::gb:
     // TODO: GB
+    break;
+  default:
     break;
   }
   return v;
