@@ -20,7 +20,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 typedef uint32_t rgba_t;   // rgba color stored in little endian order
 typedef uint8_t channel_t; // rgba color channel
@@ -81,12 +81,13 @@ constexpr const char* LICENSE =
 
   "    __ _____ _____ _____ \n"
   " __|  |   __|     |   | |  JSON for Modern C++\n"
-  "|  |  |__   |  |  | | | |  version 3.1.2\n"
+  "|  |  |__   |  |  | | | |  version 3.6.1\n"
   "|_____|_____|_____|_|___|  https://github.com/nlohmann/json\n"
   "\n"
   "Licensed under the MIT License <http://opensource.org/licenses/MIT>.\n"
-  "Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>."
-  "\n\n"
+  "SPDX-License-Identifier: MIT\n"
+  "Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.\n"
+  "\n"
   "Permission is hereby  granted, free of charge, to any  person obtaining a copy "
   "of this software and associated  documentation files (the \"Software\"), to deal "
   "in the Software  without restriction, including without  limitation the rights "
