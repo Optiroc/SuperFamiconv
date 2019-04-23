@@ -247,9 +247,7 @@ void Image::save_indexed(const std::string& path) {
 }
 
 std::ostream& operator<<(std::ostream& os, const Image& img) {
-  std::stringstream ss;
-  ss << img.width() << "x" << img.height() << ", " << (img.palette_size() ? "indexed color" : "rgb color");
-  return os << ss.str();
+  return os << fmt::format("{}x{}, {}", img.width(), img.height(), img.palette_size() ? "indexed color" : "RGB color");
 }
 
 inline void Image::set_pixel(const rgba_t color, const unsigned index) {

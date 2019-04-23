@@ -55,7 +55,8 @@ void Palette::add(std::vector<sfc::ImageCrop> palette_tiles) {
     try {
       add(t.colors_v());
     } catch (...) {
-      std::cout << "Can't fit colors for tile [" << (unsigned)(t.coord_x() / t.width()) << "," << (unsigned)(t.coord_y() / t.height()) << "] in available palettes (at " << t.coord_x() << "," << t.coord_y() << " in source image)\n";
+      fmt::print("Can't fit colors for tile [{},{}] in available palettes (at {},{} in source image)\n",
+                 (unsigned)(t.coord_x() / t.width()), (unsigned)(t.coord_y() / t.height()), t.coord_x(), t.coord_y());
       ++palette_errors;
     }
   }
@@ -246,18 +247,16 @@ void Palette::save_act(const std::string& path) const {
 std::ostream& operator<<(std::ostream& os, Palette const& p) {
   auto v = p.colors();
   int total = 0;
-  std::stringstream ss;
-  ss << "[";
+  std::string s = "";
 
   for (auto i : v) {
     total += i.size();
-    ss << i.size() << ",";
+    s += fmt::format("{},", i.size());
   }
 
   if (total > 0) {
-    ss.seekp(-1, std::ios_base::end);
-    ss << "] colors, " << total << " total";
-    return os << ss.str();
+    s.pop_back();
+    return os << fmt::format("[{}] colors, {} total", s, total);
   } else {
     return os << "zero colors";
   }

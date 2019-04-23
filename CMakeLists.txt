@@ -7,10 +7,10 @@ include_directories(include)
 
 
 if(MSVC)
-  set(SOURCES include/LodePNG/lodepng.cpp include/getoptw/getoptw.c src/superfamiconv.cpp src/sfc_palette.cpp src/sfc_tiles.cpp src/sfc_map.cpp src/Image.cpp src/Map.cpp src/Palette.cpp src/Tiles.cpp)
+  set(SOURCES include/fmt/format.cpp include/fmt/posix.cpp include/LodePNG/lodepng.cpp include/getoptw/getoptw.c src/superfamiconv.cpp src/sfc_palette.cpp src/sfc_tiles.cpp src/sfc_map.cpp src/Image.cpp src/Map.cpp src/Palette.cpp src/Tiles.cpp)
 else(MSVC)
 # gcc, clang
-  set(SOURCES include/LodePNG/lodepng.cpp src/superfamiconv.cpp src/sfc_palette.cpp src/sfc_tiles.cpp src/sfc_map.cpp src/Image.cpp src/Map.cpp src/Palette.cpp src/Tiles.cpp)
+  set(SOURCES include/fmt/format.cpp include/fmt/posix.cpp include/LodePNG/lodepng.cpp src/superfamiconv.cpp src/sfc_palette.cpp src/sfc_tiles.cpp src/sfc_map.cpp src/Image.cpp src/Map.cpp src/Palette.cpp src/Tiles.cpp)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
   set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 

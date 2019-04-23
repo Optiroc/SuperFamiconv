@@ -94,14 +94,12 @@ int main(int argc, char* argv[]) {
     // clang-format on
 
     if (argc <= min_args || !options.Parse(argc, argv) || help) {
-      std::cout << options.Usage();
+      fmt::print(options.Usage());
       return 0;
     }
 
     if (license) {
-      std::cout << "\nSuperFamiconv/sfc_map " << sfc::VERSION << "\n" <<
-                sfc::COPYRIGHT << "\n\n" <<
-                sfc::LICENSE << '\n';
+      fmt::print("\nSuperFamiconv/sfc_map {}\n{}\n\n{}\n", sfc::VERSION, sfc::COPYRIGHT, sfc::LICENSE);
       return 0;
     }
 
@@ -109,13 +107,13 @@ int main(int argc, char* argv[]) {
 
     if (settings.mode == sfc::Mode::snes_mode7 && settings.bpp != 8) {
       settings.bpp = 8;
-      if (verbose) std::cout << "Less than 8 bpp not available for snes_mode7: defaulting to 8\n";
+      if (verbose) fmt::print("Less than 8 bpp not available for snes_mode7: defaulting to 8\n");
     }
 
     if (!sfc::bpp_allowed_for_mode(settings.bpp, settings.mode)) throw std::runtime_error("bpp setting not compatible with specified mode");
 
   } catch (const std::exception& e) {
-    std::cerr << "Error: " << e.what() << '\n';
+    fmt::print(stderr, "Error: {}\n", e.what());
     return 1;
   }
 
@@ -128,7 +126,7 @@ int main(int argc, char* argv[]) {
     if (settings.map_split_h == 0) settings.map_split_h = sfc::default_map_size_for_mode(settings.mode);
 
     sfc::Image image(settings.in_image);
-    if (verbose) std::cout << "Loaded image from \"" << settings.in_image << "\" (" << image << ")\n";
+    if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image);
 
     if (settings.map_w == 0) settings.map_w = sfc::div_ceil(image.width(), settings.tile_w);
     if (settings.map_h == 0) settings.map_h = sfc::div_ceil(image.height(), settings.tile_h);
@@ -138,29 +136,29 @@ int main(int argc, char* argv[]) {
     }
 
     sfc::Palette palette(settings.in_palette, settings.mode, sfc::palette_size_at_bpp(settings.bpp));
-    if (verbose) std::cout << "Loaded palette from \"" << settings.in_palette << "\" (" << palette << ")\n";
+    if (verbose) fmt::print("Loaded palette from \"{}\" ({})\n", settings.in_palette, palette);
 
     sfc::Tileset tileset(sfc::read_binary(settings.in_tileset), settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_flip);
-    if (verbose) std::cout << "Loaded tiles from \"" << settings.in_tileset << "\" (" << tileset.size() << " tiles)\n";
+    if (verbose) fmt::print("Loaded tiles from \"{}\" ({} tiles)\n", settings.in_tileset, tileset.size());
 
     std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
-    if (verbose) std::cout << "Mapping " << crops.size() << " " << settings.tile_w << "x" << settings.tile_h << " image slices\n";
+    if (verbose) fmt::print("Mapping {} ({}x{}) image slices\n", crops.size(), settings.tile_w, settings.tile_h);
 
     sfc::Map map(settings.mode, settings.map_w, settings.map_h);
     for (unsigned i = 0; i < crops.size(); ++i) {
       map.add(crops[i], tileset, palette, settings.bpp, i % settings.map_w, i / settings.map_w);
     }
 
-    if (verbose && settings.column_order) std::cout << "Using column-major order for output\n";
+    if (verbose && settings.column_order) fmt::print("Using column-major order for output\n");
 
     if (!settings.out_data.empty()) {
       map.save(settings.out_data, settings.column_order, settings.map_split_w, settings.map_split_h);
-      if (verbose) std::cout << "Saved native map data to \"" << settings.out_data << "\"\n";
+      if (verbose) fmt::print("Saved native map data to \"{}\"\n", settings.out_data);
     }
 
     if (!settings.out_json.empty()) {
       sfc::write_file(settings.out_json, map.to_json(settings.column_order, settings.map_split_w, settings.map_split_h));
-      if (verbose) std::cout << "Saved json map data to \"" << settings.out_json << "\"\n";
+      if (verbose) fmt::print("Saved json map data to \"{}\"\n", settings.out_json);
     }
 
     if (settings.mode == sfc::Mode::snes_mode7 && !settings.out_m7_data.empty()) {
@@ -173,16 +171,16 @@ int main(int argc, char* argv[]) {
       for (unsigned i = 0; i < td.size(); ++i) id[(i << 1) + 1] = td[i];
 
       sfc::write_file(settings.out_m7_data, id);
-      if (verbose) std::cout << "Saved interleaved data to \"" << settings.out_m7_data << "\"\n";
+      if (verbose) fmt::print("Saved interleaved data to \"{}\"\n", settings.out_m7_data);
     }
 
     if (settings.mode == sfc::Mode::gbc && !settings.out_gbc_bank.empty()) {
       sfc::write_file(settings.out_gbc_bank, map.gbc_banked_data());
-      if (verbose) std::cout << "Saved banked GBC map data to \"" << settings.out_gbc_bank << "\"\n";
+      if (verbose) fmt::print("Saved banked GBC map data to \"{}\"\n", settings.out_gbc_bank);
     }
 
   } catch (const std::exception& e) {
-    std::cerr << "Error: " << e.what() << '\n';
+    fmt::print(stderr, "Error: {}\n", e.what());
     return 1;
   }
 

@@ -84,14 +84,12 @@ int main(int argc, char* argv[]) {
     // clang-format on
 
     if (argc <= min_args || !options.Parse(argc, argv) || help) {
-      std::cout << options.Usage();
+      fmt::print(options.Usage());
       return 0;
     }
 
     if (license) {
-      std::cout << "\nSuperFamiconv/sfc_palette " << sfc::VERSION << "\n" <<
-                sfc::COPYRIGHT << "\n\n" <<
-                sfc::LICENSE << '\n';
+      fmt::print("\nSuperFamiconv/sfc_palette {}\n{}\n\n{}\n", sfc::VERSION, sfc::COPYRIGHT, sfc::LICENSE);
       return 0;
     }
 
@@ -104,12 +102,12 @@ int main(int argc, char* argv[]) {
 
     if (settings.mode == sfc::Mode::snes_mode7 && settings.palettes > 1) {
       settings.palettes = 1;
-      if (verbose) std::cout << "Multiple palettes not available for snes_mode7: defaulting to 1\n";
+      if (verbose) fmt::print("Multiple palettes not available for snes_mode7: defaulting to 1\n");
     }
 
 
   } catch (const std::exception& e) {
-    std::cerr << "Error: " << e.what() << '\n';
+    fmt::print(stderr, "Error: {}\n", e.what());
     return 1;
   }
 
@@ -117,31 +115,31 @@ int main(int argc, char* argv[]) {
     if (settings.in_image.empty()) throw std::runtime_error("Input image required");
 
     sfc::Image image(settings.in_image);
-    if (verbose) std::cout << "Loaded image from \"" << settings.in_image << "\" (" << image << ")\n";
+    if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image);
 
     sfc::Palette palette;
 
     if (settings.no_remap) {
       if (image.palette_size() == 0) throw std::runtime_error("no-remap requires indexed color image");
-      if (verbose) std::cout << "Mapping palette straight from indexed color image\n";
+      if (verbose) fmt::print("Mapping palette straight from indexed color image\n");
 
       palette = sfc::Palette(settings.mode, 1, (unsigned)image.palette_size());
       palette.add_noremap(image.palette());
 
     } else {
-      if (verbose) std::cout << "Mapping optimized palette (" << settings.palettes << "x" << settings.colors << " entries for "
-                             << settings.tile_w << "x" << settings.tile_h << " tiles)\n";
+      if (verbose) fmt::print("Mapping optimized palette ({}x{} entries for {}x{} tiles)\n",
+                              settings.palettes, settings.colors, settings.tile_w, settings.tile_h);
 
       palette = sfc::Palette(settings.mode, settings.palettes, settings.colors);
 
       rgba_t color_zero = settings.forced_zero ? settings.color_zero : image.crop(0, 0, 1, 1).rgba_data()[0];
-      if (verbose) std::cout << "Setting color zero to " << sfc::to_hexstring(color_zero, true, true) << '\n';
+      if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(color_zero, true, true));
       palette.add(color_zero);
 
       palette.add(image.image_crops(settings.tile_w, settings.tile_h));
     }
 
-    if (verbose) std::cout << "Generated palette with " << palette << '\n';
+    if (verbose) fmt::print("Generated palette with {}\n", palette);
 
     if (!settings.no_remap) {
       palette.sort();
@@ -150,27 +148,27 @@ int main(int argc, char* argv[]) {
 
     if (!settings.out_data.empty()) {
       palette.save(settings.out_data);
-      if (verbose) std::cout << "Saved native palette data to \"" << settings.out_data << "\"\n";
+      if (verbose) fmt::print("Saved native palette data to \"{}\"\n", settings.out_data);
     }
 
     if (!settings.out_act.empty()) {
       palette.save_act(settings.out_act);
-      if (verbose) std::cout << "Saved act palette to \"" << settings.out_act << "\"\n";
+      if (verbose) fmt::print("Saved ACT palette to \"{}\"\n", settings.out_act);
     }
 
     if (!settings.out_image.empty()) {
       sfc::Image palette_image(palette);
       palette_image.save(settings.out_image);
-      if (verbose) std::cout << "Saved palette image to \"" << settings.out_image << "\"\n";
+      if (verbose) fmt::print("Saved palette image to \"{}\"\n", settings.out_image);
     }
 
     if (!settings.out_json.empty()) {
       sfc::write_file(settings.out_json, palette.to_json());
-      if (verbose) std::cout << "Saved json data to \"" << settings.out_json << "\"\n";
+      if (verbose) fmt::print("Saved json data to \"{}\"\n", settings.out_json);
     }
 
   } catch (const std::exception& e) {
-    std::cerr << "Error: " << e.what() << '\n';
+    fmt::print(stderr, "Error: {}\n", e.what());
     return 1;
   }
 

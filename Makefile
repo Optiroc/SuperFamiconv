@@ -32,7 +32,7 @@ endif
 
 
 COMMON_OBJ  := $(OBJ_DIR)/Image.o $(OBJ_DIR)/Palette.o $(OBJ_DIR)/Tiles.o $(OBJ_DIR)/Map.o
-COMMON_OBJ  += $(OBJ_DIR)/LodePNG/lodepng.o
+COMMON_OBJ  += $(OBJ_DIR)/LodePNG/lodepng.o $(OBJ_DIR)/fmt/format.o $(OBJ_DIR)/fmt/posix.o
 HEADERS     := $(wildcard $(SRC_DIR)/*.h)
 
 .PHONY: clean sfc_palette sfc_tiles sfc_map

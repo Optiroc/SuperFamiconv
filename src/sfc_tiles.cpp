@@ -84,14 +84,12 @@ int main(int argc, char* argv[]) {
     // clang-format on
 
     if (argc <= min_args || !options.Parse(argc, argv) || help) {
-      std::cout << options.Usage();
+      fmt::print(options.Usage());
       return 0;
     }
 
     if (license) {
-      std::cout << "\nSuperFamiconv/sfc_tiles " << sfc::VERSION << "\n" <<
-                sfc::COPYRIGHT << "\n\n" <<
-                sfc::LICENSE << '\n';
+      fmt::print("\nSuperFamiconv/sfc_tiles {}\n{}\n\n{}\n", sfc::VERSION, sfc::COPYRIGHT, sfc::LICENSE);
       return 0;
     }
 
@@ -99,28 +97,28 @@ int main(int argc, char* argv[]) {
 
     if (settings.mode == sfc::Mode::snes_mode7 && settings.bpp != 8) {
       settings.bpp = 8;
-      if (verbose) std::cout << "Less than 8 bpp not available for snes_mode7: defaulting to 8\n";
+      if (verbose) fmt::print("Less than 8 bpp not available for snes_mode7: defaulting to 8\n");
     }
 
     if (!sfc::bpp_allowed_for_mode(settings.bpp, settings.mode)) throw std::runtime_error("bpp setting not allowed for specified mode");
 
     if (!sfc::tile_width_allowed_for_mode(settings.tile_w, settings.mode)) {
       settings.tile_w = sfc::default_tile_size_for_mode(settings.mode);
-      if (verbose) std::cout << "Tile width not allowed for specified mode, using default (" << settings.tile_w << ")\n";
+      if (verbose) fmt::print("Tile width not allowed for specified mode, using default ({})\n", settings.tile_w);
     }
 
     if (!sfc::tile_height_allowed_for_mode(settings.tile_h, settings.mode)) {
       settings.tile_h = sfc::default_tile_size_for_mode(settings.mode);
-      if (verbose) std::cout << "Tile height not allowed for specified mode, using default (" << settings.tile_h << ")\n";
+      if (verbose) fmt::print("Tile height not allowed for specified mode, using default ({})\n", settings.tile_h);
     }
 
     if (settings.mode == sfc::Mode::snes_mode7 && !settings.no_flip) {
       settings.no_flip = true;
-      if (verbose) std::cout << "Tile flipping not available for snes_mode7: converting with no-flip enabled\n";
+      if (verbose) fmt::print("Tile flipping not available for snes_mode7: converting with no-flip enabled\n");
     }
 
   } catch (const std::exception& e) {
-    std::cerr << "Error: " << e.what() << '\n';
+    fmt::print(stderr, "Error: {}\n", e.what());
     return 1;
   }
 
@@ -132,15 +130,15 @@ int main(int argc, char* argv[]) {
     if (!settings.in_data.empty()) {
       // Native data input
       tileset = sfc::Tileset(sfc::read_binary(settings.in_data), settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_flip);
-      if (verbose) std::cout << "Loaded tiles from \"" << settings.in_data << "\" (" << tileset.size() << " tiles)\n";
+      if (verbose) fmt::print("Loaded tiles from \"{}\" ({} tiles)\n", settings.in_data, tileset.size());
 
     } else {
       // Image input
       sfc::Image image(settings.in_image);
-      if (verbose) std::cout << "Loaded image from \"" << settings.in_image << "\" (" << image << ")\n";
+      if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image);
 
       std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
-      if (verbose) std::cout << "Image sliced into " << crops.size() << " " << settings.tile_w << "x" << settings.tile_h << " tiles\n";
+      if (verbose) fmt::print("Image sliced into {} {}x{} tiles\n", crops.size(), settings.tile_w, settings.tile_h);
 
       sfc::Palette palette;
       tileset = sfc::Tileset(settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_discard,
@@ -148,28 +146,28 @@ int main(int argc, char* argv[]) {
 
       if (settings.no_remap) {
         if (image.palette_size() == 0) throw std::runtime_error("\"--no-remap\" requires indexed color image");
-        if (verbose) std::cout << "Creating tile data straight from color indices\n";
+        if (verbose) fmt::print("Creating tile data straight from color indices\n");
 
       } else {
         if (settings.in_palette.empty()) throw std::runtime_error("Input palette required (except in --no-remap mode)");
         palette = sfc::Palette(settings.in_palette, settings.mode, sfc::palette_size_at_bpp(settings.bpp));
-        if (verbose) std::cout << "Remapping tile data from palette \"" << settings.in_palette << "\" (" << palette << ")\n";
+        if (verbose) fmt::print("Remapping tile data from palette \"{}\" ({})\n", settings.in_palette, palette);
       }
 
       for (auto& img : crops) tileset.add(img, &palette);
       if (verbose) {
         if (settings.no_discard) {
-          std::cout << "Created tileset with " << tileset.size() << " tiles\n";
+          fmt::print("Created tileset with {} tiles\n", tileset.size());
         } else {
-          std::cout << "Created optimized tileset with " << tileset.size()
-                    << " tiles (discarded " << tileset.discarded_tiles << " redudant tiles)\n";
+          fmt::print("Created optimized tileset with {} tiles (discared {} redundant tiles)\n",
+                     tileset.size(), tileset.discarded_tiles);
         }
       }
     }
 
     if (!settings.out_data.empty()) {
       tileset.save(settings.out_data);
-      if (verbose) std::cout << "Saved native tile data to \"" << settings.out_data << "\"\n";
+      if (verbose) fmt::print("Saved native tile data to \"{}\"\n", settings.out_data);
     }
 
     if (!settings.out_image.empty()) {
@@ -179,11 +177,11 @@ int main(int argc, char* argv[]) {
       } else {
         tileset_image.save(settings.out_image);
       }
-      if (verbose) std::cout << "Saved tileset image to \"" << settings.out_image << "\"\n";
+      if (verbose) fmt::print("Saved tileset image to \"{}\"\n", settings.out_image);
     }
 
   } catch (const std::exception& e) {
-    std::cerr << "Error: " << e.what() << '\n';
+    fmt::print(stderr, "Error: {}\n", e.what());
     return 1;
   }
 

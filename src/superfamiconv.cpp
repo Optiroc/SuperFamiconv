@@ -85,14 +85,12 @@ int superfamiconv(int argc, char* argv[]) {
     // clang-format on
 
     if (argc <= 1 || !options.Parse(argc, argv) || help) {
-      std::cout << options.Usage();
+      fmt::print(options.Usage());
       return 0;
     }
 
     if (license) {
-      std::cout << "\nSuperFamiconv " << sfc::VERSION << "\n" <<
-                sfc::COPYRIGHT << "\n\n" <<
-                sfc::LICENSE << '\n';
+      fmt::print("\nSuperFamiconv {}\n{}\n\n{}\n", sfc::VERSION, sfc::COPYRIGHT, sfc::LICENSE);
       return 0;
     }
 
@@ -100,7 +98,7 @@ int superfamiconv(int argc, char* argv[]) {
 
     if (settings.mode == sfc::Mode::snes_mode7 && settings.bpp != 8) {
       settings.bpp = sfc::default_bpp_for_mode(sfc::Mode::snes_mode7);
-      if (verbose) std::cout << "Defaulting to 8 bpp for snes_mode7\n";
+      if (verbose) fmt::print("Defaulting to 8 bpp for snes_mode7\n");
     }
 
     // TODO: GBC
@@ -113,7 +111,7 @@ int superfamiconv(int argc, char* argv[]) {
     }
 
   } catch (const std::exception& e) {
-    std::cerr << "Error: " << e.what() << '\n';
+    fmt::print(stderr, "Error: {}\n", e.what());
     return 1;
   }
 
@@ -121,7 +119,7 @@ int superfamiconv(int argc, char* argv[]) {
     if (settings.in_image.empty()) throw std::runtime_error("Input image required");
 
     sfc::Image in_image(settings.in_image);
-    if (verbose) std::cout << "Loaded image from \"" << settings.in_image << "\" (" << in_image << ")\n";
+    if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, in_image);
 
     // Make palette
     sfc::Palette palette;
@@ -129,18 +127,18 @@ int superfamiconv(int argc, char* argv[]) {
       unsigned colors_per_palette = sfc::palette_size_at_bpp(settings.bpp);
       unsigned palette_count = sfc::palette_count_for_mode(settings.mode, colors_per_palette);
 
-      if (verbose) std::cout << "Mapping optimized palette (" << palette_count << "x" << colors_per_palette << " entries for "
-                             << settings.tile_w << "x" << settings.tile_h << " tiles)\n";
+      if (verbose) fmt::print("Mapping optimized palette ({}x{} entries for {}x{} tiles)\n",
+                              palette_count, colors_per_palette, settings.tile_w, settings.tile_h);
 
       palette = sfc::Palette(settings.mode, palette_count, colors_per_palette);
 
       rgba_t color_zero = settings.forced_zero ? settings.color_zero : in_image.crop(0, 0, 1, 1).rgba_data()[0];
-      if (verbose) std::cout << "Setting color zero to " << sfc::to_hexstring(color_zero, true, true) << '\n';
+      if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(color_zero, true, true));
       palette.add(color_zero);
 
       palette.add(in_image.image_crops(settings.tile_w, settings.tile_h));
 
-      if (verbose) std::cout << "Generated palette with " << palette << '\n';
+      if (verbose) fmt::print("Generated palette with {}\n", palette);
 
       palette.sort();
       palette.pad();
@@ -154,10 +152,10 @@ int superfamiconv(int argc, char* argv[]) {
       for (auto& image : crops) tileset.add(image, &palette);
       if (verbose) {
         if (settings.no_discard) {
-          std::cout << "Created tileset with " << tileset.size() << " tiles\n";
+          fmt::print("Created tileset with {} tiles\n", tileset.size());
         } else {
-          std::cout << "Created optimized tileset with " << tileset.size()
-                    << " tiles (discarded " << tileset.discarded_tiles << " redudant tiles)\n";
+          fmt::print("Created optimized tileset with {} tiles (discared {} redundant tiles)\n",
+                     tileset.size(), tileset.discarded_tiles);
         }
       }
     }
@@ -173,7 +171,7 @@ int superfamiconv(int argc, char* argv[]) {
     sfc::Map map(settings.mode, settings.map_w, settings.map_h);
     {
       std::vector<sfc::Image> crops = in_image.crops(settings.tile_w, settings.tile_h);
-      if (verbose) std::cout << "Mapping " << crops.size() << " " << settings.tile_w << "x" << settings.tile_h << " image slices\n";
+      if (verbose) fmt::print("Mapping {} ({}x{}) image slices\n", crops.size(), settings.tile_w, settings.tile_h);
 
       for (unsigned i = 0; i < crops.size(); ++i) {
         map.add(crops[i], tileset, palette, settings.bpp, i % settings.map_w, i / settings.map_w);
@@ -183,38 +181,38 @@ int superfamiconv(int argc, char* argv[]) {
     // Write data
     if (!settings.out_palette.empty()) {
       palette.save(settings.out_palette);
-      if (verbose) std::cout << "Saved native palette data to \"" << settings.out_palette << "\"\n";
+      if (verbose) fmt::print("Saved native palette data to \"{}\"\n", settings.out_palette);
     }
 
     if (!settings.out_tiles.empty()) {
       tileset.save(settings.out_tiles);
-      if (verbose) std::cout << "Saved native tile data to \"" << settings.out_tiles << "\"\n";
+      if (verbose) fmt::print("Saved native tile data to \"{}\"\n", settings.out_tiles);
     }
 
     if (!settings.out_map.empty()) {
       map.save(settings.out_map);
-      if (verbose) std::cout << "Saved native map data to \"" << settings.out_map << "\"\n";
+      if (verbose) fmt::print("Saved native map data to \"{}\"\n", settings.out_map);
+    }
+
+    if (!settings.out_palette_act.empty()) {
+      palette.save_act(settings.out_palette_act);
+      if (verbose) fmt::print("Saved ACT palette to \"{}\"\n", settings.out_palette_act);
     }
 
     if (!settings.out_palette_image.empty()) {
       sfc::Image palette_image(palette);
       palette_image.save(settings.out_palette_image);
-      if (verbose) std::cout << "Saved palette image to \"" << settings.out_palette_image << "\"\n";
-    }
-
-    if (!settings.out_palette_act.empty()) {
-      palette.save_act(settings.out_palette_act);
-      if (verbose) std::cout << "Saved act palette to \"" << settings.out_palette_act << "\"\n";
+      if (verbose) fmt::print("Saved palette image to \"{}\"\n", settings.out_palette_image);
     }
 
     if (!settings.out_tiles_image.empty()) {
       sfc::Image tileset_image(tileset);
       tileset_image.save(settings.out_tiles_image);
-      if (verbose) std::cout << "Saved tileset image to \"" << settings.out_tiles_image << "\"\n";
+      if (verbose) fmt::print("Saved tileset image to \"{}\"\n", settings.out_tiles_image);
     }
 
   } catch (const std::exception& e) {
-    std::cerr << "Error: " << e.what() << '\n';
+    fmt::print(stderr, "Error: {}\n", e.what());
     return 1;
   }
 

@@ -10,8 +10,6 @@
 #include <cstdint>
 #include <fstream>
 #include <functional>
-#include <iomanip>
-#include <iostream>
 #include <iterator>
 #include <memory>
 #include <set>
@@ -20,6 +18,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 #include <nlohmann/json.hpp>
 
 typedef uint32_t rgba_t;   // rgba color stored in little endian order
@@ -105,6 +105,33 @@ constexpr const char* LICENSE =
   "LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM, "
   "OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE "
   "SOFTWARE."
+
+  "\n\n\n"
+
+  "{fmt} version 5.3.0\n"
+  "Copyright (c) 2012 - 2016, Victor Zverovich"
+  "\n\n"
+  "All rights reserved."
+  "\n\n"
+  "Redistribution and use in source and binary forms, with or without "
+  "modification, are permitted provided that the following conditions are met:"
+  "\n\n"
+  "1. Redistributions of source code must retain the above copyright notice, this "
+  "   list of conditions and the following disclaimer.\n"
+  "2. Redistributions in binary form must reproduce the above copyright notice, "
+  "   this list of conditions and the following disclaimer in the documentation "
+  "   and/or other materials provided with the distribution."
+  "\n\n"
+  "THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND "
+  "ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED "
+  "WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE "
+  "DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR "
+  "ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES "
+  "(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; "
+  "LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND "
+  "ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT "
+  "(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS "
+  "SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
   "\n";
 
 enum Constants {
@@ -605,15 +632,7 @@ inline std::vector<T> mirror(const std::vector<T>& source, unsigned width, bool 
 
 // rgba value to css style hex string
 inline std::string to_hexstring(rgba_t value, bool pound = true, bool alpha = false) {
-  value = reverse_bytes(value);
-  std::stringstream ss;
-  if (pound) ss << '#';
-  if (alpha) {
-    ss << std::setfill('0') << std::setw(8) << std::hex << value;
-  } else {
-    ss << std::setfill('0') << std::setw(6) << std::hex << (value >> 8);
-  }
-  return ss.str();
+  return fmt::format("{1}{0:0{2}x}", reverse_bytes(value) >> (alpha ? 0 : 8), pound ? "#" : "", alpha ? 8 : 6);
 }
 
 // css style hex string to rgba value
@@ -635,9 +654,7 @@ inline nlohmann::json read_json_file(const std::string& path) {
   nlohmann::json j;
   std::ifstream f(path);
   if (f.fail()) {
-    std::stringstream ss;
-    ss << "File \"" << path << "\" could not be opened";
-    throw std::runtime_error(ss.str());
+    throw std::runtime_error(fmt::format("File \"{}\" could not be opened", path));
   }
   f >> j;
   return j;
@@ -647,9 +664,7 @@ inline nlohmann::json read_json_file(const std::string& path) {
 inline std::string read_file(const std::string& path) {
   std::ifstream ifs(path);
   if (ifs.fail()) {
-    std::stringstream ss;
-    ss << "File \"" << path << "\" could not be opened";
-    throw std::runtime_error(ss.str());
+    throw std::runtime_error(fmt::format("File \"{}\" could not be opened", path));
   }
   return std::string((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 }
@@ -658,9 +673,7 @@ inline std::string read_file(const std::string& path) {
 inline std::vector<uint8_t> read_binary(const std::string& path) {
   std::ifstream ifs(path, std::ios::binary);
   if (ifs.fail()) {
-    std::stringstream ss;
-    ss << "File \"" << path << "\" could not be opened";
-    throw std::runtime_error(ss.str());
+    throw std::runtime_error(fmt::format("File \"{}\" could not be opened", path));
   }
   return std::vector<uint8_t>((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 }
