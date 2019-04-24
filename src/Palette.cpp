@@ -96,16 +96,12 @@ const Subpalette& Palette::subpalette_matching(const Image& image) const {
   cs.erase(transparent_color);
   if (cs.size() > _max_colors_per_subpalette) throw std::runtime_error("Colors don't fit in palette"); // TODO: catch and report position
 
-  const Subpalette* matching_sp = nullptr;
-  for (const Subpalette& sp : _subpalettes) {
-    if (sp.diff(cs) == 0) {
-      matching_sp = &sp;
-      break;
-    }
-  }
+  auto match = std::find_if(_subpalettes.begin(), _subpalettes.end(), [&](const auto& val) -> bool {
+    return val.diff(cs) == 0;
+  });
 
-  if (matching_sp == nullptr) throw std::runtime_error("No matching palette for image"); // TODO: catch and report position
-  return *matching_sp;
+  if (match == _subpalettes.end()) throw std::runtime_error("No matching palette for image"); // TODO: catch and report position
+  return *match;
 }
 
 std::vector<const Subpalette*> Palette::subpalettes_matching(const Image& image) const {
