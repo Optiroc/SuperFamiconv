@@ -55,6 +55,18 @@ std::vector<uint8_t> Map::native_data(bool column_order, unsigned split_w, unsig
   return data;
 }
 
+std::vector<uint8_t> Map::snes_mode7_interleaved_data(const Tileset& tileset) const {
+  auto map_data = native_data();
+  auto tile_data = tileset.native_data();
+
+  size_t sz = (tile_data.size() > map_data.size()) ? tile_data.size() : map_data.size();
+  std::vector<uint8_t> data = std::vector<uint8_t>(sz * 2);
+  for (unsigned i = 0; i < map_data.size(); ++i) data[(i << 1)] = map_data[i];
+  for (unsigned i = 0; i < tile_data.size(); ++i) data[(i << 1) + 1] = tile_data[i];
+
+  return data;
+}
+
 std::vector<uint8_t> Map::gbc_banked_data() const {
   if ((width() % 32) || (height() % 32))
     throw std::runtime_error("out-gbc-bank requires map dimensions to be multiplies of 32");

@@ -162,16 +162,8 @@ int main(int argc, char* argv[]) {
     }
 
     if (settings.mode == sfc::Mode::snes_mode7 && !settings.out_m7_data.empty()) {
-      std::vector<uint8_t> md = map.native_data();
-      std::vector<uint8_t> td = tileset.native_data();
-
-      size_t sz = (td.size() > md.size()) ? td.size() : md.size();
-      std::vector<uint8_t> id = std::vector<uint8_t>(sz * 2);
-      for (unsigned i = 0; i < md.size(); ++i) id[(i << 1)] = md[i];
-      for (unsigned i = 0; i < td.size(); ++i) id[(i << 1) + 1] = td[i];
-
-      sfc::write_file(settings.out_m7_data, id);
-      if (verbose) fmt::print("Saved interleaved data to \"{}\"\n", settings.out_m7_data);
+      sfc::write_file(settings.out_m7_data, map.snes_mode7_interleaved_data(tileset));
+      if (verbose) fmt::print("Saved interleaved SNES mode 7 data to \"{}\"\n", settings.out_m7_data);
     }
 
     if (settings.mode == sfc::Mode::gbc && !settings.out_gbc_bank.empty()) {
