@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.3)
 project (superfamiconv)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 add_definitions(-DSFC_MONOLITH)
 include_directories(include)
 
