@@ -47,8 +47,6 @@ The `mode` option, which is common for all commands, affects the color space han
 * `snes_mode7` 
 * `gbc` 
 
-More will be added as I (or you!) need them.
-
 Example:
 
 	superfamiconv -v --in-image snes.png --out-palette snes.palette --out-tiles snes.tiles --out-map snes.map --out-tiles-image tiles.png
@@ -137,7 +135,7 @@ For more flexibility use the sub commands, which have the following options resp
 
 ## future work
 * More output formats
-* Error diagnostics
+* Better error diagnostics
 * Better documentation and example usage
 
 ## acknowledgments
