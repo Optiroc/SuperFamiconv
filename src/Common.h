@@ -147,7 +147,7 @@ enum class Mode {
 
 const rgba_t transparent_color = 0x00000000;
 
-inline Mode mode(std::string& str) {
+inline Mode mode(const std::string& str) {
   if (str == "snes") {
     return Mode::snes;
   } else if (str == "snes_mode7") {
@@ -175,7 +175,7 @@ inline std::string mode(Mode mode) {
   }
 }
 
-inline bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
+constexpr bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
   switch (mode) {
   case Mode::snes:
     return bpp == 2 || bpp == 4 || bpp == 8;
@@ -189,7 +189,7 @@ inline bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
   }
 }
 
-inline bool tile_width_allowed_for_mode(unsigned width, Mode mode) {
+constexpr bool tile_width_allowed_for_mode(unsigned width, Mode mode) {
   switch (mode) {
   case Mode::snes:
     return width == 8 || width == 16;
@@ -203,7 +203,7 @@ inline bool tile_width_allowed_for_mode(unsigned width, Mode mode) {
   }
 }
 
-inline bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
+constexpr bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
   switch (mode) {
   case Mode::snes:
     return height == 8 || height == 16;
@@ -217,14 +217,14 @@ inline bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
   }
 }
 
-inline unsigned default_tile_size_for_mode(Mode mode) {
+constexpr unsigned default_tile_size_for_mode(Mode mode) {
   switch (mode) {
   default:
     return 8;
   }
 }
 
-inline unsigned default_bpp_for_mode(Mode mode) {
+constexpr unsigned default_bpp_for_mode(Mode mode) {
   switch (mode) {
     case Mode::snes:
       return 4;
@@ -238,7 +238,7 @@ inline unsigned default_bpp_for_mode(Mode mode) {
   }
 }
 
-inline unsigned default_map_size_for_mode(Mode mode) {
+constexpr unsigned default_map_size_for_mode(Mode mode) {
   switch (mode) {
   case Mode::snes:
     return 32;
@@ -252,7 +252,7 @@ inline unsigned default_map_size_for_mode(Mode mode) {
   }
 }
 
-inline unsigned max_palette_count_for_mode(Mode mode) {
+constexpr unsigned max_palette_count_for_mode(Mode mode) {
   switch (mode) {
     case Mode::snes:
       return 8;
@@ -267,17 +267,17 @@ inline unsigned max_palette_count_for_mode(Mode mode) {
   }
 }
 
-inline unsigned palette_count_for_mode(Mode mode, unsigned colors_per_palette) {
+constexpr unsigned palette_count_for_mode(Mode mode, unsigned colors_per_palette) {
   return std::min(max_palette_count_for_mode(mode), 256 / colors_per_palette);
 }
 
-inline unsigned palette_size_at_bpp(unsigned bpp) {
+constexpr unsigned palette_size_at_bpp(unsigned bpp) {
   unsigned s = 1;
   for (unsigned i = 0; i < bpp; ++i) s = s << 1;
   return s;
 }
 
-inline index_t bitmask_at_bpp(unsigned bpp) {
+constexpr index_t bitmask_at_bpp(unsigned bpp) {
   unsigned m = 1;
   for (unsigned i = 1; i < bpp; ++i) m |= m << 1;
   return (index_t)m;
@@ -428,12 +428,12 @@ inline void sort_colors(std::vector<rgba_t>& colors) {
 }
 
 // swap bytes between network order and little endian
-inline rgba_t reverse_bytes(rgba_t v) {
+constexpr rgba_t reverse_bytes(rgba_t v) {
   return ((v >> 24) & 0xff) | ((v << 8) & 0xff0000) | ((v >> 8) & 0xff00) | ((v << 24) & 0xff000000);
 }
 
 // scale up using left bit replication
-inline channel_t scale_up(channel_t value, unsigned shift) {
+constexpr channel_t scale_up(channel_t value, unsigned shift) {
   return (value << shift) | (value >> (8 - shift));
 }
 
@@ -635,10 +635,11 @@ inline std::string to_hexstring(rgba_t value, bool pound = true, bool alpha = fa
 }
 
 // css style hex string to rgba value
-inline rgba_t from_hexstring(std::string str) {
-  if (str.at(0) == '#') str.erase(0, 1);
-  if (str.size() == 6) str.insert(6, 2, 'f');
-  if (str.size() != 8) throw std::runtime_error("Argument color-zero not a 6 or 8 character hex-string");
+inline rgba_t from_hexstring(const std::string& str) {
+  std::string s = str;
+  if (s.at(0) == '#') s.erase(0, 1);
+  if (s.size() == 6) s.insert(6, 2, 'f');
+  if (s.size() != 8) throw std::runtime_error("Argument color-zero not a 6 or 8 character hex-string");
   uint32_t i;
   sscanf(str.c_str(), "%x", &i);
   return reverse_bytes(i);
@@ -694,7 +695,7 @@ inline void write_file(const std::string& path, const std::vector<T>& data) {
 // general misc
 //
 
-inline int div_ceil(int numerator, int denominator) {
+constexpr int div_ceil(int numerator, int denominator) {
   return (numerator / denominator) + (((numerator < 0) ^ (denominator > 0)) && (numerator % denominator));
 }
 

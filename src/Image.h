@@ -23,13 +23,13 @@ struct Image final {
   Image(const sfc::Tileset& tileset);
   Image(const Image& image, const sfc::Subpalette& subpalette);
 
-  unsigned width() const { return _width; }
-  unsigned height() const { return _height; }
-  unsigned palette_size() const { return (unsigned)_palette.size(); }
+  constexpr unsigned width() const { return _width; }
+  constexpr unsigned height() const { return _height; }
+  constexpr unsigned palette_size() const { return (unsigned)_palette.size(); }
   std::vector<rgba_t> palette() const { return _palette; };
   std::vector<index_t> indexed_data() const { return _indexed_data; }
 
-  rgba_t rgba_color_at(unsigned index) const {
+  constexpr rgba_t rgba_color_at(unsigned index) const {
     return (_data[index * 4]) + (_data[(index * 4) + 1] << 8) +
            (_data[(index * 4) + 2] << 16) + (_data[(index * 4) + 3] << 24);
   }
@@ -76,10 +76,10 @@ struct ImageCrop final {
     colors = std::unordered_set<rgba_t>(pixels.begin(), pixels.end());
   }
 
-  unsigned width() const { return _width; }
-  unsigned height() const { return _height; }
-  unsigned coord_x() const { return _coord_x; }
-  unsigned coord_y() const { return _coord_y; }
+  constexpr unsigned width() const { return _width; }
+  constexpr unsigned height() const { return _height; }
+  constexpr unsigned coord_x() const { return _coord_x; }
+  constexpr unsigned coord_y() const { return _coord_y; }
   std::vector<rgba_t> colors_v() const { return std::vector<rgba_t>(colors.begin(), colors.end()); }
 
   std::vector<rgba_t> pixels;
