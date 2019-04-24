@@ -45,7 +45,6 @@ The `mode` option, which is common for all commands, affects the color space han
 
 * `snes` 
 * `snes_mode7` 
-* `gb` 
 * `gbc` 
 
 More will be added as I (or you!) need them.
@@ -84,6 +83,7 @@ For more flexibility use the sub commands, which have the following options resp
 	-0 --color-zero       Set color #0 <default: color at 0,0>
 	
 	-v --verbose          Verbose logging <switch>
+	-L --license          Show license <switch>
 	-h --help             Show this help <switch>
 
 **superfamiconv tiles**
@@ -104,6 +104,7 @@ For more flexibility use the sub commands, which have the following options resp
 	-T --max-tiles        Maximum number of tiles
 	
 	-v --verbose          Verbose logging <switch>
+	-L --license          Show license <switch>
 	-h --help             Show this help <switch>
 
 
@@ -115,7 +116,8 @@ For more flexibility use the sub commands, which have the following options resp
 	-t --in-tiles         Input: tiles (native)
 	-d --out-data         Output: native data
 	-j --out-json         Output: json
-	-7 --out-m7-data      Output: interleaved map/tile data
+	-7 --out-m7-data      Output: interleaved map/tile data (snes_mode7)
+	--out-gbc-bank        Output: banked map data (gbc)
 
 	-M --mode             Mode <default: snes>
 	-B --bpp              Bits per pixel <default: 4>
@@ -129,6 +131,7 @@ For more flexibility use the sub commands, which have the following options resp
 	--column-order        Output data in column-major order <switch>
 	
 	-v --verbose          Verbose logging <switch>
+	-L --license          Show license <switch>
 	-h --help             Show this help <switch>
 
 
@@ -140,5 +143,6 @@ For more flexibility use the sub commands, which have the following options resp
 ## acknowledgments
 superfamiconv uses the following libraries:
 
-* [LodePNG](http://lodev.org/lodepng/) by Lode Vandevenne
+* [{fmt}](http://fmtlib.net) by Victor Zverovich
 * [JSON for Modern C++](https://github.com/nlohmann/json) by Niels Lohmann
+* [LodePNG](http://lodev.org/lodepng/) by Lode Vandevenne
