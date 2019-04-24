@@ -82,7 +82,7 @@ struct Palette final {
     _max_subpalettes(max_subpalettes),
     _max_colors_per_subpalette(max_colors){};
 
-  Palette(const std::vector<uint8_t> native_data, Mode in_mode = Mode::snes, unsigned colors_per_subpalette = 16);
+  Palette(const std::vector<uint8_t>& native_data, Mode in_mode = Mode::snes, unsigned colors_per_subpalette = 16);
   Palette(const std::string& path, Mode in_mode = Mode::snes, unsigned colors_per_subpalette = 16);
 
   unsigned max_colors_per_subpalette() const { return _max_colors_per_subpalette; }

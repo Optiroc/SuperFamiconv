@@ -36,11 +36,11 @@ int main(int argc, char* argv[]) {
 
   SfcPalette::Settings settings = {};
   bool verbose = false;
-  bool dummy = false;
 
   try {
     bool help = false;
     bool license = false;
+    bool dummy = false;
     std::string mode_str;
     std::string czero_str;
 

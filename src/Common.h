@@ -519,7 +519,7 @@ inline std::vector<uint8_t> pack_native_color(const rgba_t color, Mode mode) {
 }
 
 // unpack native format color to (scaled) rgba color
-inline std::vector<rgba_t> unpack_native_colors(const std::vector<uint8_t> colors, Mode mode) {
+inline std::vector<rgba_t> unpack_native_colors(const std::vector<uint8_t>& colors, Mode mode) {
   std::vector<rgba_t> v;
   switch (mode) {
   case Mode::snes:

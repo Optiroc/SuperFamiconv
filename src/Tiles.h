@@ -22,10 +22,9 @@ struct Tile {
   Tile(const std::vector<Tile>& metatile, bool no_flip, unsigned width, unsigned height);
 
   Tile(Mode mode, unsigned bpp, unsigned width, unsigned height)
-  : _mode(mode),
-    _bpp(bpp),
-    _width(width),
-    _height(height) {
+  : _mode(mode), _bpp(bpp),
+    _width(width), _height(height)
+  {
     _data.resize(width * height);
     _palette.resize(palette_size_at_bpp(bpp));
   };
@@ -58,16 +57,12 @@ private:
 struct Tileset {
   Tileset(Mode mode = Mode::snes, unsigned bpp = 4, unsigned tile_width = 8, unsigned tile_height = 8,
           bool no_discard = false, bool no_flip = false, bool no_remap = false, unsigned max_tiles = 0)
-  : _mode(mode),
-    _bpp(bpp),
-    _tile_width(tile_width),
-    _tile_height(tile_height),
-    _no_discard(no_discard),
-    _no_flip(no_flip),
-    _no_remap(no_remap),
-    _max_tiles(max_tiles){};
+  : _mode(mode), _bpp(bpp),
+    _tile_width(tile_width), _tile_height(tile_height),
+    _no_discard(no_discard), _no_flip(no_flip), _no_remap(no_remap),
+    _max_tiles(max_tiles) {};
 
-  Tileset(const std::vector<uint8_t> native_data, Mode mode = Mode::snes, unsigned bpp = 4,
+  Tileset(const std::vector<uint8_t>& native_data, Mode mode = Mode::snes, unsigned bpp = 4,
           unsigned tile_width = 8, unsigned tile_height = 8, bool no_flip = false);
 
   unsigned tile_width() const { return _tile_width; }

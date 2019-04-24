@@ -2,14 +2,12 @@
 
 namespace sfc {
 
-Tile::Tile(const Image& image, Mode mode, unsigned bpp, bool no_flip) {
+Tile::Tile(const Image& image, Mode mode, unsigned bpp, bool no_flip)
+: _mode(mode), _bpp(bpp),
+  _width(image.width()), _height(image.height()),
+  _palette(image.palette())
+{
   if (image.indexed_data().empty()) throw std::runtime_error("Can't create tile without indexed data");
-
-  _mode = mode;
-  _bpp = bpp;
-  _width = image.width();
-  _height = image.height();
-  _palette = image.palette();
 
   index_t mask = bitmask_at_bpp(_bpp);
   for (index_t ip : image.indexed_data()) _data.push_back(ip & mask);
@@ -21,13 +19,11 @@ Tile::Tile(const Image& image, Mode mode, unsigned bpp, bool no_flip) {
   }
 }
 
-Tile::Tile(const std::vector<uint8_t>& native_data, Mode mode, unsigned bpp, bool no_flip, unsigned width, unsigned height) {
-  _mode = mode;
-  _bpp = bpp;
-  _width = width;
-  _height = height;
-  _data = unpack_native_tile(native_data, mode, bpp, width, height);
-
+Tile::Tile(const std::vector<uint8_t>& native_data, Mode mode, unsigned bpp, bool no_flip, unsigned width, unsigned height)
+: _mode(mode), _bpp(bpp),
+  _width(width), _height(height),
+  _data(unpack_native_tile(native_data, mode, bpp, width, height))
+{
   _palette.resize(palette_size_at_bpp(bpp));
   channel_t add = 0x100 / _palette.size();
   for (unsigned i = 0; i < _palette.size(); ++i) {
@@ -154,7 +150,7 @@ std::vector<rgba_t> Tile::rgba_data() const {
 }
 
 
-Tileset::Tileset(const std::vector<uint8_t> native_data, Mode mode, unsigned bpp,
+Tileset::Tileset(const std::vector<uint8_t>& native_data, Mode mode, unsigned bpp,
                  unsigned tile_width, unsigned tile_height, bool no_flip) {
   _mode = mode;
   _bpp = bpp;

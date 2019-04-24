@@ -36,11 +36,11 @@ int main(int argc, char* argv[]) {
 
   SfcTiles::Settings settings = {};
   bool verbose = false;
-  bool dummy = false;
 
   try {
     bool help = false;
     bool license = false;
+    bool dummy = false;
     std::string mode_str;
 
     Options options;

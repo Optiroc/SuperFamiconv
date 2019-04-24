@@ -160,7 +160,7 @@ const std::vector<std::vector<rgba_t>> Palette::normalized_colors() const {
 }
 
 
-Palette::Palette(const std::vector<uint8_t> native_data, Mode in_mode, unsigned colors_per_subpalette) {
+Palette::Palette(const std::vector<uint8_t>& native_data, Mode in_mode, unsigned colors_per_subpalette) {
   _mode = in_mode;
   _max_colors_per_subpalette = colors_per_subpalette;
   _max_subpalettes = max_palette_count_for_mode(_mode);
