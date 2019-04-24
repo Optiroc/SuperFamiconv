@@ -16,15 +16,16 @@
   #endif
 #endif
 
-#include <string>
+#include <functional>
 #include <iostream>
-#include <sstream>
 #include <map>
 #include <set>
-#include <vector>
-#include <functional>
-#include <type_traits>
+#include <sstream>
 #include <stdexcept>
+#include <string>
+#include <type_traits>
+#include <unordered_set>
+#include <vector>
 
 class Options {
 public:
@@ -35,6 +36,7 @@ public:
     void AddSwitch(bool& var, char flag, std::string long_flag, std::string description = "", bool default_val = false, std::string group = "");
 
     bool Parse(int argc, char **argv);
+    bool WasSet(const std::string& long_flag);
 
     std::string Usage();
     std::string Header;
@@ -46,6 +48,7 @@ private:
     std::vector<struct option> options;
     std::map<int, std::function<void(std::string)>> setters;
     std::map<std::string, std::vector<std::string>> usage;
+    std::unordered_set<int> was_set;
 
     int optval;
     std::string optstr;
@@ -94,12 +97,22 @@ inline bool Options::Parse(int argc, char** argv) {
     while ((ch = getopt_long(argc, argv, this->optstr.c_str(), &this->options[0], NULL)) != -1) {
         auto it = this->setters.find(ch);
         if (it != this->setters.end()) {
+            this->was_set.insert(ch);
             it->second(optarg ? optarg : "");
         } else {
             return false;
         }
     }
     return true;
+}
+
+inline bool Options::WasSet(const std::string& long_flag) {
+    for (auto opt : this->options) {
+      if (strcmp(opt.name, long_flag.c_str()) == 0) {
+        return (this->was_set.find(opt.val) != this->was_set.end());
+      }
+    }
+    return false;
 }
 
 inline std::string Options::Usage() {
