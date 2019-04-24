@@ -70,10 +70,10 @@ struct Tileset {
   Tileset(const std::vector<uint8_t> native_data, Mode mode = Mode::snes, unsigned bpp = 4,
           unsigned tile_width = 8, unsigned tile_height = 8, bool no_flip = false);
 
-  constexpr unsigned tile_width() const { return _tile_width; }
-  constexpr unsigned tile_height() const { return _tile_height; }
-  constexpr unsigned size() const { return (unsigned)_tiles.size(); }
-  constexpr bool is_full() const { return _max_tiles > 0 && _tiles.size() >= _max_tiles; }
+  unsigned tile_width() const { return _tile_width; }
+  unsigned tile_height() const { return _tile_height; }
+  unsigned size() const { return (unsigned)_tiles.size(); }
+  bool is_full() const { return _max_tiles > 0 && _tiles.size() >= _max_tiles; }
 
   const std::vector<Tile>& tiles() const { return _tiles; }
 

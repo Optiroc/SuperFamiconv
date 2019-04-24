@@ -21,8 +21,8 @@ struct Subpalette final {
   const std::vector<rgba_t> colors() const { return _colors; }
   Mode mode() const { return _mode; }
 
-  constexpr unsigned size() const { return (unsigned)_colors.size(); }
-  constexpr unsigned capacity_left() const { return (unsigned)(_max_colors - _colors.size()); }
+  unsigned size() const { return (unsigned)_colors.size(); }
+  unsigned capacity_left() const { return (unsigned)(_max_colors - _colors.size()); }
   bool is_full() const { return _colors.size() == _max_colors; }
 
   const std::vector<rgba_t> get_normalized_colors() const { return normalize_colors(_colors, _mode); }
@@ -85,7 +85,7 @@ struct Palette final {
   Palette(const std::vector<uint8_t> native_data, Mode in_mode = Mode::snes, unsigned colors_per_subpalette = 16);
   Palette(const std::string& path, Mode in_mode = Mode::snes, unsigned colors_per_subpalette = 16);
 
-  constexpr unsigned max_colors_per_subpalette() const { return _max_colors_per_subpalette; }
+  unsigned max_colors_per_subpalette() const { return _max_colors_per_subpalette; }
 
   void add(const rgba_t color);
   void add(const std::vector<rgba_t>& colors);

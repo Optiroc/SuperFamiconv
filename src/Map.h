@@ -37,8 +37,8 @@ struct Map final {
     _entries.resize(map_width * map_height);
   };
 
-  constexpr unsigned width() const { return _map_width; }
-  constexpr unsigned height() const { return _map_height; }
+  unsigned width() const { return _map_width; }
+  unsigned height() const { return _map_height; }
 
   void add(const Image& image, const Tileset& tileset, const Palette& palette, unsigned bpp, unsigned pos_x, unsigned pos_y);
   Mapentry entry_at(unsigned x, unsigned y) const;
