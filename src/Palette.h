@@ -12,7 +12,7 @@ namespace sfc {
 struct Image;
 struct ImageCrop;
 
-struct Subpalette {
+struct Subpalette final {
   Subpalette(Mode mode, unsigned max_colors)
   : _mode(mode),
     _max_colors(max_colors){};
@@ -76,7 +76,7 @@ private:
 };
 
 
-struct Palette {
+struct Palette final {
   Palette(Mode mode = Mode::snes, unsigned max_subpalettes = 0, unsigned max_colors = 0)
   : _mode(mode),
     _max_subpalettes(max_subpalettes),

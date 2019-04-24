@@ -296,7 +296,7 @@ inline std::vector<rgba_t> to_rgba(std::vector<channel_t> data) {
 // color transformations
 //
 
-struct rgba_color {
+struct rgba_color final {
   channel_t r;
   channel_t g;
   channel_t b;
@@ -320,7 +320,7 @@ struct rgba_color {
   bool operator>(const rgba_color& other) const;
 };
 
-struct hsva_color {
+struct hsva_color final {
   float h;
   float s;
   float v;

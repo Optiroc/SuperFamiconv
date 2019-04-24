@@ -15,7 +15,7 @@ struct Image;
 struct Palette;
 struct Tileset;
 
-struct Mapentry {
+struct Mapentry final {
   Mapentry(unsigned tile_index = 0, unsigned palette_index = 0, bool flip_h = false, bool flip_v = false)
   : tile_index(tile_index),
     palette_index(palette_index),
@@ -29,7 +29,7 @@ struct Mapentry {
 };
 
 
-struct Map {
+struct Map final {
   Map(Mode mode = Mode::snes, unsigned map_width = 32, unsigned map_height = 32)
   : _mode(mode),
     _map_width(map_width),

@@ -16,7 +16,7 @@ struct Palette;
 struct Tileset;
 struct ImageCrop;
 
-struct Image {
+struct Image final {
   Image(){};
   Image(const std::string& path);
   Image(const sfc::Palette& palette);
@@ -64,8 +64,7 @@ private:
 };
 
 
-
-struct ImageCrop {
+struct ImageCrop final {
   ImageCrop(){};
   ImageCrop(const std::vector<rgba_t>& data, unsigned width, unsigned height, unsigned coord_x, unsigned coord_y) {
     _width = width;
