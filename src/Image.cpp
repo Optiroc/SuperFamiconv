@@ -246,8 +246,8 @@ void Image::save_indexed(const std::string& path) {
   lodepng::save_file(buffer, path.c_str());
 }
 
-std::ostream& operator<<(std::ostream& os, const Image& img) {
-  return os << fmt::format("{}x{}, {}", img.width(), img.height(), img.palette_size() ? "indexed color" : "RGB color");
+const std::string Image::description() const {
+  return fmt::format("{}x{}, {}", width(), height(), palette_size() ? "indexed color" : "RGB color");
 }
 
 inline void Image::set_pixel(const rgba_t color, const unsigned index) {

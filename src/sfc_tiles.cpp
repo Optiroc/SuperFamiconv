@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) {
     } else {
       // Image input
       sfc::Image image(settings.in_image);
-      if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image);
+      if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
 
       std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
       if (verbose) fmt::print("Image sliced into {} {}x{} tiles\n", crops.size(), settings.tile_w, settings.tile_h);
@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
       } else {
         if (settings.in_palette.empty()) throw std::runtime_error("Input palette required (except in --no-remap mode)");
         palette = sfc::Palette(settings.in_palette, settings.mode, sfc::palette_size_at_bpp(settings.bpp));
-        if (verbose) fmt::print("Remapping tile data from palette \"{}\" ({})\n", settings.in_palette, palette);
+        if (verbose) fmt::print("Remapping tile data from palette \"{}\" ({})\n", settings.in_palette, palette.description());
       }
 
       for (auto& img : crops) tileset.add(img, &palette);

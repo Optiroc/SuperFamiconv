@@ -119,7 +119,7 @@ int superfamiconv(int argc, char* argv[]) {
     if (settings.in_image.empty()) throw std::runtime_error("Input image required");
 
     sfc::Image in_image(settings.in_image);
-    if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, in_image);
+    if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, in_image.description());
 
     // Make palette
     sfc::Palette palette;
@@ -138,7 +138,7 @@ int superfamiconv(int argc, char* argv[]) {
 
       palette.add(in_image.image_crops(settings.tile_w, settings.tile_h));
 
-      if (verbose) fmt::print("Generated palette with {}\n", palette);
+      if (verbose) fmt::print("Generated palette with {}\n", palette.description());
 
       palette.sort();
       palette.pad();

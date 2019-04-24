@@ -108,6 +108,8 @@ struct Palette {
   void save(const std::string& path) const;
   void save_act(const std::string& path) const;
 
+  const std::string description() const;
+
 private:
   Mode _mode = Mode::snes;
   unsigned _max_subpalettes = 0;
@@ -118,7 +120,5 @@ private:
 
   inline unsigned subpalettes_free() const { return _max_subpalettes - (unsigned)_subpalettes.size(); }
 };
-
-std::ostream& operator<<(std::ostream& os, Palette const& p);
 
 } /* namespace sfc */

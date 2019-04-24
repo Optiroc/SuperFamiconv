@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
     if (settings.in_image.empty()) throw std::runtime_error("Input image required");
 
     sfc::Image image(settings.in_image);
-    if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image);
+    if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
 
     sfc::Palette palette;
 
@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
       palette.add(image.image_crops(settings.tile_w, settings.tile_h));
     }
 
-    if (verbose) fmt::print("Generated palette with {}\n", palette);
+    if (verbose) fmt::print("Generated palette with {}\n", palette.description());
 
     if (!settings.no_remap) {
       palette.sort();

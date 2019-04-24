@@ -19,7 +19,6 @@
 #include <vector>
 
 #include <fmt/format.h>
-#include <fmt/ostream.h>
 #include <nlohmann/json.hpp>
 
 typedef uint32_t rgba_t;   // rgba color stored in little endian order

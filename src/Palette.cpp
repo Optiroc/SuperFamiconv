@@ -243,9 +243,8 @@ void Palette::save_act(const std::string& path) const {
   write_file(path, data);
 }
 
-// print info
-std::ostream& operator<<(std::ostream& os, Palette const& p) {
-  auto v = p.colors();
+const std::string Palette::description() const {
+  auto v = colors();
   int total = 0;
   std::string s = "";
 
@@ -256,9 +255,9 @@ std::ostream& operator<<(std::ostream& os, Palette const& p) {
 
   if (total > 0) {
     s.pop_back();
-    return os << fmt::format("[{}] colors, {} total", s, total);
+    return fmt::format("[{}] colors, {} total", s, total);
   } else {
-    return os << "zero colors";
+    return "zero colors";
   }
 }
 

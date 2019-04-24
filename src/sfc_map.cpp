@@ -126,7 +126,7 @@ int main(int argc, char* argv[]) {
     if (settings.map_split_h == 0) settings.map_split_h = sfc::default_map_size_for_mode(settings.mode);
 
     sfc::Image image(settings.in_image);
-    if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image);
+    if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
 
     if (settings.map_w == 0) settings.map_w = sfc::div_ceil(image.width(), settings.tile_w);
     if (settings.map_h == 0) settings.map_h = sfc::div_ceil(image.height(), settings.tile_h);
@@ -136,7 +136,7 @@ int main(int argc, char* argv[]) {
     }
 
     sfc::Palette palette(settings.in_palette, settings.mode, sfc::palette_size_at_bpp(settings.bpp));
-    if (verbose) fmt::print("Loaded palette from \"{}\" ({})\n", settings.in_palette, palette);
+    if (verbose) fmt::print("Loaded palette from \"{}\" ({})\n", settings.in_palette, palette.description());
 
     sfc::Tileset tileset(sfc::read_binary(settings.in_tileset), settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_flip);
     if (verbose) fmt::print("Loaded tiles from \"{}\" ({} tiles)\n", settings.in_tileset, tileset.size());

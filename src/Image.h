@@ -44,6 +44,8 @@ struct Image {
   void save(const std::string& path) const;
   void save_indexed(const std::string& path);
 
+  const std::string description() const;
+
 private:
   unsigned _width;
   unsigned _height;
@@ -61,7 +63,6 @@ private:
   void set_default_palette(const unsigned indices = 256);
 };
 
-std::ostream& operator<<(std::ostream& os, const Image& img);
 
 
 struct ImageCrop {
