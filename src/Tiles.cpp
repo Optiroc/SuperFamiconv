@@ -162,7 +162,7 @@ Tileset::Tileset(const std::vector<uint8_t> native_data, Mode mode, unsigned bpp
   _tile_height = tile_height;
   _no_flip = no_flip;
 
-  if (_mode == Mode::snes || _mode == Mode::snes_mode7) {
+  if (_mode == Mode::snes || _mode == Mode::snes_mode7 || _mode == Mode::gbc || _mode == Mode::gb) {
     unsigned bytes_per_tile = bpp << 3;
     if (native_data.size() % bytes_per_tile != 0) {
       throw std::runtime_error("Tile data can't be deserialized (size doesn't match bpp setting)");
@@ -266,7 +266,7 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
 std::vector<Tile> Tileset::remap_tiles_for_input(const std::vector<Tile>& tiles, Mode mode) const {
   std::vector<Tile> tv;
 
-  if (mode == Mode::snes) {
+  if (mode == Mode::snes || mode == Mode::gbc || mode == Mode::gb) {
     const unsigned cells_per_tile_h = _tile_width / 8;
     const unsigned cells_per_tile_v = _tile_height / 8;
 
