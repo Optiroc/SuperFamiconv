@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 17)
 add_definitions(-DSFC_MONOLITH)
 include_directories(include)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE MinSizeRel)
+endif(NOT CMAKE_BUILD_TYPE)
 
 if(MSVC)
   set(SOURCES include/fmt/format.cpp include/fmt/posix.cpp include/LodePNG/lodepng.cpp include/getoptw/getoptw.c src/superfamiconv.cpp src/sfc_palette.cpp src/sfc_tiles.cpp src/sfc_map.cpp src/Image.cpp src/Map.cpp src/Palette.cpp src/Tiles.cpp)
