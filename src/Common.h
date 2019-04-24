@@ -235,7 +235,7 @@ constexpr unsigned default_bpp_for_mode(Mode mode) {
       return 8;
     case Mode::gb:
     case Mode::gbc:
-      return 4;
+      return 2;
     default:
       return 4;
   }

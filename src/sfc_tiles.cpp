@@ -95,10 +95,8 @@ int main(int argc, char* argv[]) {
 
     settings.mode = sfc::mode(mode_str);
 
-    if (settings.mode == sfc::Mode::snes_mode7 && settings.bpp != 8) {
-      settings.bpp = 8;
-      if (verbose) fmt::print("Less than 8 bpp not available for snes_mode7: defaulting to 8\n");
-    }
+    // Mode-specific defaults
+    if (!options.WasSet("bpp")) settings.bpp = sfc::default_bpp_for_mode(settings.mode);
 
     if (!sfc::bpp_allowed_for_mode(settings.bpp, settings.mode)) throw std::runtime_error("bpp setting not allowed for specified mode");
 

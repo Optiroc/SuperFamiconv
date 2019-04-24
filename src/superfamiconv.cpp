@@ -96,14 +96,8 @@ int superfamiconv(int argc, char* argv[]) {
 
     settings.mode = sfc::mode(mode_str);
 
-    if (settings.mode == sfc::Mode::snes_mode7 && settings.bpp != 8) {
-      settings.bpp = sfc::default_bpp_for_mode(sfc::Mode::snes_mode7);
-      if (verbose) fmt::print("Defaulting to 8 bpp for snes_mode7\n");
-    }
-
-    // TODO: GBC
-    // Default to 2 bpp, if Mode::gb||gbc
-    // Need to query Options if bpp was set...
+    // Mode-specific defaults
+    if (!options.WasSet("bpp")) settings.bpp = sfc::default_bpp_for_mode(settings.mode);
 
     if (!czero_str.empty()) {
       settings.color_zero = sfc::from_hexstring(czero_str);
