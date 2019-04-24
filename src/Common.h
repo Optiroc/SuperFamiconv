@@ -153,7 +153,9 @@ inline Mode mode(const std::string& str) {
   } else if (str == "snes_mode7") {
     return Mode::snes_mode7;
   } else if (str == "gb") {
-    return Mode::gb;
+    //TODO:
+    //return Mode::gb;
+    return Mode::gbc;
   } else if (str == "gbc") {
     return Mode::gbc;
   }
@@ -167,7 +169,8 @@ inline std::string mode(Mode mode) {
   case Mode::snes_mode7:
     return std::string("snes_mode7");
   case Mode::gb:
-    return std::string("gb");
+    //TODO:
+    //return std::string("gb");
   case Mode::gbc:
     return std::string("gbc");
   default:
