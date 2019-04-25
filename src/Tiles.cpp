@@ -144,7 +144,9 @@ std::vector<uint8_t> Tile::native_data() const {
 std::vector<rgba_t> Tile::rgba_data() const {
   std::vector<rgba_t> v(_data.size());
   for (unsigned i = 0; i < _data.size(); ++i) {
-    v[i] = (_data[i] == 0) ? transparent_color : _palette[_data[i]];
+    //TODO: Render with transparency if "sprite mode" / col0 is set?
+    //v[i] = (_data[i] == 0) ? transparent_color : _palette[_data[i]];
+    v[i] = _palette[_data[i]];
   }
   return v;
 }
