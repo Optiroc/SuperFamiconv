@@ -135,7 +135,6 @@ int superfamiconv(int argc, char* argv[]) {
       if (verbose) fmt::print("Generated palette with {}\n", palette.description());
 
       palette.sort();
-      palette.pad();
     }
 
     // Make tileset

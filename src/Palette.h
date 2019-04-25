@@ -46,8 +46,10 @@ struct Subpalette final {
     for (auto c : new_colors) add(c, add_duplicates);
   }
 
-  void pad() {
-    while (_colors.size() < _max_colors) add(0, true);
+  Subpalette padded() const {
+    Subpalette sp = Subpalette(*this);
+    while (sp._colors.size() < sp._max_colors) sp.add(0, true);
+    return sp;
   }
 
   // number of colors in new_colors not in _colors
@@ -101,7 +103,6 @@ struct Palette final {
   std::vector<const Subpalette*> subpalettes_matching(const Image& image) const;
 
   void sort();
-  void pad();
 
   const std::string description() const;
   const std::string to_json() const;

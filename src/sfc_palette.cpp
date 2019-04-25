@@ -143,7 +143,6 @@ int main(int argc, char* argv[]) {
 
     if (!settings.no_remap) {
       palette.sort();
-      palette.pad();
     }
 
     if (!settings.out_data.empty()) {

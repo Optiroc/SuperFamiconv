@@ -175,10 +175,6 @@ void Palette::sort() {
   for (auto& sp : _subpalettes) sp.sort();
 }
 
-void Palette::pad() {
-  for (auto& sp : _subpalettes) sp.pad();
-}
-
 
 const std::string Palette::description() const {
   auto v = colors();
@@ -217,7 +213,8 @@ void Palette::save(const std::string& path) const {
   std::vector<uint8_t> data;
 
   for (auto& sp : _subpalettes) {
-    std::vector<rgba_t> colors = sp.colors();
+    Subpalette spp = sp.padded();
+    std::vector<rgba_t> colors = spp.colors();
     for (auto c : colors) {
       auto nc = pack_native_color(c, _mode);
       data.insert(data.end(), nc.begin(), nc.end());
@@ -232,7 +229,8 @@ void Palette::save_act(const std::string& path) const {
   int count = 0;
 
   for (auto& sp : _subpalettes) {
-    std::vector<rgba_t> colors = sp.get_normalized_colors();
+    Subpalette spp = sp.padded();
+    std::vector<rgba_t> colors = spp.get_normalized_colors();
     for (auto c : colors) {
       rgba_color rgba(c);
       data[count * 3 + 0] = rgba.r;
