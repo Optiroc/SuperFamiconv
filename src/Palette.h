@@ -86,6 +86,8 @@ struct Palette final {
   Palette(const std::string& path, Mode in_mode = Mode::snes, unsigned colors_per_subpalette = 16);
 
   unsigned max_colors_per_subpalette() const { return _max_colors_per_subpalette; }
+  const std::vector<std::vector<rgba_t>> colors() const;
+  const std::vector<std::vector<rgba_t>> normalized_colors() const;
 
   void add(const rgba_t color);
   void add(const std::vector<rgba_t>& colors);
@@ -93,22 +95,18 @@ struct Palette final {
   void add_noremap(const std::vector<rgba_t>& colors, bool reduce = true);
 
   const Subpalette& subpalette_at(unsigned index) const;
+  int index_of(const Subpalette& subpalette) const;
+  Subpalette& first_nonempty_subpalette();
   const Subpalette& subpalette_matching(const Image& image) const;
   std::vector<const Subpalette*> subpalettes_matching(const Image& image) const;
-  Subpalette& first_nonempty_subpalette();
-  int index_of(const Subpalette& subpalette) const;
-
-  const std::vector<std::vector<rgba_t>> colors() const;
-  const std::vector<std::vector<rgba_t>> normalized_colors() const;
 
   void sort();
   void pad();
 
+  const std::string description() const;
   const std::string to_json() const;
   void save(const std::string& path) const;
   void save_act(const std::string& path) const;
-
-  const std::string description() const;
 
 private:
   Mode _mode = Mode::snes;

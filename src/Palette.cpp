@@ -2,6 +2,55 @@
 
 namespace sfc {
 
+// construct Palette by deserializing json or binary
+Palette::Palette(const std::string& path, Mode in_mode, uint32_t colors_per_subpalette) {
+  _mode = in_mode;
+  _max_colors_per_subpalette = colors_per_subpalette;
+  _max_subpalettes = 64;
+
+  try {
+    // load json
+    auto j = read_json_file(path);
+    auto jp = j["palettes"];
+    for (auto jsp : jp) {
+      std::vector<rgba_t> colors;
+      for (auto jcs : jsp)
+        if (jcs.is_string()) colors.push_back(reduce_color(from_hexstring(jcs), in_mode));
+      if (colors.size() > _max_colors_per_subpalette) throw std::runtime_error("Palette in JSON doesn't match color depth / colors per subpalette");
+      add_noremap(colors, false);
+    }
+  } catch (...) {
+    // load binary
+    add_noremap(unpack_native_colors(read_binary(path), in_mode), false);
+  }
+
+  if (_subpalettes.empty()) throw std::runtime_error("No palette data in JSON");
+}
+
+// construct Palette from native data
+Palette::Palette(const std::vector<uint8_t>& native_data, Mode in_mode, unsigned colors_per_subpalette) {
+  _mode = in_mode;
+  _max_colors_per_subpalette = colors_per_subpalette;
+  _max_subpalettes = max_palette_count_for_mode(_mode);
+  add_noremap(unpack_native_colors(native_data, in_mode), false);
+}
+
+
+// get colors
+const std::vector<std::vector<rgba_t>> Palette::colors() const {
+  std::vector<std::vector<rgba_t>> v;
+  for (auto sp : _subpalettes) v.push_back(sp.colors());
+  return v;
+}
+
+const std::vector<std::vector<rgba_t>> Palette::normalized_colors() const {
+  auto v = colors();
+  for (auto& i : v) i = normalize_colors(i, _mode);
+  return v;
+}
+
+
+// add colors
 void Palette::add(const rgba_t color) {
   std::vector<rgba_t> v = {color};
   add(v);
@@ -43,7 +92,6 @@ void Palette::add(const std::vector<rgba_t>& colors) {
   }
 }
 
-// add colors from ImageCrops
 void Palette::add(std::vector<sfc::ImageCrop> palette_tiles) {
   unsigned palette_errors = 0;
 
@@ -64,7 +112,6 @@ void Palette::add(std::vector<sfc::ImageCrop> palette_tiles) {
   if (palette_errors > 0) throw std::runtime_error("Colors in image do not fit in available palettes. Aborting.");
 }
 
-// add colors without reordering or discarding duplicates
 void Palette::add_noremap(const std::vector<rgba_t>& colors, bool reduce) {
   auto rc = colors;
   if (reduce) rc = reduce_colors(rc, _mode);
@@ -76,17 +123,22 @@ void Palette::add_noremap(const std::vector<rgba_t>& colors, bool reduce) {
   }
 }
 
-void Palette::sort() {
-  for (auto& sp : _subpalettes) sp.sort();
-}
-
-void Palette::pad() {
-  for (auto& sp : _subpalettes) sp.pad();
-}
 
 const Subpalette& Palette::subpalette_at(unsigned index) const {
   if (index > _subpalettes.size()) throw std::runtime_error("Subpalette doesn't exist");
   return _subpalettes.at(index);
+}
+
+int Palette::index_of(const Subpalette& subpalette) const {
+  for (int i = 0; i < (int)_subpalettes.size(); ++i) {
+    if (subpalette.colors() == _subpalettes[i].colors()) return i;
+  }
+  return -1;
+}
+
+Subpalette& Palette::first_nonempty_subpalette() {
+  if (_subpalettes.empty() || _subpalettes[_subpalettes.size() - 1].is_full()) return add_subpalette();
+  return _subpalettes[_subpalettes.size() - 1];
 }
 
 // get first subpalette containing all colors in image
@@ -118,74 +170,32 @@ std::vector<const Subpalette*> Palette::subpalettes_matching(const Image& image)
   return sv;
 }
 
-Subpalette& Palette::first_nonempty_subpalette() {
-  if (_subpalettes.empty() || _subpalettes[_subpalettes.size() - 1].is_full()) return add_subpalette();
-  return _subpalettes[_subpalettes.size() - 1];
+
+void Palette::sort() {
+  for (auto& sp : _subpalettes) sp.sort();
 }
 
-int Palette::index_of(const Subpalette& subpalette) const {
-  for (int i = 0; i < (int)_subpalettes.size(); ++i) {
-    if (subpalette.colors() == _subpalettes[i].colors()) return i;
-  }
-  return -1;
+void Palette::pad() {
+  for (auto& sp : _subpalettes) sp.pad();
 }
 
-Subpalette& Palette::add_subpalette() {
-  if (_max_subpalettes - _subpalettes.size() == 0) throw std::runtime_error("Colors don't fit in palette");
-  _subpalettes.emplace_back(Subpalette(_mode, _max_colors_per_subpalette));
-  Subpalette& sp = _subpalettes.back();
 
-  // if applicable, add color 0 from first palette to any subsequent palettes
-  if (_mode == Mode::snes || _mode == Mode::snes_mode7) {
-    if (_subpalettes.size() > 1 && _subpalettes[0].size() > 0) sp.add(_subpalettes[0].color_at(0));
-  }
-
-  return sp;
-}
-
-const std::vector<std::vector<rgba_t>> Palette::colors() const {
-  std::vector<std::vector<rgba_t>> v;
-  for (auto sp : _subpalettes) v.push_back(sp.colors());
-  return v;
-}
-
-const std::vector<std::vector<rgba_t>> Palette::normalized_colors() const {
+const std::string Palette::description() const {
   auto v = colors();
-  for (auto& i : v) i = normalize_colors(i, _mode);
-  return v;
-}
+  int total = 0;
+  std::string s = "";
 
-
-Palette::Palette(const std::vector<uint8_t>& native_data, Mode in_mode, unsigned colors_per_subpalette) {
-  _mode = in_mode;
-  _max_colors_per_subpalette = colors_per_subpalette;
-  _max_subpalettes = max_palette_count_for_mode(_mode);
-  add_noremap(unpack_native_colors(native_data, in_mode), false);
-}
-
-// deserialize palette from json or binary
-Palette::Palette(const std::string& path, Mode in_mode, uint32_t colors_per_subpalette) {
-  _mode = in_mode;
-  _max_colors_per_subpalette = colors_per_subpalette;
-  _max_subpalettes = 64;
-
-  try {
-    // load json
-    auto j = read_json_file(path);
-    auto jp = j["palettes"];
-    for (auto jsp : jp) {
-      std::vector<rgba_t> colors;
-      for (auto jcs : jsp)
-        if (jcs.is_string()) colors.push_back(reduce_color(from_hexstring(jcs), in_mode));
-      if (colors.size() > _max_colors_per_subpalette) throw std::runtime_error("Palette in JSON doesn't match color depth / colors per subpalette");
-      add_noremap(colors, false);
-    }
-  } catch (...) {
-    // load binary
-    add_noremap(unpack_native_colors(read_binary(path), in_mode), false);
+  for (auto i : v) {
+    total += i.size();
+    s += fmt::format("{},", i.size());
   }
 
-  if (_subpalettes.empty()) throw std::runtime_error("No palette data in JSON");
+  if (total > 0) {
+    s.pop_back();
+    return fmt::format("[{}] colors, {} total", s, total);
+  } else {
+    return "zero colors";
+  }
 }
 
 const std::string Palette::to_json() const {
@@ -239,22 +249,19 @@ void Palette::save_act(const std::string& path) const {
   write_file(path, data);
 }
 
-const std::string Palette::description() const {
-  auto v = colors();
-  int total = 0;
-  std::string s = "";
 
-  for (auto i : v) {
-    total += i.size();
-    s += fmt::format("{},", i.size());
+Subpalette& Palette::add_subpalette() {
+  if (_max_subpalettes - _subpalettes.size() == 0) throw std::runtime_error("Colors don't fit in palette");
+  _subpalettes.emplace_back(Subpalette(_mode, _max_colors_per_subpalette));
+  Subpalette& sp = _subpalettes.back();
+
+  // if applicable, add color 0 from first palette to any subsequent palettes
+  // TODO: add gbc sprite flag
+  if (_mode == Mode::snes || _mode == Mode::snes_mode7) {
+    if (_subpalettes.size() > 1 && _subpalettes[0].size() > 0) sp.add(_subpalettes[0].color_at(0));
   }
 
-  if (total > 0) {
-    s.pop_back();
-    return fmt::format("[{}] colors, {} total", s, total);
-  } else {
-    return "zero colors";
-  }
+  return sp;
 }
 
 } /* namespace sfc */
