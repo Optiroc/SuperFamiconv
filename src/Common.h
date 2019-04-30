@@ -220,6 +220,19 @@ constexpr bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
   }
 }
 
+constexpr bool tile_flipping_allowed_for_mode(Mode mode) {
+  switch (mode) {
+  case Mode::snes:
+  case Mode::gbc:
+    return true;
+  case Mode::snes_mode7:
+  case Mode::gb:
+    return false;
+  default:
+    return false;
+  }
+}
+
 constexpr unsigned default_tile_size_for_mode(Mode mode) {
   switch (mode) {
   default:

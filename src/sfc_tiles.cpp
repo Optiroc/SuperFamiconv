@@ -73,6 +73,7 @@ int sfc_tiles(int argc, char* argv[]) {
 
     // Mode-specific defaults
     if (!options.WasSet("bpp")) settings.bpp = sfc::default_bpp_for_mode(settings.mode);
+    if (!options.WasSet("no-flip")) settings.no_flip = !sfc::tile_flipping_allowed_for_mode(settings.mode);
 
     if (!sfc::bpp_allowed_for_mode(settings.bpp, settings.mode)) throw std::runtime_error("bpp setting not allowed for specified mode");
 
@@ -84,11 +85,6 @@ int sfc_tiles(int argc, char* argv[]) {
     if (!sfc::tile_height_allowed_for_mode(settings.tile_h, settings.mode)) {
       settings.tile_h = sfc::default_tile_size_for_mode(settings.mode);
       if (verbose) fmt::print("Tile height not allowed for specified mode, using default ({})\n", settings.tile_h);
-    }
-
-    if (settings.mode == sfc::Mode::snes_mode7 && !settings.no_flip) {
-      settings.no_flip = true;
-      if (verbose) fmt::print("Tile flipping not available for snes_mode7: converting with no-flip enabled\n");
     }
 
   } catch (const std::exception& e) {

@@ -96,6 +96,7 @@ int superfamiconv(int argc, char* argv[]) {
 
     // Mode-specific defaults
     if (!options.WasSet("bpp")) settings.bpp = sfc::default_bpp_for_mode(settings.mode);
+    if (!options.WasSet("no-flip")) settings.no_flip = !sfc::tile_flipping_allowed_for_mode(settings.mode);
 
     if (!settings.color_zero.empty()) {
       col0 = sfc::from_hexstring(settings.color_zero);
