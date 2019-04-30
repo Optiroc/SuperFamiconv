@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2A39C6BF227835E000A97D33 /* lodepng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A39C6BD227835E000A97D33 /* lodepng.cpp */; };
+		2A39C6C0227835E000A97D33 /* lodepng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A39C6BD227835E000A97D33 /* lodepng.cpp */; };
+		2A39C6C1227835E000A97D33 /* lodepng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A39C6BD227835E000A97D33 /* lodepng.cpp */; };
+		2A39C6C2227835E000A97D33 /* lodepng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A39C6BD227835E000A97D33 /* lodepng.cpp */; };
 		2A75C18C227050F700803ABF /* format.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A75C183227050F600803ABF /* format.cpp */; };
 		2A75C18D227050F700803ABF /* format.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A75C183227050F600803ABF /* format.cpp */; };
 		2A75C18E227050F700803ABF /* format.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A75C183227050F600803ABF /* format.cpp */; };
@@ -27,18 +31,10 @@
 		2AB6F3581E12F73900F2AE78 /* sfc_palette.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AB6F34B1E12F70200F2AE78 /* sfc_palette.cpp */; };
 		2AB6F36F1E12F77100F2AE78 /* sfc_map.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AB6F34A1E12F70200F2AE78 /* sfc_map.cpp */; };
 		2AB6F3701E12F77500F2AE78 /* sfc_tiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AB6F34C1E12F70200F2AE78 /* sfc_tiles.cpp */; };
-		2AB6F3711E12F77900F2AE78 /* lodepng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A468C751E11DC1D00433FCE /* lodepng.cpp */; settings = {COMPILER_FLAGS = "-Wno-shorten-64-to-32"; }; };
-		2AB6F3721E12F77900F2AE78 /* lodepng_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A468C771E11DC1D00433FCE /* lodepng_util.cpp */; settings = {COMPILER_FLAGS = "-Wno-shorten-64-to-32"; }; };
-		2AB6F3731E12F77A00F2AE78 /* lodepng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A468C751E11DC1D00433FCE /* lodepng.cpp */; settings = {COMPILER_FLAGS = "-Wno-shorten-64-to-32"; }; };
-		2AB6F3741E12F77A00F2AE78 /* lodepng_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A468C771E11DC1D00433FCE /* lodepng_util.cpp */; settings = {COMPILER_FLAGS = "-Wno-shorten-64-to-32"; }; };
-		2AB6F3751E12F77A00F2AE78 /* lodepng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A468C751E11DC1D00433FCE /* lodepng.cpp */; settings = {COMPILER_FLAGS = "-Wno-shorten-64-to-32"; }; };
-		2AB6F3761E12F77A00F2AE78 /* lodepng_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A468C771E11DC1D00433FCE /* lodepng_util.cpp */; settings = {COMPILER_FLAGS = "-Wno-shorten-64-to-32"; }; };
 		2AD683881E28D50E0049C1F2 /* Palette.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A8169881E1AD58A00668B8F /* Palette.cpp */; };
 		2AD683891E28D50E0049C1F2 /* sfc_palette.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AB6F34B1E12F70200F2AE78 /* sfc_palette.cpp */; settings = {COMPILER_FLAGS = "-D SFC_MONOLITH"; }; };
 		2AD6838A1E28D50E0049C1F2 /* Image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A8169841E1AD52500668B8F /* Image.cpp */; };
 		2AD6838B1E28D50E0049C1F2 /* Tiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A81698C1E1AD5DD00668B8F /* Tiles.cpp */; };
-		2AD6838C1E28D50E0049C1F2 /* lodepng_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A468C771E11DC1D00433FCE /* lodepng_util.cpp */; settings = {COMPILER_FLAGS = "-Wno-shorten-64-to-32"; }; };
-		2AD6838D1E28D50E0049C1F2 /* lodepng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A468C751E11DC1D00433FCE /* lodepng.cpp */; settings = {COMPILER_FLAGS = "-Wno-shorten-64-to-32"; }; };
 		2AD683941E28D5370049C1F2 /* sfc_tiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AB6F34C1E12F70200F2AE78 /* sfc_tiles.cpp */; settings = {COMPILER_FLAGS = "-D SFC_MONOLITH"; }; };
 		2AD683951E28D53A0049C1F2 /* sfc_map.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AB6F34A1E12F70200F2AE78 /* sfc_map.cpp */; settings = {COMPILER_FLAGS = "-D SFC_MONOLITH"; }; };
 		2AD683961E28D5460049C1F2 /* Map.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A893EE61E22FCDA0032D146 /* Map.cpp */; };
@@ -85,10 +81,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		2A468C751E11DC1D00433FCE /* lodepng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lodepng.cpp; sourceTree = "<group>"; };
-		2A468C761E11DC1D00433FCE /* lodepng.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lodepng.h; sourceTree = "<group>"; };
-		2A468C771E11DC1D00433FCE /* lodepng_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lodepng_util.cpp; sourceTree = "<group>"; };
-		2A468C781E11DC1D00433FCE /* lodepng_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lodepng_util.h; sourceTree = "<group>"; };
+		2A39C6BD227835E000A97D33 /* lodepng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lodepng.cpp; sourceTree = "<group>"; };
+		2A39C6BE227835E000A97D33 /* lodepng.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lodepng.h; sourceTree = "<group>"; };
 		2A75C17E227050F600803ABF /* time.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = time.h; sourceTree = "<group>"; };
 		2A75C17F227050F600803ABF /* ostream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ostream.h; sourceTree = "<group>"; };
 		2A75C180227050F600803ABF /* format-inl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "format-inl.h"; sourceTree = "<group>"; };
@@ -209,10 +203,8 @@
 		2A468C741E11DC1D00433FCE /* LodePNG */ = {
 			isa = PBXGroup;
 			children = (
-				2A468C751E11DC1D00433FCE /* lodepng.cpp */,
-				2A468C761E11DC1D00433FCE /* lodepng.h */,
-				2A468C771E11DC1D00433FCE /* lodepng_util.cpp */,
-				2A468C781E11DC1D00433FCE /* lodepng_util.h */,
+				2A39C6BD227835E000A97D33 /* lodepng.cpp */,
+				2A39C6BE227835E000A97D33 /* lodepng.h */,
 			);
 			path = LodePNG;
 			sourceTree = "<group>";
@@ -377,8 +369,7 @@
 				2A8169851E1AD52500668B8F /* Image.cpp in Sources */,
 				2A81698D1E1AD5DD00668B8F /* Tiles.cpp in Sources */,
 				2A75C191227050F700803ABF /* posix.cpp in Sources */,
-				2AB6F3721E12F77900F2AE78 /* lodepng_util.cpp in Sources */,
-				2AB6F3711E12F77900F2AE78 /* lodepng.cpp in Sources */,
+				2A39C6C0227835E000A97D33 /* lodepng.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -392,8 +383,7 @@
 				2A8169861E1AD52500668B8F /* Image.cpp in Sources */,
 				2A81698E1E1AD5DD00668B8F /* Tiles.cpp in Sources */,
 				2A75C192227050F700803ABF /* posix.cpp in Sources */,
-				2AB6F3741E12F77A00F2AE78 /* lodepng_util.cpp in Sources */,
-				2AB6F3731E12F77A00F2AE78 /* lodepng.cpp in Sources */,
+				2A39C6C1227835E000A97D33 /* lodepng.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -405,10 +395,9 @@
 				2AB6F36F1E12F77100F2AE78 /* sfc_map.cpp in Sources */,
 				2A75C18F227050F700803ABF /* format.cpp in Sources */,
 				2A8169871E1AD52500668B8F /* Image.cpp in Sources */,
-				2AB6F3761E12F77A00F2AE78 /* lodepng_util.cpp in Sources */,
 				2A75C193227050F700803ABF /* posix.cpp in Sources */,
 				2A893EE71E22FCDA0032D146 /* Map.cpp in Sources */,
-				2AB6F3751E12F77A00F2AE78 /* lodepng.cpp in Sources */,
+				2A39C6C2227835E000A97D33 /* lodepng.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -420,14 +409,13 @@
 				2AD683941E28D5370049C1F2 /* sfc_tiles.cpp in Sources */,
 				2AD683951E28D53A0049C1F2 /* sfc_map.cpp in Sources */,
 				2AD683881E28D50E0049C1F2 /* Palette.cpp in Sources */,
+				2A39C6BF227835E000A97D33 /* lodepng.cpp in Sources */,
 				2AD683981E28D5800049C1F2 /* superfamiconv.cpp in Sources */,
 				2A75C190227050F700803ABF /* posix.cpp in Sources */,
 				2AD6838A1E28D50E0049C1F2 /* Image.cpp in Sources */,
 				2AD683961E28D5460049C1F2 /* Map.cpp in Sources */,
 				2AD6838B1E28D50E0049C1F2 /* Tiles.cpp in Sources */,
-				2AD6838C1E28D50E0049C1F2 /* lodepng_util.cpp in Sources */,
 				2A75C18C227050F700803ABF /* format.cpp in Sources */,
-				2AD6838D1E28D50E0049C1F2 /* lodepng.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
