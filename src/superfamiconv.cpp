@@ -2,6 +2,10 @@
 //
 // david lindecrantz <optiroc@gmail.com>
 
+// TODO: gbc sprite mode should set common color 0 transparency
+// TODO: Check "shorthand" path for 16x16 tile conversion
+// TODO: Don't always pad native palette output? (Pad every palette but the last? Option?)
+
 #include <Options.h>
 #include "Common.h"
 #include "Image.h"
