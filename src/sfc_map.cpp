@@ -15,7 +15,6 @@ struct Settings {
   std::string in_image;
   std::string in_palette;
   std::string in_tileset;
-
   std::string out_data;
   std::string out_json;
   std::string out_m7_data;
@@ -34,12 +33,7 @@ struct Settings {
 };
 };
 
-#ifdef SFC_MONOLITH
 int sfc_map(int argc, char* argv[]) {
-#else
-int main(int argc, char* argv[]) {
-#endif
-
   SfcMap::Settings settings = {};
   bool verbose = false;
 
@@ -176,3 +170,9 @@ int main(int argc, char* argv[]) {
 
   return 0;
 }
+
+#ifndef SFC_MONOLITH
+int main(int argc, char* argv[]) {
+  return sfc_map(argc, argv);
+}
+#endif

@@ -27,13 +27,7 @@ struct Settings {
 };
 };
 
-
-#ifdef SFC_MONOLITH
 int sfc_palette(int argc, char* argv[]) {
-#else
-int main(int argc, char* argv[]) {
-#endif
-
   SfcPalette::Settings settings = {};
   bool verbose = false;
 
@@ -173,3 +167,9 @@ int main(int argc, char* argv[]) {
 
   return 0;
 }
+
+#ifndef SFC_MONOLITH
+int main(int argc, char* argv[]) {
+  return sfc_palette(argc, argv);
+}
+#endif

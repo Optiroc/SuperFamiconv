@@ -28,12 +28,7 @@ struct Settings {
 };
 };
 
-#ifdef SFC_MONOLITH
 int sfc_tiles(int argc, char* argv[]) {
-#else
-int main(int argc, char* argv[]) {
-#endif
-
   SfcTiles::Settings settings = {};
   bool verbose = false;
 
@@ -185,3 +180,9 @@ int main(int argc, char* argv[]) {
 
   return 0;
 }
+
+#ifndef SFC_MONOLITH
+int main(int argc, char* argv[]) {
+  return sfc_tiles(argc, argv);
+}
+#endif
