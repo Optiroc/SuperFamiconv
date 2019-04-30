@@ -65,7 +65,7 @@ int superfamiconv(int argc, char* argv[]) {
     options.Add(settings.out_tiles,          't', "out-tiles",         "Output: tile data");
     options.Add(settings.out_map,            'm', "out-map",           "Output: map data");
     options.Add(settings.out_palette_image, '\0', "out-palette-image", "Output: palette image");
-    options.Add(settings.out_palette_act,   '\0', "out-palette-act",   "Output: act palette");
+    options.Add(settings.out_palette_act,   '\0', "out-palette-act",   "Output: photoshop palette");
     options.Add(settings.out_tiles_image,   '\0', "out-tiles-image",   "Output: tiles image");
 
     options.Add(mode_str,                    'M', "mode",              "Mode",                              std::string("snes"), "Settings");

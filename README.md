@@ -23,20 +23,20 @@ In short hand mode, the following options are available:
 	-t --out-tiles        Output: tile data
 	-m --out-map          Output: map data
 	--out-palette-image   Output: palette image
+	--out-palette-act     Output: photoshop palette
 	--out-tiles-image     Output: tiles image
 
 	-M --mode             Mode <default: snes>
 	-B --bpp              Bits per pixel <default: 4>
-	--tile-width          Tile width <default: 8>
-	--tile-height         Tile height <default: 8>
-	--map-width           Map width (in tiles) <default: inferred>
-	--map-height          Map height (in tiles) <default: inferred>
-	--no-discard          Don't discard redundant tiles <switch>
-	--no-flip             Don't discard using tile flipping <switch>
-	--color-zero          Set color #0 <default: color at 0,0>
+	-W --tile-width       Tile width <default: 8>
+	-H --tile-height      Tile height <default: 8>
+	-D --no-discard       Don't discard redundant tiles <switch>
+	-F --no-flip          Don't discard using tile flipping <switch>
+	-S --sprite-mode      Apply sprite output settings <switch>
+	--color-zero          Set color #0
 
 	-v --verbose          Verbose logging <switch>
-	-L --license          Show license <switch>
+	-l --license          Show licenses <switch>
 	-h --help             Show this help <switch>
 
 This command mode accepts one image (either indexed, RGB or RGBA mode PNG – which are the formats supported for all image inputs) and outputs palette, tile and/or map data.
@@ -66,71 +66,75 @@ For more flexibility use the sub commands, which have the following options resp
 
 **superfamiconv palette**
 
-	superfamiconv palette [<options>]
-	-i --in-image         Input: image
-	-d --out-data         Output: native data
-	-j --out-json         Output: json
-	-o --out-image        Output: image
+	Usage: superfamiconv palette [<options>]
+	  -i --in-image         Input: image
+	  -d --out-data         Output: native data
+	  -a --out-act          Output: photoshop palette
+	  -j --out-json         Output: json
+	  -o --out-image        Output: image
 	
-	-M --mode             Mode <default: snes>
-	-P --palettes         Number of subpalettes <default: 8>
-	-C --colors           Colors per subpalette <default: 16>
-	-W --tile-width       Tile width <default: 8>
-	-H --tile-height      Tile height <default: 8>
-	-R --no-remap         Don't remap colors <switch>
-	-0 --color-zero       Set color #0 <default: color at 0,0>
+	Settings:
+	  -M --mode             Mode <default: snes>
+	  -P --palettes         Number of subpalettes <default: 8>
+	  -C --colors           Colors per subpalette <default: 16>
+	  -W --tile-width       Tile width <default: 8>
+	  -H --tile-height      Tile height <default: 8>
+	  -R --no-remap         Don't remap colors <switch>
+	  -0 --color-zero       Set color #0
 	
-	-v --verbose          Verbose logging <switch>
-	-L --license          Show license <switch>
-	-h --help             Show this help <switch>
+	  -v --verbose          Verbose logging <switch>
+	  -h --help             Show this help <switch>
+
 
 **superfamiconv tiles**
 
-	superfamiconv tiles [<options>]
-	-i --in-image         Input: image
-	-p --in-palette       Input: palette (native/json)
-	-d --out-data         Output: native data
-	-o --out-image        Output: image
-	
-	-M --mode             Mode <default: snes>
-	-B --bpp              Bits per pixel <default: 4>
-	-D --no-discard       Don't discard redundant tiles <switch>
-	-F --no-flip          Don't discard using tile flipping <switch>
-	-W --tile-width       Tile width <default: 8>
-	-H --tile-height      Tile height <default: 8>
-	-R --no-remap         Don't remap colors <switch>
-	-T --max-tiles        Maximum number of tiles
-	
-	-v --verbose          Verbose logging <switch>
-	-L --license          Show license <switch>
-	-h --help             Show this help <switch>
+	Usage: superfamiconv tiles [<options>]
+	  -i --in-image         Input: image
+	  -n --in-data          Input: native data
+	  -p --in-palette       Input: palette (native/json)
+	  -d --out-data         Output: native data
+	  -o --out-image        Output: image
+
+	Settings:
+	  -M --mode             Mode <default: snes>
+	  -B --bpp              Bits per pixel <default: 4>
+	  -W --tile-width       Tile width <default: 8>
+	  -H --tile-height      Tile height <default: 8>
+	  -R --no-remap         Don't remap colors <switch>
+	  -D --no-discard       Don't discard redundant tiles <switch>
+	  -F --no-flip          Don't discard using tile flipping <switch>
+	  -S --sprite-mode      Apply sprite output settings <switch>
+	  -T --max-tiles        Maximum number of tiles
+
+	  -v --verbose          Verbose logging <switch>
+	  -h --help             Show this help <switch>
 
 
 **superfamiconv map**
 
-	superfamiconv map [<options>]
-	-i --in-image         Input: image
-	-p --in-palette       Input: palette (json/native)
-	-t --in-tiles         Input: tiles (native)
-	-d --out-data         Output: native data
-	-j --out-json         Output: json
-	-7 --out-m7-data      Output: interleaved map/tile data (snes_mode7)
-	--out-gbc-bank        Output: banked map data (gbc)
+	Usage: superfamiconv map [<options>]
+	  -i --in-image         Input: image
+	  -p --in-palette       Input: palette (json/native)
+	  -t --in-tiles         Input: tiles (native)
+	  -d --out-data         Output: native data
+	  -j --out-json         Output: json
+	  -7 --out-m7-data      Output: interleaved map/tile data (snes_mode7)
+	  --out-gbc-bank        Output: banked map data (gbc)
 
-	-M --mode             Mode <default: snes>
-	-B --bpp              Bits per pixel <default: 4>
-	-W --tile-width       Tile width <default: 8>
-	-H --tile-height      Tile height <default: 8>
-	-F --no-flip          Don't use flipped tiles <switch>
-	--map-width           Map width (in tiles) <default: inferred>
-	--map-height          Map height (in tiles) <default: inferred>
-	--split-width         Split output into columns of <tiles> width
-	--split-height        Split output into rows of <tiles> height
-	--column-order        Output data in column-major order <switch>
-	
-	-v --verbose          Verbose logging <switch>
-	-L --license          Show license <switch>
-	-h --help             Show this help <switch>
+	Settings:
+	  -M --mode             Mode <default: snes>
+	  -B --bpp              Bits per pixel <default: 4>
+	  -W --tile-width       Tile width <default: 8>
+	  -H --tile-height      Tile height <default: 8>
+	  -F --no-flip          Don't use flipped tiles <switch>
+	  --map-width           Map width (in tiles)
+	  --map-height          Map height (in tiles)
+	  --split-width         Split output into columns of <tiles> width
+	  --split-height        Split output into rows of <tiles> height
+	  --column-order        Output data in column-major order <switch>
+
+	  -v --verbose          Verbose logging <switch>
+	  -h --help             Show this help <switch>
 
 
 ## future work

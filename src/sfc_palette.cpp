@@ -44,7 +44,7 @@ int sfc_palette(int argc, char* argv[]) {
     // clang-format off
     options.Add(settings.in_image,           'i', "in-image",       "Input: image");
     options.Add(settings.out_data,           'd', "out-data",       "Output: native data");
-    options.Add(settings.out_act,            'a', "out-act",        "Output: act palette");
+    options.Add(settings.out_act,            'a', "out-act",        "Output: photoshop palette");
     options.Add(settings.out_json,           'j', "out-json",       "Output: json");
     options.Add(settings.out_image,          'o', "out-image",      "Output: image");
 
