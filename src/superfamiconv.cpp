@@ -24,7 +24,6 @@ struct Settings {
 
   sfc::Mode mode;
   unsigned bpp;
-
   unsigned tile_w;
   unsigned tile_h;
   unsigned map_w;
@@ -32,20 +31,19 @@ struct Settings {
 
   bool no_discard;
   bool no_flip;
-
-  bool forced_zero;
-  rgba_t color_zero;
+  std::string color_zero;
 };
 
 int superfamiconv(int argc, char* argv[]) {
   Settings settings = {};
   bool verbose = false;
+  bool col0_forced = false;
+  rgba_t col0 = 0;
 
   try {
     bool help;
     bool license;
     std::string mode_str;
-    std::string czero_str;
 
     Options options;
     options.IndentDescription = sfc::Constants::options_indent;
@@ -76,7 +74,7 @@ int superfamiconv(int argc, char* argv[]) {
 
     options.AddSwitch(settings.no_discard,  '\0', "no-discard",        "Don't discard redundant tiles",        false,            "Settings");
     options.AddSwitch(settings.no_flip,     '\0', "no-flip",           "Don't discard using tile flipping",    false,            "Settings");
-    options.Add(czero_str,                  '\0', "color-zero",        "Set color #0 <default: color at 0,0>", std::string(),    "Settings");
+    options.Add(settings.color_zero,        '\0', "color-zero",        "Set color #0 <default: color at 0,0>", std::string(),    "Settings");
 
     options.AddSwitch(verbose, 'v', "verbose", "Verbose logging", false, "_");
     options.AddSwitch(license, 'L', "license", "Show license",    false, "_");
@@ -99,9 +97,9 @@ int superfamiconv(int argc, char* argv[]) {
     // Mode-specific defaults
     if (!options.WasSet("bpp")) settings.bpp = sfc::default_bpp_for_mode(settings.mode);
 
-    if (!czero_str.empty()) {
-      settings.color_zero = sfc::from_hexstring(czero_str);
-      settings.forced_zero = true;
+    if (!settings.color_zero.empty()) {
+      col0 = sfc::from_hexstring(settings.color_zero);
+      col0_forced = true;
     }
 
   } catch (const std::exception& e) {
@@ -124,17 +122,16 @@ int superfamiconv(int argc, char* argv[]) {
       if (verbose) fmt::print("Mapping optimized palette ({}x{} entries for {}x{} tiles)\n",
                               palette_count, colors_per_palette, settings.tile_w, settings.tile_h);
 
+      // set color-zero mode
       palette = sfc::Palette(settings.mode, palette_count, colors_per_palette);
 
-      rgba_t color_zero = settings.forced_zero ? settings.color_zero : in_image.crop(0, 0, 1, 1).rgba_data()[0];
-      if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(color_zero, true, true));
-      palette.add(color_zero);
+      col0 = col0_forced ? col0 : in_image.crop(0, 0, 1, 1).rgba_data()[0];
+      if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(col0, true, true));
+      palette.add(col0);
 
       palette.add(in_image.image_crops(settings.tile_w, settings.tile_h));
-
-      if (verbose) fmt::print("Generated palette with {}\n", palette.description());
-
       palette.sort();
+      if (verbose) fmt::print("Generated palette with {}\n", palette.description());
     }
 
     // Make tileset

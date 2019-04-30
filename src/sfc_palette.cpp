@@ -22,21 +22,21 @@ struct Settings {
   unsigned tile_w;
   unsigned tile_h;
   bool no_remap;
-  bool forced_zero;
-  rgba_t color_zero;
+  std::string color_zero;
 };
 };
 
 int sfc_palette(int argc, char* argv[]) {
   SfcPalette::Settings settings = {};
   bool verbose = false;
+  bool col0_forced = false;
+  rgba_t col0 = 0;
 
   try {
     bool help = false;
     bool license = false;
-    bool dummy = false;
     std::string mode_str;
-    std::string czero_str;
+    bool dummy = false;
 
     Options options;
     options.IndentDescription = sfc::Constants::options_indent;
@@ -65,7 +65,7 @@ int sfc_palette(int argc, char* argv[]) {
     options.Add(settings.tile_w,             'W', "tile-width",     "Tile width",                       unsigned(8),         "Settings");
     options.Add(settings.tile_h,             'H', "tile-height",    "Tile height",                      unsigned(8),         "Settings");
     options.AddSwitch(settings.no_remap,     'R', "no-remap",       "Don't remap colors",               false,               "Settings");
-    options.Add(czero_str,                   '0', "color-zero",     "Set color #0 <default: color at 0,0>", std::string(),   "Settings");
+    options.Add(settings.color_zero,         '0', "color-zero",     "Set color #0 <default: color at 0,0>", std::string(),   "Settings");
 
     options.AddSwitch(verbose, 'v', "verbose", "Verbose logging", false, "_");
 #ifndef SFC_MONOLITH
@@ -89,16 +89,14 @@ int sfc_palette(int argc, char* argv[]) {
 
     settings.mode = sfc::mode(mode_str);
 
-    if (!czero_str.empty()) {
-      settings.color_zero = sfc::from_hexstring(czero_str);
-      settings.forced_zero = true;
-    }
+    // Mode-specific defaults
+    if (!options.WasSet("palettes")) settings.palettes = sfc::max_palette_count_for_mode(settings.mode);
+    if (!options.WasSet("colors")) settings.colors = sfc::palette_size_at_bpp(sfc::default_bpp_for_mode(settings.mode));
 
-    if (settings.mode == sfc::Mode::snes_mode7 && settings.palettes > 1) {
-      settings.palettes = 1;
-      if (verbose) fmt::print("Multiple palettes not available for snes_mode7: defaulting to 1\n");
+    if (!settings.color_zero.empty()) {
+      col0 = sfc::from_hexstring(settings.color_zero);
+      col0_forced = true;
     }
-
 
   } catch (const std::exception& e) {
     fmt::print(stderr, "Error: {}\n", e.what());
@@ -126,9 +124,9 @@ int sfc_palette(int argc, char* argv[]) {
 
       palette = sfc::Palette(settings.mode, settings.palettes, settings.colors);
 
-      rgba_t color_zero = settings.forced_zero ? settings.color_zero : image.crop(0, 0, 1, 1).rgba_data()[0];
-      if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(color_zero, true, true));
-      palette.add(color_zero);
+      col0 = col0_forced ? col0 : image.crop(0, 0, 1, 1).rgba_data()[0];
+      if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(col0, true, true));
+      palette.add(col0);
 
       palette.add(image.image_crops(settings.tile_w, settings.tile_h));
     }
