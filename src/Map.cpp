@@ -86,14 +86,28 @@ void Map::save(const std::string& path, bool column_order, unsigned split_w, uns
 const std::string Map::to_json(bool column_order, unsigned split_w, unsigned split_h) const {
   nlohmann::json j;
   auto vmm = collect_entries(column_order, split_w, split_h);
+
   for (auto& vm : vmm) {
     nlohmann::json ja = nlohmann::json::array();
-    for (auto& m : vm) {
-      ja.push_back({{"tile", m.tile_index},
-                    {"palette", m.palette_index},
-                    {"flip_h", (int)m.flip_h},
-                    {"flip_v", (int)m.flip_v}});
+
+    if (tile_flipping_allowed_for_mode(_mode) && max_palette_count_for_mode(_mode) > 1) {
+      for (auto& m : vm) {
+        ja.push_back({{"tile", m.tile_index}, {"palette", m.palette_index}, {"flip_h", (int)m.flip_h}, {"flip_v", (int)m.flip_v}});
+      }
+    } else if (tile_flipping_allowed_for_mode(_mode)) {
+      for (auto& m : vm) {
+        ja.push_back({{"tile", m.tile_index}, {"flip_h", (int)m.flip_h}, {"flip_v", (int)m.flip_v}});
+      }
+    } else if (max_palette_count_for_mode(_mode) > 1) {
+      for (auto& m : vm) {
+        ja.push_back({{"tile", m.tile_index}, {"palette", m.palette_index}});
+      }
+    } else {
+      for (auto& m : vm) {
+        ja.push_back({{"tile", m.tile_index}});
+      }
     }
+
     if (vmm.size() > 1) {
       j["maps"].emplace_back(ja);
     } else {
