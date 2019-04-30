@@ -11,26 +11,26 @@
 #include "Tiles.h"
 
 namespace SfcMap {
-struct Settings {
-  std::string in_image;
-  std::string in_palette;
-  std::string in_tileset;
-  std::string out_data;
-  std::string out_json;
-  std::string out_m7_data;
-  std::string out_gbc_bank;
+  struct Settings {
+    std::string in_image;
+    std::string in_palette;
+    std::string in_tileset;
+    std::string out_data;
+    std::string out_json;
+    std::string out_m7_data;
+    std::string out_gbc_bank;
 
-  sfc::Mode mode;
-  unsigned bpp;
-  unsigned tile_w;
-  unsigned tile_h;
-  bool no_flip;
-  unsigned map_w;
-  unsigned map_h;
-  unsigned map_split_w;
-  unsigned map_split_h;
-  bool column_order;
-};
+    sfc::Mode mode;
+    unsigned bpp;
+    unsigned tile_w;
+    unsigned tile_h;
+    bool no_flip;
+    unsigned map_w;
+    unsigned map_h;
+    unsigned map_split_w;
+    unsigned map_split_h;
+    bool column_order;
+  };
 };
 
 int sfc_map(int argc, char* argv[]) {
@@ -39,23 +39,12 @@ int sfc_map(int argc, char* argv[]) {
 
   try {
     bool help = false;
-    bool license = false;
     bool dummy = false;
     std::string mode_str;
 
     Options options;
     options.IndentDescription = sfc::Constants::options_indent;
-
-#ifdef SFC_MONOLITH
-    int min_args = 2;
-    options.Header =
-      "Usage: superfamiconv map [<options>]\n";
-#else
-    int min_args = 1;
-    options.Header =
-      "SuperFamiconv/sfc_map - Create map data from palette and tiles\n"
-      "Usage: sfc_map [<options>]\n";
-#endif
+    options.Header = "Usage: superfamiconv map [<options>]\n";
 
     // clang-format off
     options.Add(settings.in_image,            'i', "in-image",       "Input: image");
@@ -78,22 +67,14 @@ int sfc_map(int argc, char* argv[]) {
     options.AddSwitch(settings.column_order, '\0', "column-order",   "Output data in column-major order",          false,       "Settings");
 
     options.AddSwitch(verbose, 'v', "verbose", "Verbose logging", false, "_");
-#ifndef SFC_MONOLITH
-    options.AddSwitch(license, 'L', "license", "Show license",    false, "_");
-#endif
     options.AddSwitch(help,    'h', "help",    "Show this help",  false, "_");
 
     options.AddSwitch(help,    '?', std::string(), std::string(), false);
     options.AddSwitch(dummy,   '9', std::string(), std::string(), false);
     // clang-format on
 
-    if (argc <= min_args || !options.Parse(argc, argv) || help) {
+    if (argc <= 2 || !options.Parse(argc, argv) || help) {
       fmt::print(options.Usage());
-      return 0;
-    }
-
-    if (license) {
-      fmt::print("\nSuperFamiconv/sfc_map {}\n{}\n\n{}\n", sfc::VERSION, sfc::COPYRIGHT, sfc::LICENSE);
       return 0;
     }
 
@@ -170,9 +151,3 @@ int sfc_map(int argc, char* argv[]) {
 
   return 0;
 }
-
-#ifndef SFC_MONOLITH
-int main(int argc, char* argv[]) {
-  return sfc_map(argc, argv);
-}
-#endif
