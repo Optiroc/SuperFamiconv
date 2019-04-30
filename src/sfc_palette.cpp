@@ -54,16 +54,16 @@ int sfc_palette(int argc, char* argv[]) {
     options.Add(settings.tile_w,             'W', "tile-width",     "Tile width",                       unsigned(8),         "Settings");
     options.Add(settings.tile_h,             'H', "tile-height",    "Tile height",                      unsigned(8),         "Settings");
     options.AddSwitch(settings.no_remap,     'R', "no-remap",       "Don't remap colors",               false,               "Settings");
-    options.Add(settings.color_zero,         '0', "color-zero",     "Set color #0 <default: color at 0,0>", std::string(),   "Settings");
+    options.Add(settings.color_zero,         '0', "color-zero",     "Set color #0",                     std::string(),       "Settings");
 
-    options.AddSwitch(verbose, 'v', "verbose", "Verbose logging", false, "_");
-    options.AddSwitch(help,    'h', "help",    "Show this help",  false, "_");
-
-    options.AddSwitch(help,    '?', std::string(), std::string(), false);
-    options.AddSwitch(dummy,   '9', std::string(), std::string(), false);
+    options.AddSwitch(verbose,               'v', "verbose",        "Verbose logging", false, "_");
+    options.AddSwitch(help,                  'h', "help",           "Show this help",  false, "_");
+    options.AddSwitch(dummy,                 '9', std::string(),    std::string(),     false);
     // clang-format on
 
-    if (argc <= 2 || !options.Parse(argc, argv) || help) {
+    if (!options.Parse(argc, argv)) return 1;
+
+    if (argc <= 2 || help) {
       fmt::print(options.Usage());
       return 0;
     }

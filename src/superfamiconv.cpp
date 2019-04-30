@@ -26,11 +26,10 @@ struct Settings {
   unsigned bpp;
   unsigned tile_w;
   unsigned tile_h;
-  unsigned map_w;
-  unsigned map_h;
 
   bool no_discard;
   bool no_flip;
+  bool sprite_mode;
   std::string color_zero;
 };
 
@@ -67,22 +66,21 @@ int superfamiconv(int argc, char* argv[]) {
 
     options.Add(mode_str,                    'M', "mode",              "Mode",                              std::string("snes"), "Settings");
     options.Add(settings.bpp,                'B', "bpp",               "Bits per pixel",                    unsigned(4),         "Settings");
-    options.Add(settings.tile_w,            '\0', "tile-width",        "Tile width",                        unsigned(8),         "Settings");
-    options.Add(settings.tile_h,            '\0', "tile-height",       "Tile height",                       unsigned(8),         "Settings");
-    options.Add(settings.map_w,             '\0', "map-width",         "Map width (in tiles) <default: inferred>",  unsigned(0), "Settings");
-    options.Add(settings.map_h,             '\0', "map-height",        "Map height (in tiles) <default: inferred>", unsigned(0), "Settings");
+    options.Add(settings.tile_w,             'W', "tile-width",        "Tile width",                        unsigned(8),         "Settings");
+    options.Add(settings.tile_h,             'H', "tile-height",       "Tile height",                       unsigned(8),         "Settings");
+    options.AddSwitch(settings.no_discard,   'D', "no-discard",        "Don't discard redundant tiles",     false,               "Settings");
+    options.AddSwitch(settings.no_flip,      'F', "no-flip",           "Don't discard using tile flipping", false,               "Settings");
+    options.AddSwitch(settings.sprite_mode,  'S', "sprite-mode",       "Apply sprite output settings",      false,               "Settings");
+    options.Add(settings.color_zero,        '\0', "color-zero",        "Set color #0", std::string(),                            "Settings");
 
-    options.AddSwitch(settings.no_discard,  '\0', "no-discard",        "Don't discard redundant tiles",        false,            "Settings");
-    options.AddSwitch(settings.no_flip,     '\0', "no-flip",           "Don't discard using tile flipping",    false,            "Settings");
-    options.Add(settings.color_zero,        '\0', "color-zero",        "Set color #0 <default: color at 0,0>", std::string(),    "Settings");
-
-    options.AddSwitch(verbose, 'v', "verbose", "Verbose logging", false, "_");
-    options.AddSwitch(license, 'L', "license", "Show license",    false, "_");
-    options.AddSwitch(help,    'h', "help",    "Show this help",  false, "_");
-    options.AddSwitch(help,    '?', std::string(), std::string(), false);
+    options.AddSwitch(verbose,               'v', "verbose",           "Verbose logging", false, "_");
+    options.AddSwitch(license,               'l', "license",           "Show licenses",   false, "_");
+    options.AddSwitch(help,                  'h', "help",              "Show this help",  false, "_");
     // clang-format on
 
-    if (argc <= 1 || !options.Parse(argc, argv) || help) {
+    if (!options.Parse(argc, argv)) return 1;
+
+    if (argc <= 1 || help) {
       fmt::print(options.Usage());
       return 0;
     }
@@ -97,6 +95,12 @@ int superfamiconv(int argc, char* argv[]) {
     // Mode-specific defaults
     if (!options.WasSet("bpp")) settings.bpp = sfc::default_bpp_for_mode(settings.mode);
     if (!options.WasSet("no-flip")) settings.no_flip = !sfc::tile_flipping_allowed_for_mode(settings.mode);
+
+    // Sprite mode
+    if (settings.sprite_mode) {
+      settings.no_discard = settings.no_flip = true;
+      // TODO: For Mode::gbc set common col0 transparency
+    }
 
     if (!settings.color_zero.empty()) {
       col0 = sfc::from_hexstring(settings.color_zero);
@@ -152,20 +156,20 @@ int superfamiconv(int argc, char* argv[]) {
     }
 
     // Make map
-    if (settings.map_w == 0) settings.map_w = sfc::div_ceil(in_image.width(), settings.tile_w);
-    if (settings.map_h == 0) settings.map_h = sfc::div_ceil(in_image.height(), settings.tile_h);
+    unsigned map_width = sfc::div_ceil(in_image.width(), settings.tile_w);
+    unsigned map_height = sfc::div_ceil(in_image.height(), settings.tile_h);
 
-    if (settings.map_w * settings.tile_w != in_image.width() || settings.map_h * settings.tile_h != in_image.height()) {
-      in_image = in_image.crop(0, 0, settings.map_w * settings.tile_w, settings.map_h * settings.tile_h);
+    if (map_width * settings.tile_w != in_image.width() || map_height * settings.tile_h != in_image.height()) {
+      in_image = in_image.crop(0, 0, map_width * settings.tile_w, map_height * settings.tile_h);
     }
 
-    sfc::Map map(settings.mode, settings.map_w, settings.map_h);
+    sfc::Map map(settings.mode, map_width, map_height);
     {
       std::vector<sfc::Image> crops = in_image.crops(settings.tile_w, settings.tile_h);
       if (verbose) fmt::print("Mapping {} ({}x{}) image slices\n", crops.size(), settings.tile_w, settings.tile_h);
 
       for (unsigned i = 0; i < crops.size(); ++i) {
-        map.add(crops[i], tileset, palette, settings.bpp, i % settings.map_w, i / settings.map_w);
+        map.add(crops[i], tileset, palette, settings.bpp, i % map_width, i / map_width);
       }
     }
 
@@ -212,6 +216,7 @@ int superfamiconv(int argc, char* argv[]) {
 
 
 int main(int argc, char* argv[]) {
+  // If first argument is a subcommand, replace with dummy parameter and pass along
   if (argc > 1 && std::strcmp(argv[1], "palette") == 0) {
     std::strcpy(argv[1], "-9");
     return sfc_palette(argc, argv);

@@ -24,6 +24,7 @@ namespace SfcTiles {
     unsigned tile_w;
     unsigned tile_h;
     bool no_remap;
+    bool sprite_mode;
     unsigned max_tiles;
   };
 };
@@ -50,21 +51,22 @@ int sfc_tiles(int argc, char* argv[]) {
 
     options.Add(mode_str,                    'M', "mode",           "Mode",                              std::string("snes"), "Settings");
     options.Add(settings.bpp,                'B', "bpp",            "Bits per pixel",                    unsigned(4),         "Settings");
-    options.AddSwitch(settings.no_discard,   'D', "no-discard",     "Don't discard redundant tiles",     false,               "Settings");
-    options.AddSwitch(settings.no_flip,      'F', "no-flip",        "Don't discard using tile flipping", false,               "Settings");
     options.Add(settings.tile_w,             'W', "tile-width",     "Tile width",                        unsigned(8),         "Settings");
     options.Add(settings.tile_h,             'H', "tile-height",    "Tile height",                       unsigned(8),         "Settings");
     options.AddSwitch(settings.no_remap,     'R', "no-remap",       "Don't remap colors",                false,               "Settings");
+    options.AddSwitch(settings.no_discard,   'D', "no-discard",     "Don't discard redundant tiles",     false,               "Settings");
+    options.AddSwitch(settings.no_flip,      'F', "no-flip",        "Don't discard using tile flipping", false,               "Settings");
+    options.AddSwitch(settings.sprite_mode,  'S', "sprite-mode",    "Apply sprite output settings",      false,               "Settings");
     options.Add(settings.max_tiles,          'T', "max-tiles",      "Maximum number of tiles",           unsigned(),          "Settings");
 
-    options.AddSwitch(verbose, 'v', "verbose", "Verbose logging", false, "_");
-    options.AddSwitch(help,    'h', "help",    "Show this help",  false, "_");
-
-    options.AddSwitch(help,    '?', std::string(), std::string(), false);
-    options.AddSwitch(dummy,   '9', std::string(), std::string(), false);
+    options.AddSwitch(verbose,               'v', "verbose",        "Verbose logging", false, "_");
+    options.AddSwitch(help,                  'h', "help",           "Show this help",  false, "_");
+    options.AddSwitch(dummy,                 '9', std::string(),    std::string(),     false);
     // clang-format on
 
-    if (argc <= 2 || !options.Parse(argc, argv) || help) {
+    if (!options.Parse(argc, argv)) return 1;
+
+    if (argc <= 2 || help) {
       fmt::print(options.Usage());
       return 0;
     }
@@ -74,6 +76,12 @@ int sfc_tiles(int argc, char* argv[]) {
     // Mode-specific defaults
     if (!options.WasSet("bpp")) settings.bpp = sfc::default_bpp_for_mode(settings.mode);
     if (!options.WasSet("no-flip")) settings.no_flip = !sfc::tile_flipping_allowed_for_mode(settings.mode);
+
+    // Sprite mode
+    if (settings.sprite_mode) {
+      settings.no_discard = settings.no_flip = true;
+      // TODO: For Mode::gbc set common col0 transparency
+    }
 
     if (!sfc::bpp_allowed_for_mode(settings.bpp, settings.mode)) throw std::runtime_error("bpp setting not allowed for specified mode");
 

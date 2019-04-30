@@ -60,20 +60,20 @@ int sfc_map(int argc, char* argv[]) {
     options.Add(settings.tile_w,              'W', "tile-width",     "Tile width",                        unsigned(8),          "Settings");
     options.Add(settings.tile_h,              'H', "tile-height",    "Tile height",                       unsigned(8),          "Settings");
     options.AddSwitch(settings.no_flip,       'F', "no-flip",        "Don't use flipped tiles",           false,                "Settings");
-    options.Add(settings.map_w,              '\0', "map-width",      "Map width (in tiles) <default: inferred>",   unsigned(0), "Settings");
-    options.Add(settings.map_h,              '\0', "map-height",     "Map height (in tiles) <default: inferred>",  unsigned(0), "Settings");
+    options.Add(settings.map_w,              '\0', "map-width",      "Map width (in tiles)",              unsigned(0),          "Settings");
+    options.Add(settings.map_h,              '\0', "map-height",     "Map height (in tiles)",             unsigned(0),          "Settings");
     options.Add(settings.map_split_w,        '\0', "split-width",    "Split output into columns of <tiles> width", unsigned(0), "Settings");
     options.Add(settings.map_split_h,        '\0', "split-height",   "Split output into rows of <tiles> height",   unsigned(0), "Settings");
     options.AddSwitch(settings.column_order, '\0', "column-order",   "Output data in column-major order",          false,       "Settings");
 
-    options.AddSwitch(verbose, 'v', "verbose", "Verbose logging", false, "_");
-    options.AddSwitch(help,    'h', "help",    "Show this help",  false, "_");
-
-    options.AddSwitch(help,    '?', std::string(), std::string(), false);
-    options.AddSwitch(dummy,   '9', std::string(), std::string(), false);
+    options.AddSwitch(verbose,                'v', "verbose",        "Verbose logging", false, "_");
+    options.AddSwitch(help,                   'h', "help",           "Show this help",  false, "_");
+    options.AddSwitch(dummy,                  '9', std::string(),    std::string(),     false);
     // clang-format on
 
-    if (argc <= 2 || !options.Parse(argc, argv) || help) {
+    if (!options.Parse(argc, argv)) return 1;
+
+    if (argc <= 2 || help) {
       fmt::print(options.Usage());
       return 0;
     }
