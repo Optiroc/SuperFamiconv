@@ -644,8 +644,11 @@ inline rgba_t from_hexstring(const std::string& str) {
   if (s.size() == 6) s.insert(6, 2, 'f');
   if (s.size() != 8) throw std::runtime_error("Argument color-zero not a 6 or 8 character hex-string");
   uint32_t i;
-  sscanf(str.c_str(), "%x", &i);
-  return reverse_bytes(i);
+  if (sscanf(s.c_str(), "%x", &i) == 1) {
+    return reverse_bytes(i);
+  } else {
+    throw std::runtime_error("Failed to interpret argument color-zero");
+  };
 }
 
 //
