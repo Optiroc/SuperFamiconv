@@ -775,4 +775,40 @@ bool has_superset(const std::set<T> set, const std::vector<std::set<T>> super) {
   return false;
 }
 
+struct combinations
+{
+  typedef std::vector<int> combination_t;
+
+  combinations(int N, int R)
+  : completed(N < 1 || R > N),
+    generated(0),
+    N(N), R(R)
+  {
+    for (int c = 1; c <= R; ++c) curr.push_back(c);
+  }
+
+  bool completed;
+  int generated;
+
+  combination_t next() {
+    combination_t ret = curr;
+
+    completed = true;
+    for (int i = R - 1; i >= 0; --i)
+      if (curr[i] < N - R + i + 1) {
+        int j = curr[i] + 1;
+        while (i <= R-1)
+          curr[i++] = j++;
+        completed = false;
+        ++generated;
+        break;
+      }
+    return ret;
+  }
+
+private:
+  int N, R;
+  combination_t curr;
+};
+
 } /* namespace sfc */

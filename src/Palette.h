@@ -88,6 +88,7 @@ private:
   unsigned subpalettes_free() const { return _max_subpalettes - (unsigned)_subpalettes.size(); }
 
   const color_set_vect optimized_palettes(const color_set_vect& colors) const;
+  const color_set_vect exhaustive_palettes(const color_set_vect& colors, unsigned depth = 0) const;
 };
 
 } /* namespace sfc */

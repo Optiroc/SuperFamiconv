@@ -322,4 +322,74 @@ const color_set_vect Palette::optimized_palettes(const color_set_vect& colors) c
   return opt;
 }
 
+// exhaustively search for optimal palette
+// based on algorithm used in cgb_prep.py by David Revelj
+const color_set_vect Palette::exhaustive_palettes(const color_set_vect& colors, unsigned depth) const {
+
+  auto filter_subsets = [](const color_set_vect& v) {
+    auto n = color_set_vect();
+    for (auto& s : v) if (!has_superset(s, v)) n.push_back(s);
+    return n;
+  };
+
+  auto filter_redundant = [](const color_set_vect& v) {
+    auto n = color_set_vect();
+    for (auto& s : v) {
+      if (s.size() < 1) continue;
+      if (std::find(n.begin(), n.end(), s) == n.end()) n.push_back(s);
+    }
+    return n;
+  };
+
+  auto filter_impossible = [&](const color_set_vect& v) {
+    auto n = color_set_vect();
+    for (auto& s : v) if (s.size() <= _max_colors_per_subpalette) n.push_back(s);
+    return n;
+  };
+
+  auto get_nonfull = [&](const color_set_vect& v) {
+    auto n = color_set_vect();
+    for (auto& s : v) if (s.size() < _max_colors_per_subpalette) n.push_back(s);
+    return n;
+  };
+
+  auto get_combinations = [&](const color_set_vect& v) {
+    auto n = color_set_vect();
+    combinations cs((unsigned)v.size(), 2);
+    while (!cs.completed) {
+      auto c = cs.next();
+      auto u = v[c[0] - 1];
+      u.insert(v[c[1] - 1].begin(), v[c[1] - 1].end());
+      n.push_back(u);
+    }
+    return n;
+  };
+
+  auto sets = filter_redundant(colors);
+  sets = filter_subsets(sets);
+
+  auto littletons = get_nonfull(sets);
+  if (littletons.size() < 2) return littletons;
+
+  auto combinations = get_combinations(littletons);
+  combinations = filter_impossible(combinations);
+  combinations = filter_redundant(combinations);
+  combinations = filter_subsets(combinations);
+
+  if (combinations.size() == 0) return sets;
+
+  auto new_sets = std::vector<color_set_vect>();
+  for (auto& c : combinations) {
+    auto sc = color_set_vect(sets);
+    sc.push_back(c);
+    new_sets.push_back(exhaustive_palettes(sc, depth + 1));
+  }
+
+  std::sort(new_sets.begin(), new_sets.end(), [](auto& a, auto& b) -> bool {
+    return a.size() > b.size();
+  });
+
+  return new_sets[0];
+}
+
 } /* namespace sfc */
