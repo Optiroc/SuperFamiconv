@@ -15,7 +15,6 @@
 #include <set>
 #include <stdexcept>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
 #include <fmt/format.h>
@@ -268,6 +267,19 @@ constexpr unsigned default_map_size_for_mode(Mode mode) {
   }
 }
 
+constexpr bool col0_is_shared_for_mode(Mode mode) {
+  switch (mode) {
+  case Mode::snes:
+  case Mode::snes_mode7:
+    return true;
+  case Mode::gb:
+  case Mode::gbc:
+    return false;
+  default:
+    return true;
+  }
+}
+
 constexpr unsigned max_palette_count_for_mode(Mode mode) {
   switch (mode) {
     case Mode::snes:
@@ -484,6 +496,12 @@ inline std::vector<rgba_t> reduce_colors(const std::vector<rgba_t>& colors, Mode
   auto vc = colors;
   for (rgba_t& color : vc) color = reduce_color(color, to_mode);
   return vc;
+}
+
+inline std::set<rgba_t> reduce_colors(const std::set<rgba_t>& colors, Mode to_mode) {
+  auto sc = std::set<rgba_t>();
+  for (const rgba_t& color : colors) sc.insert(reduce_color(color, to_mode));
+  return sc;
 }
 
 // scale color from system specific range to 8bpc RGBA range
@@ -733,6 +751,28 @@ std::vector<T> split_vector(const T& vect, unsigned split_size) {
     std::advance(it, num_to_copy);
   }
   return sv;
+}
+
+template <typename T>
+T vec_pop(std::vector<T>& v) {
+  if (!v.size()) throw std::range_error("vector empty");
+  T e = v.back();
+  v.pop_back();
+  return e;
+}
+
+template <typename T>
+bool is_subset(const std::set<T> set, const std::set<T> superset) {
+  return std::includes(superset.begin(), superset.end(), set.begin(), set.end());
+}
+
+template <typename T>
+bool has_superset(const std::set<T> set, const std::vector<std::set<T>> super) {
+  for (auto& cmp_set : super) {
+    if (cmp_set == set) continue;
+    if (is_subset(set, cmp_set)) return true;
+  }
+  return false;
 }
 
 } /* namespace sfc */

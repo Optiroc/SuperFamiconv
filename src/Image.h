@@ -67,7 +67,7 @@ struct ImageCrop final {
   ImageCrop(){};
   ImageCrop(const std::vector<rgba_t>& data, unsigned width, unsigned height, unsigned coord_x, unsigned coord_y)
   : pixels(data),
-    colors(std::unordered_set<rgba_t>(data.begin(), data.end())),
+    colors(std::set<rgba_t>(data.begin(), data.end())),
     _width(width), _height(height),
     _coord_x(coord_x), _coord_y(coord_y) {}
 
@@ -78,7 +78,7 @@ struct ImageCrop final {
   std::vector<rgba_t> colors_v() const { return std::vector<rgba_t>(colors.begin(), colors.end()); }
 
   std::vector<rgba_t> pixels;
-  std::unordered_set<rgba_t> colors;
+  std::set<rgba_t> colors;
 
 private:
   unsigned _width;

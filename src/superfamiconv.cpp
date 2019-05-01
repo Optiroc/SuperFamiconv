@@ -2,7 +2,9 @@
 //
 // david lindecrantz <optiroc@gmail.com>
 
+// TODO: Rename ImageCrop -> ImageTile
 // TODO: gbc sprite mode should set common color 0 transparency
+// TODO: Add --no-remap to "shorthand" mode
 // TODO: Check "shorthand" path for 16x16 tile conversion
 // TODO: Don't always pad native palette output? (Pad every palette but the last? Option?)
 
@@ -131,14 +133,16 @@ int superfamiconv(int argc, char* argv[]) {
       if (verbose) fmt::print("Mapping optimized palette ({}x{} entries for {}x{} tiles)\n",
                               palette_count, colors_per_palette, settings.tile_w, settings.tile_h);
 
-      // set color-zero mode
       palette = sfc::Palette(settings.mode, palette_count, colors_per_palette);
 
       col0 = col0_forced ? col0 : in_image.crop(0, 0, 1, 1).rgba_data()[0];
-      if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(col0, true, true));
-      palette.add(col0);
 
-      palette.add(in_image.image_crops(settings.tile_w, settings.tile_h));
+      if (col0_forced || sfc::col0_is_shared_for_mode(settings.mode)) {
+        if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(col0, true, true));
+        palette.set_col0(col0);
+      }
+
+      palette.add_tiles(in_image.image_crops(settings.tile_w, settings.tile_h));
       palette.sort();
       if (verbose) fmt::print("Generated palette with {}\n", palette.description());
     }
@@ -170,7 +174,7 @@ int superfamiconv(int argc, char* argv[]) {
     sfc::Map map(settings.mode, map_width, map_height);
     {
       std::vector<sfc::Image> crops = in_image.crops(settings.tile_w, settings.tile_h);
-      if (verbose) fmt::print("Mapping {} ({}x{}) image slices\n", crops.size(), settings.tile_w, settings.tile_h);
+      if (verbose) fmt::print("Mapping {} ({}x{}) tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
 
       for (unsigned i = 0; i < crops.size(); ++i) {
         map.add(crops[i], tileset, palette, settings.bpp, i % map_width, i / map_width);

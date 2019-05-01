@@ -9,6 +9,9 @@
 
 namespace sfc {
 
+typedef std::set<rgba_t> color_set;
+typedef std::vector<color_set> color_set_vect;
+
 struct Image;
 struct ImageCrop;
 
@@ -17,57 +20,19 @@ struct Subpalette final {
   : _mode(mode),
     _max_colors(max_colors){};
 
-  rgba_t color_at(unsigned index) const { return _colors[index]; }
-  const std::vector<rgba_t> colors() const { return _colors; }
   Mode mode() const { return _mode; }
-
-  unsigned size() const { return (unsigned)_colors.size(); }
-  unsigned capacity_left() const { return (unsigned)(_max_colors - _colors.size()); }
   bool is_full() const { return _colors.size() == _max_colors; }
 
-  const std::vector<rgba_t> get_normalized_colors() const { return normalize_colors(_colors, _mode); }
+  rgba_t color_at(unsigned index) const { return _colors[index]; }
+  const std::vector<rgba_t> colors() const { return _colors; }
+  const std::vector<rgba_t> normalized_colors() const { return normalize_colors(_colors, _mode); }
 
-  void add(rgba_t color, bool add_duplicates = false) {
-    if (add_duplicates) {
-      if (is_full()) throw std::runtime_error("Colors don't fit in palette");
-      _colors.push_back(color);
-    } else if (_colors_set.find(color) == _colors_set.end()) {
-      if (is_full()) throw std::runtime_error("Colors don't fit in palette");
-      _colors.push_back(color);
-    }
-    _colors_set.insert(color);
-  }
+  void add(rgba_t color, bool add_duplicates = false);
+  void add(const std::vector<rgba_t>& new_colors, bool add_duplicates = false, bool overwrite = false);
 
-  void add(const std::vector<rgba_t>& new_colors, bool add_duplicates = false, bool overwrite = false) {
-    if (overwrite) {
-      _colors.clear();
-      _colors_set.clear();
-    }
-    for (auto c : new_colors) add(c, add_duplicates);
-  }
-
-  Subpalette padded() const {
-    Subpalette sp = Subpalette(*this);
-    while (sp._colors.size() < sp._max_colors) sp.add(0, true);
-    return sp;
-  }
-
-  // number of colors in new_colors not in _colors
-  unsigned diff(const std::set<rgba_t>& new_colors) const {
-    std::set<rgba_t> ds;
-    std::set_difference(new_colors.begin(), new_colors.end(), _colors_set.begin(), _colors_set.end(), std::inserter(ds, ds.begin()));
-    return (unsigned)ds.size();
-  }
-
-  // sort colors, keeping color at index 0
-  void sort() {
-    if (_colors.size() < 3) return;
-    std::vector<rgba_t> vc(_colors.begin() + 1, _colors.end());
-    _colors.resize(1);
-    sort_colors(vc);
-    std::reverse(vc.begin(), vc.end());
-    _colors.insert(_colors.end(), vc.begin(), vc.end());
-  }
+  Subpalette padded() const;
+  unsigned diff(const std::set<rgba_t>& new_colors) const;
+  void sort();
 
 private:
   Mode _mode = Mode::snes;
@@ -91,14 +56,15 @@ struct Palette final {
   const std::vector<std::vector<rgba_t>> colors() const;
   const std::vector<std::vector<rgba_t>> normalized_colors() const;
 
-  void add(const rgba_t color);
-  void add(const std::vector<rgba_t>& colors);
-  void add(std::vector<sfc::ImageCrop>);
-  void add_noremap(const std::vector<rgba_t>& colors, bool reduce = true);
+  void set_col0(const rgba_t color) {
+    _col0 = color;
+    _col0_is_shared = true;
+  }
 
-  const Subpalette& subpalette_at(unsigned index) const;
+  void add_tiles(std::vector<sfc::ImageCrop>);
+  void add_colors(const std::vector<rgba_t>& colors, bool reduce_depth = true);
+
   int index_of(const Subpalette& subpalette) const;
-  Subpalette& first_nonempty_subpalette();
   const Subpalette& subpalette_matching(const Image& image) const;
   std::vector<const Subpalette*> subpalettes_matching(const Image& image) const;
 
@@ -115,9 +81,13 @@ private:
   unsigned _max_colors_per_subpalette = 0;
   std::vector<Subpalette> _subpalettes;
 
-  Subpalette& add_subpalette();
+  rgba_t _col0 = 0;
+  bool _col0_is_shared = false;
 
-  inline unsigned subpalettes_free() const { return _max_subpalettes - (unsigned)_subpalettes.size(); }
+  Subpalette& add_subpalette();
+  unsigned subpalettes_free() const { return _max_subpalettes - (unsigned)_subpalettes.size(); }
+
+  const color_set_vect optimized_palettes(const color_set_vect& colors) const;
 };
 
 } /* namespace sfc */

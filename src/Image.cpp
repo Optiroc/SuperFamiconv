@@ -113,7 +113,7 @@ Image::Image(const sfc::Tileset& tileset) {
 // Make new normalized image with color indices mapped to palette
 Image::Image(const Image& image, const sfc::Subpalette& subpalette)
 : _width(image.width()), _height(image.height()),
-  _palette(subpalette.get_normalized_colors())
+  _palette(subpalette.normalized_colors())
 {
   if (_palette.empty()) throw std::runtime_error("No colors");
 

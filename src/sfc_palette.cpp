@@ -97,7 +97,7 @@ int sfc_palette(int argc, char* argv[]) {
       if (verbose) fmt::print("Mapping palette straight from indexed color image\n");
 
       palette = sfc::Palette(settings.mode, 1, (unsigned)image.palette_size());
-      palette.add_noremap(image.palette());
+      palette.add_colors(image.palette());
 
     } else {
       if (verbose) fmt::print("Mapping optimized palette ({}x{} entries for {}x{} tiles)\n",
@@ -106,10 +106,13 @@ int sfc_palette(int argc, char* argv[]) {
       palette = sfc::Palette(settings.mode, settings.palettes, settings.colors);
 
       col0 = col0_forced ? col0 : image.crop(0, 0, 1, 1).rgba_data()[0];
-      if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(col0, true, true));
-      palette.add(col0);
 
-      palette.add(image.image_crops(settings.tile_w, settings.tile_h));
+      if (col0_forced || sfc::col0_is_shared_for_mode(settings.mode)) {
+        if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(col0, true, true));
+        palette.set_col0(col0);
+      }
+
+      palette.add_tiles(image.image_crops(settings.tile_w, settings.tile_h));
     }
 
     if (verbose) fmt::print("Generated palette with {}\n", palette.description());

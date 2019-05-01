@@ -115,7 +115,7 @@ int sfc_map(int argc, char* argv[]) {
     if (verbose) fmt::print("Loaded tiles from \"{}\" ({} tiles)\n", settings.in_tileset, tileset.size());
 
     std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
-    if (verbose) fmt::print("Mapping {} ({}x{}) image slices\n", crops.size(), settings.tile_w, settings.tile_h);
+    if (verbose) fmt::print("Mapping {} ({}x{}) tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
 
     sfc::Map map(settings.mode, settings.map_w, settings.map_h);
     for (unsigned i = 0; i < crops.size(); ++i) {

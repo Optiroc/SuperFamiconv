@@ -25,7 +25,6 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
-#include <unordered_set>
 #include <vector>
 
 class Options {
@@ -49,7 +48,7 @@ private:
     std::vector<struct option> options;
     std::map<int, std::function<void(std::string)>> setters;
     std::map<std::string, std::vector<std::string>> usage;
-    std::unordered_set<int> was_set;
+    std::set<int> was_set;
 
     int optval;
     std::string optstr;

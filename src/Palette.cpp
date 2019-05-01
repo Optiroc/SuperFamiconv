@@ -2,6 +2,52 @@
 
 namespace sfc {
 
+// add color
+void Subpalette::add(rgba_t color, bool add_duplicates) {
+  if (add_duplicates) {
+    if (is_full()) throw std::runtime_error("Colors don't fit in palette");
+    _colors.push_back(color);
+  } else if (_colors_set.find(color) == _colors_set.end()) {
+    if (is_full()) throw std::runtime_error("Colors don't fit in palette");
+    _colors.push_back(color);
+  }
+  _colors_set.insert(color);
+}
+
+// add vector of colors
+void Subpalette::add(const std::vector<rgba_t>& new_colors, bool add_duplicates, bool overwrite) {
+  if (overwrite) {
+    _colors.clear();
+    _colors_set.clear();
+  }
+  for (auto c : new_colors) add(c, add_duplicates);
+}
+
+// return subpalette padded to max_color count
+Subpalette Subpalette::padded() const {
+  Subpalette sp = Subpalette(*this);
+  while (sp._colors.size() < sp._max_colors) sp.add(0, true);
+  return sp;
+}
+
+// number of colors in new_colors not in subpalette
+unsigned Subpalette::diff(const std::set<rgba_t>& new_colors) const {
+  std::set<rgba_t> ds;
+  std::set_difference(new_colors.begin(), new_colors.end(), _colors_set.begin(), _colors_set.end(), std::inserter(ds, ds.begin()));
+  return (unsigned)ds.size();
+}
+
+// sort colors, keeping color at index 0
+void Subpalette::sort() {
+  if (_colors.size() < 3) return;
+  std::vector<rgba_t> vc(_colors.begin() + 1, _colors.end());
+  _colors.resize(1);
+  sort_colors(vc);
+  std::reverse(vc.begin(), vc.end());
+  _colors.insert(_colors.end(), vc.begin(), vc.end());
+}
+
+
 // construct Palette by deserializing json or binary
 Palette::Palette(const std::string& path, Mode in_mode, uint32_t colors_per_subpalette) {
   _mode = in_mode;
@@ -17,11 +63,11 @@ Palette::Palette(const std::string& path, Mode in_mode, uint32_t colors_per_subp
       for (auto jcs : jsp)
         if (jcs.is_string()) colors.push_back(reduce_color(from_hexstring(jcs), in_mode));
       if (colors.size() > _max_colors_per_subpalette) throw std::runtime_error("Palette in JSON doesn't match color depth / colors per subpalette");
-      add_noremap(colors, false);
+      add_colors(colors, false);
     }
   } catch (...) {
     // load binary
-    add_noremap(unpack_native_colors(read_binary(path), in_mode), false);
+    add_colors(unpack_native_colors(read_binary(path), in_mode), false);
   }
 
   if (_subpalettes.empty()) throw std::runtime_error("No palette data in JSON");
@@ -32,7 +78,7 @@ Palette::Palette(const std::vector<uint8_t>& native_data, Mode in_mode, unsigned
   _mode = in_mode;
   _max_colors_per_subpalette = colors_per_subpalette;
   _max_subpalettes = max_palette_count_for_mode(_mode);
-  add_noremap(unpack_native_colors(native_data, in_mode), false);
+  add_colors(unpack_native_colors(native_data, in_mode), false);
 }
 
 
@@ -43,6 +89,7 @@ const std::vector<std::vector<rgba_t>> Palette::colors() const {
   return v;
 }
 
+// get colors normalized to RGBA8888 range
 const std::vector<std::vector<rgba_t>> Palette::normalized_colors() const {
   auto v = colors();
   for (auto& i : v) i = normalize_colors(i, _mode);
@@ -50,71 +97,51 @@ const std::vector<std::vector<rgba_t>> Palette::normalized_colors() const {
 }
 
 
-// add colors
-void Palette::add(const rgba_t color) {
-  std::vector<rgba_t> v = {color};
-  add(v);
-}
+// add optimized subpalettes containing colors in palette_tiles
+void Palette::add_tiles(std::vector<sfc::ImageCrop> palette_tiles) {
 
-// add colors by appending to first subpalette with enough free colors
-void Palette::add(const std::vector<rgba_t>& colors) {
-  auto rc = reduce_colors(colors, _mode);
+  // make vector of sets of all tiles' colors
+  color_set_vect palettes = color_set_vect();
+  for (auto& c : palette_tiles) {
 
-  if (!_subpalettes.size()) {
-    // always add initial color
-    Subpalette& new_sp = add_subpalette();
-    new_sp.add(rc);
-    return;
-  }
+    if (c.colors.size() > _max_colors_per_subpalette) {
+      fmt::print("Tile [{},{}] has more than the allowed number of colors (at {},{} in source image)\n",
+                 (unsigned)(c.coord_x() / c.width()), (unsigned)(c.coord_y() / c.height()), c.coord_x(), c.coord_y());
+    }
 
-  std::set<rgba_t> cs(rc.begin(), rc.end());
-  cs.erase(transparent_color);
-  if (cs.size() > _max_colors_per_subpalette) throw std::runtime_error("Colors don't fit in palette");
-
-  Subpalette* best_candidate = nullptr;
-  unsigned best_diff = UINT_MAX;
-  for (Subpalette& sp : _subpalettes) {
-    unsigned diff = sp.diff(cs);
-    if (diff > 0 && sp.is_full()) continue;
-    if (diff < best_diff && diff <= sp.capacity_left()) {
-      best_diff = diff;
-      best_candidate = &sp;
+    if (_col0_is_shared) {
+      auto colors = c.colors;
+      colors.insert(_col0);
+      palettes.push_back(reduce_colors(colors, _mode));
+    } else {
+      palettes.push_back(reduce_colors(c.colors, _mode));
     }
   }
 
-  if (best_diff == 0) {
-    return;
-  } else if (!best_candidate || best_candidate->is_full()) {
-    Subpalette& new_sp = add_subpalette();
-    new_sp.add(std::vector<rgba_t>(cs.begin(), cs.end()));
-  } else {
-    best_candidate->add(std::vector<rgba_t>(cs.begin(), cs.end()));
-  }
-}
+  // optimize
+  auto optimized = optimized_palettes(palettes);
 
-void Palette::add(std::vector<sfc::ImageCrop> palette_tiles) {
-  unsigned palette_errors = 0;
+  // TODO: if throw iterate all palette_tiles and report positions
+  if (optimized.size() > _max_subpalettes)
+    throw std::runtime_error("Colors in image do not fit in available palettes. Aborting.");
 
-  std::sort(palette_tiles.begin(), palette_tiles.end(), [](const sfc::ImageCrop& a, const sfc::ImageCrop& b) -> bool {
-    return a.colors.size() > b.colors.size();
-  });
+  // add subpalettes
+  for (auto& cs : optimized) {
+    auto& sp = add_subpalette();
+    std::vector<rgba_t> cv(cs.begin(), cs.end());
 
-  for (auto& t : palette_tiles) {
-    try {
-      add(t.colors_v());
-    } catch (...) {
-      fmt::print("Can't fit colors for tile [{},{}] in available palettes (at {},{} in source image)\n",
-                 (unsigned)(t.coord_x() / t.width()), (unsigned)(t.coord_y() / t.height()), t.coord_x(), t.coord_y());
-      ++palette_errors;
+    if (_col0_is_shared) {
+      auto p = std::find(cv.begin(), cv.end(), reduce_color(_col0, _mode));
+      if (p != cv.end()) std::iter_swap(p, cv.begin());
     }
-  }
 
-  if (palette_errors > 0) throw std::runtime_error("Colors in image do not fit in available palettes. Aborting.");
+    sp.add(cv);
+  }
 }
 
-void Palette::add_noremap(const std::vector<rgba_t>& colors, bool reduce) {
+void Palette::add_colors(const std::vector<rgba_t>& colors, bool reduce_depth) {
   auto rc = colors;
-  if (reduce) rc = reduce_colors(rc, _mode);
+  if (reduce_depth) rc = reduce_colors(rc, _mode);
   auto splits = split_vector(rc, _max_colors_per_subpalette);
   for (auto& sv : splits) {
     Subpalette sp(_mode, _max_colors_per_subpalette);
@@ -124,21 +151,11 @@ void Palette::add_noremap(const std::vector<rgba_t>& colors, bool reduce) {
 }
 
 
-const Subpalette& Palette::subpalette_at(unsigned index) const {
-  if (index > _subpalettes.size()) throw std::runtime_error("Subpalette doesn't exist");
-  return _subpalettes.at(index);
-}
-
 int Palette::index_of(const Subpalette& subpalette) const {
   for (int i = 0; i < (int)_subpalettes.size(); ++i) {
     if (subpalette.colors() == _subpalettes[i].colors()) return i;
   }
   return -1;
-}
-
-Subpalette& Palette::first_nonempty_subpalette() {
-  if (_subpalettes.empty() || _subpalettes[_subpalettes.size() - 1].is_full()) return add_subpalette();
-  return _subpalettes[_subpalettes.size() - 1];
 }
 
 // get first subpalette containing all colors in image
@@ -230,7 +247,7 @@ void Palette::save_act(const std::string& path) const {
 
   for (auto& sp : _subpalettes) {
     Subpalette spp = sp.padded();
-    std::vector<rgba_t> colors = spp.get_normalized_colors();
+    std::vector<rgba_t> colors = spp.normalized_colors();
     for (auto c : colors) {
       rgba_color rgba(c);
       data[count * 3 + 0] = rgba.r;
@@ -252,14 +269,57 @@ Subpalette& Palette::add_subpalette() {
   if (_max_subpalettes - _subpalettes.size() == 0) throw std::runtime_error("Colors don't fit in palette");
   _subpalettes.emplace_back(Subpalette(_mode, _max_colors_per_subpalette));
   Subpalette& sp = _subpalettes.back();
+  return sp;
+}
 
-  // if applicable, add color 0 from first palette to any subsequent palettes
-  // TODO: add gbc sprite flag
-  if (_mode == Mode::snes || _mode == Mode::snes_mode7) {
-    if (_subpalettes.size() > 1 && _subpalettes[0].size() > 0) sp.add(_subpalettes[0].color_at(0));
+// functional form of old simple palette optimizer
+const color_set_vect Palette::optimized_palettes(const color_set_vect& colors) const {
+
+  auto filter_subsets = [](const color_set_vect& v) {
+    auto n = color_set_vect();
+    for (auto& s : v) if (!has_superset(s, v)) n.push_back(s);
+    return n;
+  };
+
+  auto filter_redundant = [](const color_set_vect& v) {
+    auto n = color_set_vect();
+    for (auto& s : v) {
+      if (s.size() < 1) continue;
+      if (std::find(n.begin(), n.end(), s) == n.end()) n.push_back(s);
+    }
+    return n;
+  };
+
+  auto best_fit = [&](const color_set& s, const color_set_vect& v) {
+    int best = -1;
+    unsigned i = 0;
+    for (auto& cs : v) {
+      color_set d;
+      std::set_difference(s.begin(), s.end(), cs.begin(), cs.end(), std::inserter(d, d.begin()));
+      if (d.size() + cs.size() <= _max_colors_per_subpalette) best = i;
+      ++i;
+    }
+    return best;
+  };
+
+  auto sets = filter_redundant(colors);
+  sets = filter_subsets(sets);
+  std::sort(sets.begin(), sets.end(), [](auto& a, auto& b) { return a.size() < b.size(); });
+
+  color_set_vect opt = color_set_vect();
+
+  while (sets.size()) {
+    auto set = vec_pop(sets);
+    auto best_index = best_fit(set, opt);
+    if (best_index == -1) {
+      opt.push_back(set);
+    } else {
+      opt[best_index].insert(set.begin(), set.end());
+    }
   }
 
-  return sp;
+  std::sort(opt.begin(), opt.end(), [](auto& a, auto& b) -> bool { return a.size() > b.size(); });
+  return opt;
 }
 
 } /* namespace sfc */
