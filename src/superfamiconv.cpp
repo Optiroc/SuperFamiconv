@@ -2,7 +2,6 @@
 //
 // david lindecrantz <optiroc@gmail.com>
 
-// TODO: Rename ImageCrop -> ImageTile
 // TODO: gbc sprite mode should set common color 0 transparency
 // TODO: Add --no-remap to "shorthand" mode
 // TODO: Check "shorthand" path for 16x16 tile conversion
@@ -142,7 +141,7 @@ int superfamiconv(int argc, char* argv[]) {
         palette.set_col0(col0);
       }
 
-      palette.add_tiles(in_image.image_crops(settings.tile_w, settings.tile_h));
+      palette.add_tiles(in_image.image_tiles(settings.tile_w, settings.tile_h));
       palette.sort();
       if (verbose) fmt::print("Generated palette with {}\n", palette.description());
     }

@@ -13,7 +13,7 @@ typedef std::set<rgba_t> color_set;
 typedef std::vector<color_set> color_set_vect;
 
 struct Image;
-struct ImageCrop;
+struct ImageTile;
 
 struct Subpalette final {
   Subpalette(Mode mode, unsigned max_colors)
@@ -61,7 +61,7 @@ struct Palette final {
     _col0_is_shared = true;
   }
 
-  void add_tiles(std::vector<sfc::ImageCrop>);
+  void add_tiles(std::vector<sfc::ImageTile>);
   void add_colors(const std::vector<rgba_t>& colors, bool reduce_depth = true);
 
   int index_of(const Subpalette& subpalette) const;

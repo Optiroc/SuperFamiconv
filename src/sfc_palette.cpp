@@ -112,7 +112,7 @@ int sfc_palette(int argc, char* argv[]) {
         palette.set_col0(col0);
       }
 
-      palette.add_tiles(image.image_crops(settings.tile_w, settings.tile_h));
+      palette.add_tiles(image.image_tiles(settings.tile_w, settings.tile_h));
     }
 
     if (verbose) fmt::print("Generated palette with {}\n", palette.description());

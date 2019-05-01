@@ -98,7 +98,7 @@ const std::vector<std::vector<rgba_t>> Palette::normalized_colors() const {
 
 
 // add optimized subpalettes containing colors in palette_tiles
-void Palette::add_tiles(std::vector<sfc::ImageCrop> palette_tiles) {
+void Palette::add_tiles(std::vector<sfc::ImageTile> palette_tiles) {
 
   // make vector of sets of all tiles' colors
   color_set_vect palettes = color_set_vect();

@@ -14,7 +14,7 @@ namespace sfc {
 struct Subpalette;
 struct Palette;
 struct Tileset;
-struct ImageCrop;
+struct ImageTile;
 
 struct Image final {
   Image(){};
@@ -38,7 +38,7 @@ struct Image final {
 
   Image crop(unsigned x, unsigned y, unsigned width, unsigned height) const;
   std::vector<Image> crops(unsigned tile_width, unsigned tile_height) const;
-  std::vector<ImageCrop> image_crops(unsigned tile_width, unsigned tile_height) const;
+  std::vector<ImageTile> image_tiles(unsigned tile_width, unsigned tile_height) const;
 
   void save(const std::string& path) const;
   void save_indexed(const std::string& path);
@@ -63,9 +63,9 @@ private:
 };
 
 
-struct ImageCrop final {
-  ImageCrop(){};
-  ImageCrop(const std::vector<rgba_t>& data, unsigned width, unsigned height, unsigned coord_x, unsigned coord_y)
+struct ImageTile final {
+  ImageTile(){};
+  ImageTile(const std::vector<rgba_t>& data, unsigned width, unsigned height, unsigned coord_x, unsigned coord_y)
   : pixels(data),
     colors(std::set<rgba_t>(data.begin(), data.end())),
     _width(width), _height(height),
