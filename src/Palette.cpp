@@ -98,23 +98,24 @@ const std::vector<std::vector<rgba_t>> Palette::normalized_colors() const {
 
 
 // add optimized subpalettes containing colors in palette_tiles
-void Palette::add_tiles(std::vector<sfc::ImageTile> palette_tiles) {
+void Palette::add_images(std::vector<sfc::Image> palette_tiles) {
 
   // make vector of sets of all tiles' colors
   color_set_vect palettes = color_set_vect();
   for (auto& c : palette_tiles) {
 
-    if (c.colors.size() > _max_colors_per_subpalette) {
+    if (c.colors().size() > _max_colors_per_subpalette) {
       fmt::print("Tile [{},{}] has more than the allowed number of colors (at {},{} in source image)\n",
-                 (unsigned)(c.coord_x() / c.width()), (unsigned)(c.coord_y() / c.height()), c.coord_x(), c.coord_y());
+                 (unsigned)(c.src_coord_x() / c.width()), (unsigned)(c.src_coord_y() / c.height()),
+                 c.src_coord_x(), c.src_coord_y());
     }
 
     if (_col0_is_shared) {
-      auto colors = c.colors;
+      auto colors = c.colors();
       colors.insert(_col0);
       palettes.push_back(reduce_colors(colors, _mode));
     } else {
-      palettes.push_back(reduce_colors(c.colors, _mode));
+      palettes.push_back(reduce_colors(c.colors(), _mode));
     }
   }
 

@@ -141,7 +141,7 @@ int superfamiconv(int argc, char* argv[]) {
         palette.set_col0(col0);
       }
 
-      palette.add_tiles(in_image.image_tiles(settings.tile_w, settings.tile_h));
+      palette.add_images(in_image.crops(settings.tile_w, settings.tile_h));
       palette.sort();
       if (verbose) fmt::print("Generated palette with {}\n", palette.description());
     }

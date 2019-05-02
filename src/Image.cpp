@@ -67,6 +67,8 @@ Image::Image(const std::string& path) {
 
   _width = w;
   _height = h;
+  auto rgba_v = rgba_data();
+  _colors = std::set<rgba_t>(rgba_v.begin(), rgba_v.end());
 }
 
 Image::Image(const sfc::Palette& palette) {
@@ -82,6 +84,9 @@ Image::Image(const sfc::Palette& palette) {
     auto vy = v[y];
     for (unsigned x = 0; x < vy.size(); ++x) set_pixel(sfc::rgba_color(vy[x]), x, y);
   }
+
+  auto rgba_v = rgba_data();
+  _colors = std::set<rgba_t>(rgba_v.begin(), rgba_v.end());
 }
 
 Image::Image(const sfc::Tileset& tileset) {
@@ -108,6 +113,9 @@ Image::Image(const sfc::Tileset& tileset) {
     auto tile_data = tiles[tile_index].data();
     blit_indexed(tile_data, (tile_index % tiles_per_row) * tile_width, (tile_index / tiles_per_row) * tile_height, tile_width);
   }
+
+  auto rgba_v = rgba_data();
+  _colors = std::set<rgba_t>(rgba_v.begin(), rgba_v.end());
 }
 
 // Make new normalized image with color indices mapped to palette
@@ -137,6 +145,9 @@ Image::Image(const Image& image, const sfc::Subpalette& subpalette)
       }
     }
   }
+
+  auto rgba_v = rgba_data();
+  _colors = std::set<rgba_t>(rgba_v.begin(), rgba_v.end());
 }
 
 std::vector<rgba_t> Image::rgba_data() const {
@@ -148,6 +159,8 @@ Image Image::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_hei
   img._palette = _palette;
   img._width = crop_width;
   img._height = crop_height;
+  img._src_coord_x = x;
+  img._src_coord_y = y;
   img._data.resize(crop_width * crop_height * 4);
 
   uint32_t fillval = transparent_color;
@@ -173,6 +186,9 @@ Image Image::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_hei
       std::memcpy(&img._indexed_data[iy * img._width], &_indexed_data[x + ((iy + y) * _width)], blit_width);
     }
   }
+
+  auto rgba_v = img.rgba_data();
+  img._colors = std::set<rgba_t>(rgba_v.begin(), rgba_v.end());
   return img;
 }
 
@@ -183,21 +199,6 @@ std::vector<Image> Image::crops(unsigned tile_width, unsigned tile_height) const
   while (y < _height) {
     while (x < _width) {
       v.push_back(crop(x, y, tile_width, tile_height));
-      x += tile_width;
-    }
-    x = 0;
-    y += tile_width;
-  }
-  return v;
-}
-
-std::vector<ImageTile> Image::image_tiles(unsigned tile_width, unsigned tile_height) const {
-  std::vector<ImageTile> v;
-  unsigned x = 0;
-  unsigned y = 0;
-  while (y < _height) {
-    while (x < _width) {
-      v.push_back(ImageTile(crop(x, y, tile_width, tile_height).rgba_data(), tile_width, tile_height, x, y));
       x += tile_width;
     }
     x = 0;
@@ -241,6 +242,7 @@ inline void Image::set_pixel(const rgba_t color, const unsigned index) {
   _data[offset + 1] = (channel_t)((color >> 8) & 0xff);
   _data[offset + 2] = (channel_t)((color >> 16) & 0xff);
   _data[offset + 3] = (channel_t)((color >> 24) & 0xff);
+  _colors.insert(color);
 }
 
 inline void Image::set_pixel(const rgba_t color, const unsigned x, const unsigned y) {
@@ -250,6 +252,7 @@ inline void Image::set_pixel(const rgba_t color, const unsigned x, const unsigne
   _data[offset + 1] = (channel_t)((color >> 8) & 0xff);
   _data[offset + 2] = (channel_t)((color >> 16) & 0xff);
   _data[offset + 3] = (channel_t)((color >> 24) & 0xff);
+  _colors.insert(color);
 }
 
 void Image::blit(const std::vector<rgba_t>& rgba_data, const unsigned x, const unsigned y, const unsigned width) {
