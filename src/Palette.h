@@ -56,7 +56,7 @@ struct Palette final {
   const std::vector<std::vector<rgba_t>> normalized_colors() const;
 
   void set_col0(const rgba_t color) {
-    _col0 = color;
+    _col0 = reduce_color(color, _mode) == transparent_color ? transparent_color : color;
     _col0_is_shared = true;
   }
 
