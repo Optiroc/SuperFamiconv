@@ -205,8 +205,12 @@ const std::string Palette::description() const {
   }
 
   if (total > 0) {
-    s.pop_back();
-    return fmt::format("[{}] colors, {} total", s, total);
+    if (v.size() == 1) {
+      return fmt::format("{} colors", total);
+    } else {
+      s.pop_back();
+      return fmt::format("{} colors [{}]", total, s);
+    }
   } else {
     return "zero colors";
   }

@@ -100,8 +100,7 @@ int sfc_palette(int argc, char* argv[]) {
       palette.add_colors(image.palette());
 
     } else {
-      if (verbose) fmt::print("Mapping optimized palette ({}x{} entries for {}x{} tiles)\n",
-                              settings.palettes, settings.colors, settings.tile_w, settings.tile_h);
+      if (verbose) fmt::print("Mapping optimized palette ({}x{} entries)\n", settings.palettes, settings.colors);
 
       palette = sfc::Palette(settings.mode, settings.palettes, settings.colors);
 
@@ -128,7 +127,7 @@ int sfc_palette(int argc, char* argv[]) {
 
     if (!settings.out_act.empty()) {
       palette.save_act(settings.out_act);
-      if (verbose) fmt::print("Saved ACT palette to \"{}\"\n", settings.out_act);
+      if (verbose) fmt::print("Saved photoshop palette to \"{}\"\n", settings.out_act);
     }
 
     if (!settings.out_image.empty()) {

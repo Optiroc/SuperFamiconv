@@ -112,10 +112,10 @@ int sfc_map(int argc, char* argv[]) {
     if (verbose) fmt::print("Loaded palette from \"{}\" ({})\n", settings.in_palette, palette.description());
 
     sfc::Tileset tileset(sfc::read_binary(settings.in_tileset), settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_flip);
-    if (verbose) fmt::print("Loaded tiles from \"{}\" ({} tiles)\n", settings.in_tileset, tileset.size());
+    if (verbose) fmt::print("Loaded tiles from \"{}\" ({} entries)\n", settings.in_tileset, tileset.size());
 
     std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
-    if (verbose) fmt::print("Mapping {} ({}x{}) tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
+    if (verbose) fmt::print("Mapping {} {}x{}px tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
 
     sfc::Map map(settings.mode, settings.map_w, settings.map_h);
     for (unsigned i = 0; i < crops.size(); ++i) {

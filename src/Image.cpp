@@ -240,7 +240,7 @@ void Image::save_indexed(const std::string& path) {
 }
 
 const std::string Image::description() const {
-  return fmt::format("{}x{}, {}", width(), height(), palette_size() ? "indexed color" : "RGB color");
+  return fmt::format("{}x{}px, {}", width(), height(), palette_size() ? "indexed color" : "RGB color");
 }
 
 inline void Image::set_pixel(const rgba_t color, const unsigned index) {

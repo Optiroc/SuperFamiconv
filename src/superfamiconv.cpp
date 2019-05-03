@@ -129,8 +129,7 @@ int superfamiconv(int argc, char* argv[]) {
       unsigned colors_per_palette = sfc::palette_size_at_bpp(settings.bpp);
       unsigned palette_count = sfc::palette_count_for_mode(settings.mode, colors_per_palette);
 
-      if (verbose) fmt::print("Mapping optimized palette ({}x{} entries for {}x{} tiles)\n",
-                              palette_count, colors_per_palette, settings.tile_w, settings.tile_h);
+      if (verbose) fmt::print("Mapping optimized palette ({}x{} entries)\n", palette_count, colors_per_palette);
 
       palette = sfc::Palette(settings.mode, palette_count, colors_per_palette);
 
@@ -154,9 +153,9 @@ int superfamiconv(int argc, char* argv[]) {
       for (auto& image : crops) tileset.add(image, &palette);
       if (verbose) {
         if (settings.no_discard) {
-          fmt::print("Created tileset with {} tiles\n", tileset.size());
+          fmt::print("Created tileset with {} entries\n", tileset.size());
         } else {
-          fmt::print("Created optimized tileset with {} tiles (discared {} redundant tiles)\n",
+          fmt::print("Created optimized tileset with {} entries (discarded {} redundant tiles)\n",
                      tileset.size(), tileset.discarded_tiles);
         }
       }
@@ -173,7 +172,7 @@ int superfamiconv(int argc, char* argv[]) {
     sfc::Map map(settings.mode, map_width, map_height);
     {
       std::vector<sfc::Image> crops = in_image.crops(settings.tile_w, settings.tile_h);
-      if (verbose) fmt::print("Mapping {} ({}x{}) tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
+      if (verbose) fmt::print("Mapping {} {}x{}px tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
 
       for (unsigned i = 0; i < crops.size(); ++i) {
         map.add(crops[i], tileset, palette, settings.bpp, i % map_width, i / map_width);
@@ -198,7 +197,7 @@ int superfamiconv(int argc, char* argv[]) {
 
     if (!settings.out_palette_act.empty()) {
       palette.save_act(settings.out_palette_act);
-      if (verbose) fmt::print("Saved ACT palette to \"{}\"\n", settings.out_palette_act);
+      if (verbose) fmt::print("Saved photoshop palette to \"{}\"\n", settings.out_palette_act);
     }
 
     if (!settings.out_palette_image.empty()) {

@@ -50,12 +50,12 @@ The `mode` option, which is common for all commands, affects the color space han
 Example:
 
 	superfamiconv -v --in-image snes.png --out-palette snes.palette --out-tiles snes.tiles --out-map snes.map --out-tiles-image tiles.png
-	Loaded image from "snes.png" (256x224, indexed color)
-	Mapping optimized palette (16x16 color palettes, 8x8 tiles)
+	Loaded image from "snes.png" (256x224px, indexed color)
+	Mapping optimized palette (16x16 entries)
 	Setting color zero to #505050
-	Generated palette with [16,8] colors, 24 total
-	Created optimized tileset with 156 tiles (discarded 740 redudant tiles)
-	Mapping 896 8x8 image slices
+	Generated palette with 24 colors [16,8]
+	Created optimized tileset with 156 entries (discarded 740 redudant tiles)
+	Mapping 896 8x8px tiles from image
 	Saved native palette data to "snes.palette"
 	Saved native tile data to "snes.tiles"
 	Saved native map data to "snes.map"

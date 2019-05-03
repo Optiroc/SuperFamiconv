@@ -113,10 +113,10 @@ int sfc_tiles(int argc, char* argv[]) {
     } else {
       // Image input
       sfc::Image image(settings.in_image);
+      std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
       if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
 
-      std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
-      if (verbose) fmt::print("Image sliced into {} {}x{} tiles\n", crops.size(), settings.tile_w, settings.tile_h);
+      if (verbose) fmt::print("Image sliced into {} {}x{}px tiles\n", crops.size(), settings.tile_w, settings.tile_h);
 
       sfc::Palette palette;
       tileset = sfc::Tileset(settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_discard,
@@ -135,9 +135,9 @@ int sfc_tiles(int argc, char* argv[]) {
       for (auto& img : crops) tileset.add(img, &palette);
       if (verbose) {
         if (settings.no_discard) {
-          fmt::print("Created tileset with {} tiles\n", tileset.size());
+          fmt::print("Created tileset with {} entries\n", tileset.size());
         } else {
-          fmt::print("Created optimized tileset with {} tiles (discared {} redundant tiles)\n",
+          fmt::print("Created optimized tileset with {} entries (discarded {} redundant tiles)\n",
                      tileset.size(), tileset.discarded_tiles);
         }
       }
