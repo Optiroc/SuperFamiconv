@@ -18,12 +18,12 @@ else(MSVC)
 
   if(WIN32) # mingw/cygwin
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g")
-    set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -s")
+    set(CMAKE_CXX_FLAGS_MINSIZEREL "-O3 -s")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -s")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_LD_FLAGS} -static -static-libgcc -static-libstdc++")
   else(WIN32)
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g")
-    set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -s -flto")
+    set(CMAKE_CXX_FLAGS_MINSIZEREL "-O3 -s -flto")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -s -flto")
   endif(WIN32)
 

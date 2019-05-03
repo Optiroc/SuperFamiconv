@@ -1,3 +1,5 @@
+.PHONY: clean
+
 SRC_DIR := src
 INC_DIR := include
 BIN_DIR := bin
@@ -6,7 +8,7 @@ OBJ_DIR := .build
 CC  := gcc
 CXX := g++
 
-FLAGS     := -Wextra -I$(INC_DIR)
+FLAGS     := -Wall -Wextra -I$(INC_DIR)
 CXX_FLAGS := -std=gnu++17 $(FLAGS)
 CC_FLAGS  := -std=gnu99 $(FLAGS)
 LD_FLAGS  :=
@@ -32,14 +34,12 @@ endif
 
 
 COMMON_OBJ  := $(OBJ_DIR)/Image.o $(OBJ_DIR)/Palette.o $(OBJ_DIR)/Tiles.o $(OBJ_DIR)/Map.o
-COMMON_OBJ  += $(OBJ_DIR)/LodePNG/lodepng.o $(OBJ_DIR)/fmt/format.o $(OBJ_DIR)/fmt/posix.o
+LIBRARY_OBJ := $(OBJ_DIR)/LodePNG/lodepng.o $(OBJ_DIR)/fmt/format.o $(OBJ_DIR)/fmt/posix.o
 HEADERS     := $(wildcard $(SRC_DIR)/*.h)
-
-.PHONY: clean sfc_palette sfc_tiles sfc_map
 
 superfamiconv: $(BIN_DIR)/superfamiconv
 
-$(BIN_DIR)/superfamiconv : $(OBJ_DIR)/superfamiconv.o $(OBJ_DIR)/sfc_palette.o $(OBJ_DIR)/sfc_tiles.o $(OBJ_DIR)/sfc_map.o $(COMMON_OBJ) | $(BIN_DIR)
+$(BIN_DIR)/superfamiconv : $(OBJ_DIR)/superfamiconv.o $(OBJ_DIR)/sfc_palette.o $(OBJ_DIR)/sfc_tiles.o $(OBJ_DIR)/sfc_map.o $(COMMON_OBJ) $(LIBRARY_OBJ) | $(BIN_DIR)
 	$(CXX) $(LD_FLAGS) $^ -o $@
 
 $(OBJ_DIR)/%.o : ./**/%.cpp $(HEADERS)
