@@ -762,12 +762,12 @@ T vec_pop(std::vector<T>& v) {
 }
 
 template <typename T>
-bool is_subset(const std::set<T> set, const std::set<T> superset) {
+bool is_subset(const std::set<T>& set, const std::set<T>& superset) {
   return std::includes(superset.begin(), superset.end(), set.begin(), set.end());
 }
 
 template <typename T>
-bool has_superset(const std::set<T> set, const std::vector<std::set<T>> super) {
+bool has_superset(const std::set<T>& set, const std::vector<std::set<T>>& super) {
   for (auto& cmp_set : super) {
     if (cmp_set == set) continue;
     if (is_subset(set, cmp_set)) return true;
