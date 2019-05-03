@@ -87,9 +87,7 @@ bool Tile::is_v_flipped(const Tile& other) const {
 bool Tile::operator==(const Tile& other) const {
   if (other._data == _data) return true;
   if (!_mirrors.empty()) {
-    for (auto& m : _mirrors) {
-      if (other._data == m) return true;
-    }
+    return std::any_of(_mirrors.begin(), _mirrors.end(), [&](auto& m){ return m == other._data; });
   }
   return false;
 }

@@ -277,17 +277,20 @@ Subpalette& Palette::add_subpalette() {
 const color_set_vect Palette::optimized_palettes(const color_set_vect& colors) const {
 
   auto filter_subsets = [](const color_set_vect& v) {
-    auto n = color_set_vect();
-    for (auto& s : v) if (!has_superset(s, v)) n.push_back(s);
+    auto n = color_set_vect(v.size());
+    auto it = std::copy_if(v.begin(), v.end(), n.begin(), [&](auto& s){
+      return !has_superset(s, v);
+    });
+    n.resize(std::distance(n.begin(),it));
     return n;
   };
 
   auto filter_redundant = [](const color_set_vect& v) {
-    auto n = color_set_vect();
-    for (auto& s : v) {
-      if (s.size() < 1) continue;
-      if (std::find(n.begin(), n.end(), s) == n.end()) n.push_back(s);
-    }
+    auto n = color_set_vect(v.size());
+    auto it = std::copy_if(v.begin(), v.end(), n.begin(), [&](auto& s){
+      return s.size() < 1 ? false : std::find(n.begin(), n.end(), s) == n.end();
+    });
+    n.resize(std::distance(n.begin(),it));
     return n;
   };
 
