@@ -3,7 +3,6 @@
 // david lindecrantz <optiroc@gmail.com>
 
 // TODO: gbc sprite mode should set common color 0 transparency
-// TODO: Add --no-remap to "shorthand" mode
 // TODO: Check "shorthand" path for 16x16 tile conversion
 // TODO: Don't always pad native palette output? (Pad every palette but the last? Option?)
 
@@ -32,6 +31,7 @@ struct Settings {
   unsigned tile_w;
   unsigned tile_h;
 
+  bool no_remap;
   bool no_discard;
   bool no_flip;
   bool sprite_mode;
@@ -73,6 +73,7 @@ int superfamiconv(int argc, char* argv[]) {
     options.Add(settings.bpp,                'B', "bpp",               "Bits per pixel",                    unsigned(4),         "Settings");
     options.Add(settings.tile_w,             'W', "tile-width",        "Tile width",                        unsigned(8),         "Settings");
     options.Add(settings.tile_h,             'H', "tile-height",       "Tile height",                       unsigned(8),         "Settings");
+    options.AddSwitch(settings.no_remap,     'R', "no-remap",          "Don't remap colors",                false,               "Settings");
     options.AddSwitch(settings.no_discard,   'D', "no-discard",        "Don't discard redundant tiles",     false,               "Settings");
     options.AddSwitch(settings.no_flip,      'F', "no-flip",           "Don't discard using tile flipping", false,               "Settings");
     options.AddSwitch(settings.sprite_mode,  'S', "sprite-mode",       "Apply sprite output settings",      false,               "Settings");
@@ -120,8 +121,8 @@ int superfamiconv(int argc, char* argv[]) {
   try {
     if (settings.in_image.empty()) throw std::runtime_error("Input image required");
 
-    sfc::Image in_image(settings.in_image);
-    if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, in_image.description());
+    sfc::Image image(settings.in_image);
+    if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
 
     // Make palette
     sfc::Palette palette;
@@ -129,28 +130,37 @@ int superfamiconv(int argc, char* argv[]) {
       unsigned colors_per_palette = sfc::palette_size_at_bpp(settings.bpp);
       unsigned palette_count = sfc::palette_count_for_mode(settings.mode, colors_per_palette);
 
-      if (verbose) fmt::print("Mapping optimized palette ({}x{} entries)\n", palette_count, colors_per_palette);
+      if (settings.no_remap) {
+        if (image.palette_size() == 0) throw std::runtime_error("no-remap requires indexed color image");
+        if (verbose) fmt::print("Mapping palette straight from indexed color image\n");
 
-      palette = sfc::Palette(settings.mode, palette_count, colors_per_palette);
+        palette = sfc::Palette(settings.mode, palette_count, colors_per_palette);
+        palette.add_colors(image.palette());
 
-      col0 = col0_forced ? col0 : in_image.crop(0, 0, 1, 1).rgba_data()[0];
+      } else {
+        if (verbose) fmt::print("Mapping optimized palette ({}x{} entries)\n", palette_count, colors_per_palette);
 
-      if (col0_forced || sfc::col0_is_shared_for_mode(settings.mode)) {
-        if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(col0, true, true));
-        palette.set_col0(col0);
+        palette = sfc::Palette(settings.mode, palette_count, colors_per_palette);
+
+        col0 = col0_forced ? col0 : image.crop(0, 0, 1, 1).rgba_data()[0];
+
+        if (col0_forced || sfc::col0_is_shared_for_mode(settings.mode)) {
+          if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(col0, true, true));
+          palette.set_col0(col0);
+        }
+
+        palette.add_images(image.crops(settings.tile_w, settings.tile_h));
+        palette.sort();
       }
-
-      palette.add_images(in_image.crops(settings.tile_w, settings.tile_h));
-      palette.sort();
-      if (verbose) fmt::print("Generated palette with {}\n", palette.description());
+      if (verbose) fmt::print("Created palette with {}\n", palette.description());
     }
 
     // Make tileset
     sfc::Tileset tileset(settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_discard, settings.no_flip);
     {
-      std::vector<sfc::Image> crops = in_image.crops(settings.tile_w, settings.tile_h);
+      std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
 
-      for (auto& image : crops) tileset.add(image, &palette);
+      for (auto& crop : crops) tileset.add(crop, &palette);
       if (verbose) {
         if (settings.no_discard) {
           fmt::print("Created tileset with {} entries\n", tileset.size());
@@ -162,16 +172,16 @@ int superfamiconv(int argc, char* argv[]) {
     }
 
     // Make map
-    unsigned map_width = sfc::div_ceil(in_image.width(), settings.tile_w);
-    unsigned map_height = sfc::div_ceil(in_image.height(), settings.tile_h);
+    unsigned map_width = sfc::div_ceil(image.width(), settings.tile_w);
+    unsigned map_height = sfc::div_ceil(image.height(), settings.tile_h);
 
-    if (map_width * settings.tile_w != in_image.width() || map_height * settings.tile_h != in_image.height()) {
-      in_image = in_image.crop(0, 0, map_width * settings.tile_w, map_height * settings.tile_h);
+    if (map_width * settings.tile_w != image.width() || map_height * settings.tile_h != image.height()) {
+      image = image.crop(0, 0, map_width * settings.tile_w, map_height * settings.tile_h);
     }
 
     sfc::Map map(settings.mode, map_width, map_height);
     {
-      std::vector<sfc::Image> crops = in_image.crops(settings.tile_w, settings.tile_h);
+      std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
       if (verbose) fmt::print("Mapping {} {}x{}px tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
 
       for (unsigned i = 0; i < crops.size(); ++i) {

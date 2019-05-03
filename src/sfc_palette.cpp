@@ -114,7 +114,7 @@ int sfc_palette(int argc, char* argv[]) {
       palette.add_images(image.crops(settings.tile_w, settings.tile_h));
     }
 
-    if (verbose) fmt::print("Generated palette with {}\n", palette.description());
+    if (verbose) fmt::print("Created palette with {}\n", palette.description());
 
     if (!settings.no_remap) {
       palette.sort();

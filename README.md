@@ -30,6 +30,7 @@ In short hand mode, the following options are available:
 	-B --bpp              Bits per pixel <default: 4>
 	-W --tile-width       Tile width <default: 8>
 	-H --tile-height      Tile height <default: 8>
+	-R --no-remap         Don't remap colors <switch>
 	-D --no-discard       Don't discard redundant tiles <switch>
 	-F --no-flip          Don't discard using tile flipping <switch>
 	-S --sprite-mode      Apply sprite output settings <switch>
@@ -53,7 +54,7 @@ Example:
 	Loaded image from "snes.png" (256x224px, indexed color)
 	Mapping optimized palette (16x16 entries)
 	Setting color zero to #505050
-	Generated palette with 24 colors [16,8]
+	Created palette with 24 colors [16,8]
 	Created optimized tileset with 156 entries (discarded 740 redudant tiles)
 	Mapping 896 8x8px tiles from image
 	Saved native palette data to "snes.palette"
