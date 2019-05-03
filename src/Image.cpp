@@ -67,6 +67,9 @@ Image::Image(const std::string& path) {
 
   _width = w;
   _height = h;
+
+  _src_coord_x = _src_coord_y = 0;
+
   auto rgba_v = rgba_data();
   _colors = std::set<rgba_t>(rgba_v.begin(), rgba_v.end());
 }
@@ -84,6 +87,8 @@ Image::Image(const sfc::Palette& palette) {
     auto vy = v[y];
     for (unsigned x = 0; x < vy.size(); ++x) set_pixel(sfc::rgba_color(vy[x]), x, y);
   }
+
+  _src_coord_x = _src_coord_y = 0;
 
   auto rgba_v = rgba_data();
   _colors = std::set<rgba_t>(rgba_v.begin(), rgba_v.end());
@@ -114,6 +119,8 @@ Image::Image(const sfc::Tileset& tileset) {
     blit_indexed(tile_data, (tile_index % tiles_per_row) * tile_width, (tile_index / tiles_per_row) * tile_height, tile_width);
   }
 
+  _src_coord_x = _src_coord_y = 0;
+
   auto rgba_v = rgba_data();
   _colors = std::set<rgba_t>(rgba_v.begin(), rgba_v.end());
 }
@@ -125,13 +132,12 @@ Image::Image(const Image& image, const sfc::Subpalette& subpalette)
 {
   if (_palette.empty()) throw std::runtime_error("No colors");
 
-  sfc::Mode mode = subpalette.mode();
   unsigned size = _width * _height;
   _indexed_data.resize(size);
   _data.resize(size * 4);
 
   for (unsigned i = 0; i < size; ++i) {
-    rgba_t color = sfc::normalize_color(sfc::reduce_color(image.rgba_color_at(i), mode), mode);
+    rgba_t color = sfc::normalize_color(sfc::reduce_color(image.rgba_color_at(i), subpalette.mode()), subpalette.mode());
     if (color == transparent_color) {
       _indexed_data[i] = 0;
       set_pixel(transparent_color, i);
@@ -145,6 +151,8 @@ Image::Image(const Image& image, const sfc::Subpalette& subpalette)
       }
     }
   }
+
+  _src_coord_x = _src_coord_y = 0;
 
   auto rgba_v = rgba_data();
   _colors = std::set<rgba_t>(rgba_v.begin(), rgba_v.end());
