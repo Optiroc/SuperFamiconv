@@ -295,7 +295,7 @@ constexpr unsigned max_palette_count_for_mode(Mode mode) {
   }
 }
 
-inline unsigned palette_count_for_mode(Mode mode, unsigned colors_per_palette) {
+constexpr unsigned palette_count_for_mode(Mode mode, unsigned colors_per_palette) {
   return std::min(max_palette_count_for_mode(mode), 256 / colors_per_palette);
 }
 
