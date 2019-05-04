@@ -9,8 +9,8 @@ CC  := gcc
 CXX := g++
 
 FLAGS     := -Wall -Wextra -I$(INC_DIR)
-CXX_FLAGS := -std=gnu++17 $(FLAGS)
-CC_FLAGS  := -std=gnu99 $(FLAGS)
+CXX_FLAGS := -std=c++14 $(FLAGS)
+CC_FLAGS  := -std=c99 $(FLAGS)
 LD_FLAGS  :=
 
 ifeq ($(OS),Windows_NT)
