@@ -7,7 +7,7 @@ skip_non_tags: true
 image: Visual Studio 2017
 before_build:
   - ps: >-
-      if ($env:APPVEYOR_REPO_TAG -eq "true")
+      if ($env:APPVEYOR_REPO_TAG)
 
       {
 
@@ -25,17 +25,28 @@ before_build:
 
 build_script:
   - cmd: >-
-      mkdir build-win-x64
+      mkdir build-win_x64
 
-      cd build-win-x64
+      cd build-win_x64
 
       cmake -DCMAKE_GENERATOR_PLATFORM=x64 ..
 
       cd ..
 
-      cmake --build build-win-x64 --config Release
+      cmake --build build-win_x64 --config Release
 
-      dir build-win-x64
+      mkdir build-win_x86
+
+      cd build-win_x86
+
+      cmake -DCMAKE_GENERATOR_PLATFORM=x86 ..
+
+      cd ..
+
+      cmake --build build-win_x86 --config Release
 
 artifacts:
-- path: build-win-x64
+- path: build-win_x64\Release
+  name: SuperFamiconv-win_x64
+- path: build-win_x86\Release
+  name: SuperFamiconv-win_x86
