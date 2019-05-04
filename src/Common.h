@@ -234,6 +234,8 @@ constexpr bool tile_flipping_allowed_for_mode(Mode mode) {
 
 constexpr unsigned default_tile_size_for_mode(Mode mode) {
   switch (mode) {
+  case Mode::snes:
+    return 8;
   default:
     return 8;
   }
@@ -394,39 +396,39 @@ inline hsva_color::operator rgba_color() {
   float m = v - c;
 
   if (0.0f <= p && p < 1.0f) {
-    rgba.r = c;
-    rgba.g = x;
-    rgba.b = 0.0f;
+    rgba.r = (channel_t)c;
+    rgba.g = (channel_t)x;
+    rgba.b = 0;
   } else if (1.0f <= p && p < 2.0f) {
-    rgba.r = x;
-    rgba.g = c;
-    rgba.b = 0.0f;
+    rgba.r = (channel_t)x;
+    rgba.g = (channel_t)c;
+    rgba.b = 0;
   } else if (2.0f <= p && p < 3.0f) {
-    rgba.r = 0.0f;
-    rgba.g = c;
-    rgba.b = x;
+    rgba.r = 0;
+    rgba.g = (channel_t)c;
+    rgba.b = (channel_t)x;
   } else if (3.0f <= p && p < 4.0f) {
-    rgba.r = 0.0f;
-    rgba.g = x;
-    rgba.b = c;
+    rgba.r = 0;
+    rgba.g = (channel_t)x;
+    rgba.b = (channel_t)c;
   } else if (4.0f <= p && p < 5.0f) {
-    rgba.r = x;
-    rgba.g = 0.0f;
-    rgba.b = c;
+    rgba.r = (channel_t)x;
+    rgba.g = 0;
+    rgba.b = (channel_t)c;
   } else if (5.0f <= p && p < 6.0f) {
-    rgba.r = c;
-    rgba.g = 0.0f;
-    rgba.b = x;
+    rgba.r = (channel_t)c;
+    rgba.g = 0;
+    rgba.b = (channel_t)x;
   } else {
-    rgba.r = 0.0f;
-    rgba.g = 0.0f;
-    rgba.b = 0.0f;
+    rgba.r = 0;
+    rgba.g = 0;
+    rgba.b = 0;
   }
 
-  rgba.r += m;
-  rgba.g += m;
-  rgba.b += m;
-  rgba.a = a * 255.0f;
+  rgba.r += (channel_t)m;
+  rgba.g += (channel_t)m;
+  rgba.b += (channel_t)m;
+  rgba.a = (channel_t)(a * 255.0f);
   return rgba;
 }
 
