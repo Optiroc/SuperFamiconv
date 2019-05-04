@@ -77,7 +77,7 @@ Palette::Palette(const std::string& path, Mode in_mode, uint32_t colors_per_subp
 Palette::Palette(const std::vector<uint8_t>& native_data, Mode in_mode, unsigned colors_per_subpalette) {
   _mode = in_mode;
   _max_colors_per_subpalette = colors_per_subpalette;
-  _max_subpalettes = max_palette_count_for_mode(_mode);
+  _max_subpalettes = default_palette_count_for_mode(_mode);
   add_colors(unpack_native_colors(native_data, in_mode), false);
 }
 

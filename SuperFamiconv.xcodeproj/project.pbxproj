@@ -54,6 +54,7 @@
 		2A81698C1E1AD5DD00668B8F /* Tiles.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Tiles.cpp; sourceTree = "<group>"; };
 		2A893EE51E22FCA20032D146 /* Map.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Map.h; sourceTree = "<group>"; };
 		2A893EE61E22FCDA0032D146 /* Map.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Map.cpp; sourceTree = "<group>"; };
+		2AA93759227E1E4600A9C98D /* Mode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mode.h; sourceTree = "<group>"; };
 		2AB6F3491E12F6F500F2AE78 /* Options.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Options.h; sourceTree = "<group>"; };
 		2AB6F34A1E12F70200F2AE78 /* sfc_map.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = sfc_map.cpp; sourceTree = "<group>"; };
 		2AB6F34B1E12F70200F2AE78 /* sfc_palette.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = sfc_palette.cpp; sourceTree = "<group>"; };
@@ -104,12 +105,13 @@
 				2AB6F37C1E130E4900F2AE78 /* Common.h */,
 				2AB6F37E1E133CE300F2AE78 /* Image.h */,
 				2A8169841E1AD52500668B8F /* Image.cpp */,
+				2AA93759227E1E4600A9C98D /* Mode.h */,
 				2AB6F3781E130CD600F2AE78 /* Palette.h */,
 				2A8169881E1AD58A00668B8F /* Palette.cpp */,
-				2AD9CC901E1985D100BA0593 /* Tiles.h */,
-				2A81698C1E1AD5DD00668B8F /* Tiles.cpp */,
 				2A893EE51E22FCA20032D146 /* Map.h */,
 				2A893EE61E22FCDA0032D146 /* Map.cpp */,
+				2AD9CC901E1985D100BA0593 /* Tiles.h */,
+				2A81698C1E1AD5DD00668B8F /* Tiles.cpp */,
 			);
 			path = src;
 			sourceTree = "<group>";

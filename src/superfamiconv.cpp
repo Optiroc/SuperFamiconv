@@ -127,8 +127,8 @@ int superfamiconv(int argc, char* argv[]) {
     // Make palette
     sfc::Palette palette;
     {
+      unsigned palette_count = sfc::default_palette_count_for_mode(settings.mode);
       unsigned colors_per_palette = sfc::palette_size_at_bpp(settings.bpp);
-      unsigned palette_count = sfc::palette_count_for_mode(settings.mode, colors_per_palette);
 
       if (settings.no_remap) {
         if (image.palette_size() == 0) throw std::runtime_error("no-remap requires indexed color image");

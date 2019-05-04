@@ -71,7 +71,7 @@ int sfc_palette(int argc, char* argv[]) {
     settings.mode = sfc::mode(mode_str);
 
     // Mode-specific defaults
-    if (!options.WasSet("palettes")) settings.palettes = sfc::max_palette_count_for_mode(settings.mode);
+    if (!options.WasSet("palettes")) settings.palettes = sfc::default_palette_count_for_mode(settings.mode);
     if (!options.WasSet("colors")) settings.colors = sfc::palette_size_at_bpp(sfc::default_bpp_for_mode(settings.mode));
 
     if (!settings.color_zero.empty()) {

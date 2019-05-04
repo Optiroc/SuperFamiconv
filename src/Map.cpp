@@ -90,7 +90,7 @@ const std::string Map::to_json(bool column_order, unsigned split_w, unsigned spl
   for (auto& vm : vmm) {
     nlohmann::json ja = nlohmann::json::array();
 
-    if (tile_flipping_allowed_for_mode(_mode) && max_palette_count_for_mode(_mode) > 1) {
+    if (tile_flipping_allowed_for_mode(_mode) && default_palette_count_for_mode(_mode) > 1) {
       for (auto& m : vm) {
         ja.push_back({{"tile", m.tile_index}, {"palette", m.palette_index}, {"flip_h", (int)m.flip_h}, {"flip_v", (int)m.flip_v}});
       }
@@ -98,7 +98,7 @@ const std::string Map::to_json(bool column_order, unsigned split_w, unsigned spl
       for (auto& m : vm) {
         ja.push_back({{"tile", m.tile_index}, {"flip_h", (int)m.flip_h}, {"flip_v", (int)m.flip_v}});
       }
-    } else if (max_palette_count_for_mode(_mode) > 1) {
+    } else if (default_palette_count_for_mode(_mode) > 1) {
       for (auto& m : vm) {
         ja.push_back({{"tile", m.tile_index}, {"palette", m.palette_index}});
       }
