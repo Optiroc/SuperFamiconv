@@ -95,6 +95,8 @@ int sfc_map(int argc, char* argv[]) {
     if (settings.in_palette.empty()) throw std::runtime_error("input palette required");
     if (settings.in_tileset.empty()) throw std::runtime_error("input tileset required");
 
+    if (verbose) fmt::print("Performing map operation in \"{}\" mode\n", sfc::mode(settings.mode));
+
     if (settings.map_split_w == 0) settings.map_split_w = sfc::default_map_size_for_mode(settings.mode);
     if (settings.map_split_h == 0) settings.map_split_h = sfc::default_map_size_for_mode(settings.mode);
 

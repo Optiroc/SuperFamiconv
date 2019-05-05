@@ -103,6 +103,8 @@ int sfc_tiles(int argc, char* argv[]) {
   try {
     if (settings.in_image.empty() && settings.in_data.empty()) throw std::runtime_error("Input image or native data required");
 
+    if (verbose) fmt::print("Performing tiles operation in \"{}\" mode\n", sfc::mode(settings.mode));
+
     sfc::Tileset tileset;
 
     if (!settings.in_data.empty()) {

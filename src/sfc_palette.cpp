@@ -87,6 +87,8 @@ int sfc_palette(int argc, char* argv[]) {
   try {
     if (settings.in_image.empty()) throw std::runtime_error("Input image required");
 
+    if (verbose) fmt::print("Performing palette operation in \"{}\" mode\n", sfc::mode(settings.mode));
+
     sfc::Image image(settings.in_image);
     if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
 
