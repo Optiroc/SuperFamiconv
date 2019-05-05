@@ -343,6 +343,19 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
     // TODO: GB
     // http://problemkaputt.de/pandocs.htm#lcdmonochromepalettes
     // http://problemkaputt.de/pandocs.htm#lcdcolorpalettescgbonly
+    return 0;
+  case Mode::pce:
+    if (((color & 0xff000000) >> 24) < 0x80) {
+      return transparent_color;
+    } else {
+      rgba_color c(color);
+      c.r >>= 5;
+      c.g >>= 5;
+      c.b >>= 5;
+      rgba_t scaled = c;
+      return (scaled & 0x00ffffff) + 0xff000000;
+    }
+    break;
   default:
     return 0;
   }
@@ -375,6 +388,13 @@ inline rgba_t normalize_color(const rgba_t color, Mode from_mode) {
     return c;
   case Mode::gb:
     // TODO: GB
+    return 0;
+  case Mode::pce:
+    c.r = scale_up(c.r, 5);
+    c.g = scale_up(c.g, 5);
+    c.b = scale_up(c.b, 5);
+    c.a = scale_up(c.a, 5);
+    return c;
   default:
     return 0;
   }
@@ -395,10 +415,14 @@ inline std::vector<uint8_t> pack_native_color(const rgba_t color, Mode mode) {
   case Mode::snes_mode7:
   case Mode::gbc:
     v.push_back((color & 0x1f) | ((color >> 3) & 0xe0));
-    v.push_back(((color >> 11) & 0x3) | ((color >> 14) & 0x7c));
+    v.push_back(((color >> 11) & 0x03) | ((color >> 14) & 0x7c));
     break;
   case Mode::gb:
     // TODO: GB
+    break;
+  case Mode::pce:
+    v.push_back(((color >> 16) & 0x07) | (color << 3 & 0x38) | ((color >> 2) & 0xc0));
+    v.push_back((color >> 10) & 0x01);
     break;
   default:
     break;
@@ -414,16 +438,26 @@ inline std::vector<rgba_t> unpack_native_colors(const std::vector<uint8_t>& colo
   case Mode::snes_mode7:
   case Mode::gbc:
     if (colors.size() % 2 != 0) {
-      throw std::runtime_error("SNES native color data vector size not a multiple of 2");
+      throw std::runtime_error("snes/gbc native palette size not a multiple of 2");
     }
     for (unsigned i = 0; i < colors.size(); i += 2) {
       uint16_t cw = (colors[i + 1] << 8) + colors[i];
-      rgba_t nc = (cw & 0x1f) | ((cw & 0x3e0) << 3) | ((cw & 0x7c00) << 6) | 0xff000000;
+      rgba_t nc = (cw & 0x001f) | ((cw & 0x03e0) << 3) | ((cw & 0x7c00) << 6) | 0xff000000;
       v.push_back(nc);
     }
     break;
   case Mode::gb:
     // TODO: GB
+    break;
+  case Mode::pce:
+    if (colors.size() % 2 != 0) {
+      throw std::runtime_error("pce native palette size not a multiple of 2");
+    }
+    for (unsigned i = 0; i < colors.size(); i += 2) {
+      uint16_t cw = (colors[i + 1] << 8) + colors[i];
+      rgba_t nc = ((cw & 0x0038) >> 3) | ((cw & 0x0007) << 8) | ((cw & 0x1c00) << 10) | 0xff000000;
+      v.push_back(nc);
+    }
     break;
   default:
     break;
@@ -433,9 +467,9 @@ inline std::vector<rgba_t> unpack_native_colors(const std::vector<uint8_t>& colo
 
 // pack raw image data to native format tile data
 inline std::vector<uint8_t> pack_native_tile(const std::vector<index_t>& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
-  std::vector<uint8_t> nd;
+  if (width != 8 || height != 8) throw std::runtime_error("programmer error (illegal tile size in pack_native_tile())");
 
-  auto make_nintendo_2bit_data = [](const std::vector<index_t>& in_data, unsigned plane_index) {
+  auto make_2bpp_tile = [](const std::vector<index_t>& in_data, unsigned plane_index) {
     std::vector<uint8_t> p(16);
     if (in_data.empty()) return p;
 
@@ -457,16 +491,16 @@ inline std::vector<uint8_t> pack_native_tile(const std::vector<index_t>& data, M
     return p;
   };
 
-  if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc) {
-    if (width != 8 || height != 8) throw std::runtime_error("Programmer error");
+  std::vector<uint8_t> nd;
+
+  if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc || mode == Mode::pce) {
     unsigned planes = bpp >> 1;
     for (unsigned i = 0; i < planes; ++i) {
-      auto plane = make_nintendo_2bit_data(data, i * 2);
+      auto plane = make_2bpp_tile(data, i * 2);
       nd.insert(nd.end(), plane.begin(), plane.end());
     }
 
   } else if (mode == Mode::snes_mode7) {
-    if (width != 8 || height != 8) throw std::runtime_error("Programmer error (fix mode 7 packing!)");
     nd = data;
   }
 
@@ -475,9 +509,9 @@ inline std::vector<uint8_t> pack_native_tile(const std::vector<index_t>& data, M
 
 // unpack native format tile data to raw image data
 inline std::vector<index_t> unpack_native_tile(const std::vector<uint8_t>& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
-  std::vector<index_t> ud(width * height);
+  if (width != 8 || height != 8) throw std::runtime_error("programmer error (illegal tile size in unpack_native_tile())");
 
-  auto add_nintendo_1bit_plane = [](
+  auto add_1bit_plane = [](
     std::vector<index_t>& out_data, const std::vector<uint8_t>& in_data, unsigned plane_index) {
     int plane_offset = ((plane_index >> 1) * 16) + (plane_index & 1);
     for (int y = 0; y < 8; ++y) {
@@ -487,9 +521,10 @@ inline std::vector<index_t> unpack_native_tile(const std::vector<uint8_t>& data,
     }
   };
 
-  if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc) {
-    if (width != 8 || height != 8) throw std::runtime_error("Programmer error");
-    for (unsigned i = 0; i < bpp; ++i) add_nintendo_1bit_plane(ud, data, i);
+  std::vector<index_t> ud(width * height);
+
+  if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc || mode == Mode::pce) {
+    for (unsigned i = 0; i < bpp; ++i) add_1bit_plane(ud, data, i);
   } else if (mode == Mode::snes_mode7) {
     ud = data;
   }

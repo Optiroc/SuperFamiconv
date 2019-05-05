@@ -13,7 +13,8 @@ enum class Mode {
   snes,
   snes_mode7,
   gb,
-  gbc
+  gbc,
+  pce
 };
 
 inline Mode mode(const std::string& str) {
@@ -27,6 +28,8 @@ inline Mode mode(const std::string& str) {
     return Mode::gbc;
   } else if (str == "gbc") {
     return Mode::gbc;
+  } else if (str == "pce") {
+    return Mode::pce;
   }
   return Mode::none;
 }
@@ -42,6 +45,8 @@ inline std::string mode(Mode mode) {
     //return std::string("gb");
   case Mode::gbc:
     return std::string("gbc");
+  case Mode::pce:
+    return std::string("pce");
   default:
     return std::string("none");
   }
@@ -56,6 +61,8 @@ constexpr unsigned default_bpp_for_mode(Mode mode) {
     case Mode::gb:
     case Mode::gbc:
       return 2;
+    case Mode::pce:
+      return 4;
     default:
       return 4;
   }
@@ -70,6 +77,8 @@ constexpr bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
   case Mode::gb:
   case Mode::gbc:
     return bpp == 2;
+  case Mode::pce:
+    return bpp == 4;
   default:
     return false;
   }
@@ -89,9 +98,9 @@ constexpr bool tile_width_allowed_for_mode(unsigned width, Mode mode) {
   case Mode::snes:
     return width == 8 || width == 16;
   case Mode::snes_mode7:
-    return width == 8;
   case Mode::gb:
   case Mode::gbc:
+  case Mode::pce:
     return width == 8;
   default:
     return false;
@@ -103,9 +112,9 @@ constexpr bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
   case Mode::snes:
     return height == 8 || height == 16;
   case Mode::snes_mode7:
-    return height == 8;
   case Mode::gb:
   case Mode::gbc:
+  case Mode::pce:
     return height == 8;
   default:
     return false;
@@ -119,6 +128,7 @@ constexpr bool tile_flipping_allowed_for_mode(Mode mode) {
     return true;
   case Mode::snes_mode7:
   case Mode::gb:
+  case Mode::pce:
     return false;
   default:
     return false;
@@ -133,6 +143,7 @@ constexpr unsigned default_map_size_for_mode(Mode mode) {
     return 128;
   case Mode::gb:
   case Mode::gbc:
+  case Mode::pce:
     return 32;
   default:
     return 32;
@@ -149,6 +160,8 @@ constexpr unsigned default_palette_count_for_mode(Mode mode) {
       return 1;
     case Mode::gbc:
       return 8;
+    case Mode::pce:
+      return 16;
     default:
       return 8;
   }
@@ -161,6 +174,7 @@ constexpr bool col0_is_shared_for_mode(Mode mode) {
     return true;
   case Mode::gb:
   case Mode::gbc:
+  case Mode::pce:
     return false;
   default:
     return true;

@@ -82,6 +82,11 @@ inline std::vector<uint8_t> pack_native_mapentry(const Mapentry& entry, Mode mod
     v.push_back(((entry.palette_index) & 0x07) | ((entry.tile_index >> 5) & 0x08) | (entry.flip_h << 5) | (entry.flip_v << 6));
     break;
 
+  case Mode::pce:
+    v.push_back(entry.tile_index & 0xff);
+    v.push_back(((entry.tile_index >> 8) & 0x0f) | ((entry.palette_index << 4) & 0xf0));
+    break;
+
   default:
       break;
   }
