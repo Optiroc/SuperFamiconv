@@ -300,9 +300,26 @@ constexpr rgba_t reverse_bytes(rgba_t v) {
   return ((v >> 24) & 0xff) | ((v << 8) & 0xff0000) | ((v >> 8) & 0xff00) | ((v << 24) & 0xff000000);
 }
 
-// scale up using left bit replication
+// scale up value using left bit replication
 constexpr channel_t scale_up(channel_t value, unsigned shift) {
-  return (value << shift) | (value >> (8 - shift));
+  switch (shift) {
+  case 7:
+    return value ? 0xff : 0;
+  case 6:
+    return (value << 6) | ((value << 4) & 0x30) | ((value << 2) & 0xc) | (value & 0x3);
+  case 5:
+    return (value << 5) | ((value << 2) & 0x1c) | ((value >> 1) & 0x3);
+  case 4:
+    return (value << 4) | (value & 0xf);
+  case 3:
+    return (value << 3) | ((value >> 2) & 0x7);
+  case 2:
+    return (value << 2) | ((value >> 4) & 0x3);
+  case 1:
+    return (value << 1) | ((value >> 6) & 0x1);
+  default:
+    return (value << shift);
+  }
 }
 
 // scale standard rgba color to system specific range
