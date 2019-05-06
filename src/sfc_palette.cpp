@@ -22,6 +22,7 @@ namespace SfcPalette {
     unsigned tile_w;
     unsigned tile_h;
     bool no_remap;
+    bool sprite_mode;
     std::string color_zero;
   };
 };
@@ -54,6 +55,7 @@ int sfc_palette(int argc, char* argv[]) {
     options.Add(settings.tile_w,             'W', "tile-width",     "Tile width",                       unsigned(8),         "Settings");
     options.Add(settings.tile_h,             'H', "tile-height",    "Tile height",                      unsigned(8),         "Settings");
     options.AddSwitch(settings.no_remap,     'R', "no-remap",       "Don't remap colors",               false,               "Settings");
+    options.AddSwitch(settings.sprite_mode,  'S', "sprite-mode",    "Apply sprite output settings",     false,               "Settings");
     options.Add(settings.color_zero,         '0', "color-zero",     "Set color #0",                     std::string(),       "Settings");
 
     options.AddSwitch(verbose,               'v', "verbose",        "Verbose logging", false, "_");
@@ -70,9 +72,15 @@ int sfc_palette(int argc, char* argv[]) {
 
     settings.mode = sfc::mode(mode_str);
 
+    // Set pce_sprite mode and sprite_mode interchangeably
+    if (settings.sprite_mode && settings.mode == sfc::Mode::pce) settings.mode = sfc::Mode::pce_sprite;
+    if (settings.mode == sfc::Mode::pce_sprite) settings.sprite_mode = true;
+
     // Mode-specific defaults
     if (!options.WasSet("palettes")) settings.palettes = sfc::default_palette_count_for_mode(settings.mode);
     if (!options.WasSet("colors")) settings.colors = sfc::palette_size_at_bpp(sfc::default_bpp_for_mode(settings.mode));
+    if (!options.WasSet("tile-width")) settings.tile_w = sfc::default_tile_size_for_mode(settings.mode);
+    if (!options.WasSet("tile-height")) settings.tile_h = sfc::default_tile_size_for_mode(settings.mode);
 
     if (!settings.color_zero.empty()) {
       col0 = sfc::from_hexstring(settings.color_zero);
@@ -108,9 +116,13 @@ int sfc_palette(int argc, char* argv[]) {
 
       col0 = col0_forced ? col0 : image.crop(0, 0, 1, 1).rgba_data()[0];
 
-      if (col0_forced || sfc::col0_is_shared_for_mode(settings.mode)) {
+      if (settings.sprite_mode) {
+        if (verbose) fmt::print("Setting color zero to transparent\n");
+        palette.prime_col0(sfc::transparent_color);
+      }
+      else if (col0_forced || sfc::col0_is_shared_for_mode(settings.mode)) {
         if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(col0, true, true));
-        palette.set_col0(col0);
+        palette.prime_col0(col0);
       }
 
       palette.add_images(image.crops(settings.tile_w, settings.tile_h));

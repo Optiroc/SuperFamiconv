@@ -25,6 +25,7 @@ struct Subpalette final {
 
   void add(rgba_t color, bool add_duplicates = false);
   void add(const rgba_vec_t& new_colors, bool add_duplicates = false, bool overwrite = false);
+  void set(unsigned index, const rgba_t color);
 
   Subpalette padded() const;
   unsigned diff(const rgba_set_t& new_colors) const;
@@ -52,10 +53,8 @@ struct Palette final {
   const std::vector<rgba_vec_t> colors() const;
   const std::vector<rgba_vec_t> normalized_colors() const;
 
-  void set_col0(const rgba_t color) {
-    _col0 = reduce_color(color, _mode) == transparent_color ? transparent_color : color;
-    _col0_is_shared = true;
-  }
+  void set_color(unsigned index, const rgba_t color);
+  void prime_col0(const rgba_t color);
 
   void add_images(std::vector<sfc::Image>);
   void add_colors(const rgba_vec_t& colors, bool reduce_depth = true);

@@ -2,7 +2,6 @@
 //
 // david lindecrantz <optiroc@gmail.com>
 
-// TODO: gbc sprite mode should set common color 0 transparency (palette/tiles)
 // TODO: pce sprite mode should create 16x16 data, usually from a 32xN image (tiles)
 // TODO: pce maps are not organized like nintendo's (map)
 // TODO: Check "shorthand" path for 16x16 tile conversion
@@ -113,7 +112,6 @@ int superfamiconv(int argc, char* argv[]) {
     // Sprite mode defaults
     if (settings.sprite_mode) {
       settings.no_discard = settings.no_flip = true;
-      // TODO: For Mode::gbc set common col0 transparency
     }
 
     if (!settings.color_zero.empty()) {
@@ -159,9 +157,13 @@ int superfamiconv(int argc, char* argv[]) {
 
         col0 = col0_forced ? col0 : image.crop(0, 0, 1, 1).rgba_data()[0];
 
-        if (col0_forced || sfc::col0_is_shared_for_mode(settings.mode)) {
+        if (settings.sprite_mode) {
+          if (verbose) fmt::print("Setting color zero to transparent\n");
+          palette.prime_col0(sfc::transparent_color);
+        }
+        else if (col0_forced || sfc::col0_is_shared_for_mode(settings.mode)) {
           if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(col0, true, true));
-          palette.set_col0(col0);
+          palette.prime_col0(col0);
         }
 
         palette.add_images(image.crops(settings.tile_w, settings.tile_h));

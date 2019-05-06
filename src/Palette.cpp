@@ -23,6 +23,14 @@ void Subpalette::add(const rgba_vec_t& new_colors, bool add_duplicates, bool ove
   for (auto c : new_colors) add(c, add_duplicates);
 }
 
+// set color at index
+void Subpalette::set(unsigned index, const rgba_t color) {
+  if (_colors.size() > index) {
+    _colors[index] = color;
+    _colors_set = rgba_set_t(_colors.begin(), _colors.end());
+  }
+}
+
 // return subpalette padded to max_color count
 Subpalette Subpalette::padded() const {
   Subpalette sp = Subpalette(*this);
@@ -94,6 +102,17 @@ const std::vector<rgba_vec_t> Palette::normalized_colors() const {
   auto v = colors();
   for (auto& i : v) i = normalize_colors(i, _mode);
   return v;
+}
+
+// set color at index all subpalettes
+void Palette::set_color(unsigned index, const rgba_t color) {
+  for (auto& sp : _subpalettes) sp.set(index, color);
+}
+
+// set color to be used at index 0 for subsequently created SubPalettes
+void Palette::prime_col0(const rgba_t color) {
+  _col0 = reduce_color(color, _mode) == transparent_color ? transparent_color : color;
+  _col0_is_shared = true;
 }
 
 

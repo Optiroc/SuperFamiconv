@@ -97,9 +97,6 @@ int sfc_tiles(int argc, char* argv[]) {
     // Sprite mode defaults
     if (settings.sprite_mode) {
       settings.no_discard = settings.no_flip = true;
-
-      // TODO: For Mode::gbc set common col0 transparency
-      // if (settings.mode == sfc::Mode::gb || settings.mode == sfc::Mode::gbc ) {}
     }
 
     if (!sfc::bpp_allowed_for_mode(settings.bpp, settings.mode)) throw std::runtime_error("bpp setting not allowed for specified mode");
@@ -147,6 +144,11 @@ int sfc_tiles(int argc, char* argv[]) {
         if (settings.in_palette.empty()) throw std::runtime_error("Input palette required (except in --no-remap mode)");
         palette = sfc::Palette(settings.in_palette, settings.mode, sfc::palette_size_at_bpp(settings.bpp));
         if (verbose) fmt::print("Remapping tile data from palette \"{}\" ({})\n", settings.in_palette, palette.description());
+      }
+
+      if (settings.sprite_mode && sfc::col0_is_shared_for_sprite_mode(settings.mode)) {
+        if (verbose) fmt::print("Treating color zero as transparent ({}/sprite-mode)\n", sfc::mode(settings.mode));
+        palette.set_color(0, sfc::transparent_color);
       }
 
       for (auto& img : crops) tileset.add(img, &palette);

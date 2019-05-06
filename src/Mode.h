@@ -216,4 +216,18 @@ constexpr bool col0_is_shared_for_mode(Mode mode) {
   }
 }
 
+constexpr bool col0_is_shared_for_sprite_mode(Mode mode) {
+  switch (mode) {
+  case Mode::snes:
+  case Mode::snes_mode7:
+  case Mode::pce_sprite:
+  case Mode::gb:
+  case Mode::gbc:
+  case Mode::pce:
+    return true;
+  default:
+    return true;
+  }
+}
+
 } /* namespace sfc */
