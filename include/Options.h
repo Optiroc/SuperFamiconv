@@ -57,7 +57,7 @@ private:
     void set(T& var, std::string optarg);
 
     template <typename T>
-    void add_entry(struct option& op, char flag, std::string long_flag, T& default_val, std::string description, std::string group, bool req_arg = false);
+    void add_entry(struct option& op, char flag, std::string long_flag, std::string description, std::string group, bool req_arg = false);
 
     template <typename T>
     std::string get_default(T& default_val);
@@ -68,7 +68,7 @@ private:
 template <typename T>
 inline void Options::Add(T& var, char flag, std::string long_flag, std::string description, T default_val, std::string group) {
     struct option op;
-    this->add_entry(op, flag, long_flag, default_val, description, group, true);
+    this->add_entry<T&>(op, flag, long_flag, description, group, true);
 
     op.has_arg = required_argument;
     var = default_val;
@@ -79,7 +79,7 @@ inline void Options::Add(T& var, char flag, std::string long_flag, std::string d
 
 inline void Options::AddSwitch(bool& var, char flag, std::string long_flag, std::string description, bool default_val, std::string group) {
     struct option op;
-    this->add_entry(op, flag, long_flag, var, description, group);
+    this->add_entry<bool&>(op, flag, long_flag, description, group);
 
     op.has_arg = optional_argument;
     var = default_val;
@@ -129,7 +129,7 @@ inline std::string Options::Usage() {
 
 
 template <typename T>
-inline void Options::add_entry(struct option& opt, char flag, std::string long_flag, T& default_val, std::string description, std::string group, bool req_arg) {
+inline void Options::add_entry(struct option& opt, char flag, std::string long_flag, std::string description, std::string group, bool req_arg) {
     if (!flag && !long_flag.size()) return;
 
     if (flag) {
@@ -165,7 +165,7 @@ inline void Options::add_entry(struct option& opt, char flag, std::string long_f
         ss << std::string(ss.str().length() > IndentDescription ? 1 : IndentDescription - ss.str().length(), ' ');
 
         std::string desc(description);
-        desc.append(get_default(default_val));
+        if (std::is_same<T, bool&>::value) desc.append(std::string(" <switch>"));
 
         unsigned width = tty_width();
         unsigned desc_pos = width - ss.str().length() > width * 0.3f ? (unsigned)ss.str().length() : IndentFlag + 2;
@@ -195,34 +195,6 @@ template <>
 inline void Options::set<std::string>(std::string& var, std::string opt_arg) {
     var = opt_arg;
 }
-
-
-template <typename T>
-inline std::string Options::get_default(T& default_val) {
-    if (std::is_same<T, bool>::value) {
-        return std::string(" <switch>");
-    } else if (std::is_same<T, unsigned>::value) {
-        if (default_val) {
-            std::stringstream ss;
-            ss << " <default: " << default_val << ">";
-            return ss.str();
-        } else {
-            return std::string();
-        }
-    } else {
-        std::stringstream ss;
-        ss << " <default: " << default_val << ">";
-        return ss.str();
-    }
-}
-
-template <>
-inline std::string Options::get_default(std::string& default_val) {
-    std::stringstream ss;
-    if (default_val.size()) ss << " <default: " << default_val << ">";
-    return ss.str();
-}
-
 
 inline int Options::tty_width() {
 #ifdef TIOCGSIZE

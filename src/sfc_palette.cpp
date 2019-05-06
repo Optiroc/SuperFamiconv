@@ -48,7 +48,7 @@ int sfc_palette(int argc, char* argv[]) {
     options.Add(settings.out_json,           'j', "out-json",       "Output: json");
     options.Add(settings.out_image,          'o', "out-image",      "Output: image");
 
-    options.Add(mode_str,                    'M', "mode",           "Mode",                             std::string("snes"), "Settings");
+    options.Add(mode_str,                    'M', "mode",           "Mode <default: snes>",             std::string("snes"), "Settings");
     options.Add(settings.palettes,           'P', "palettes",       "Number of subpalettes",            unsigned(8),         "Settings");
     options.Add(settings.colors,             'C', "colors",         "Colors per subpalette",            unsigned(16),        "Settings");
     options.Add(settings.tile_w,             'W', "tile-width",     "Tile width",                       unsigned(8),         "Settings");

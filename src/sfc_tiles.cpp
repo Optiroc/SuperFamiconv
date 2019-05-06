@@ -49,7 +49,7 @@ int sfc_tiles(int argc, char* argv[]) {
     options.Add(settings.out_data,           'd', "out-data",       "Output: native data");
     options.Add(settings.out_image,          'o', "out-image",      "Output: image");
 
-    options.Add(mode_str,                    'M', "mode",           "Mode",                              std::string("snes"), "Settings");
+    options.Add(mode_str,                    'M', "mode",           "Mode <default: snes>",              std::string("snes"), "Settings");
     options.Add(settings.bpp,                'B', "bpp",            "Bits per pixel",                    unsigned(4),         "Settings");
     options.Add(settings.tile_w,             'W', "tile-width",     "Tile width",                        unsigned(8),         "Settings");
     options.Add(settings.tile_h,             'H', "tile-height",    "Tile height",                       unsigned(8),         "Settings");
