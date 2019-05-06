@@ -14,7 +14,8 @@ enum class Mode {
   snes_mode7,
   gb,
   gbc,
-  pce
+  pce,
+  pce_sprite
 };
 
 inline Mode mode(const std::string& str) {
@@ -30,6 +31,8 @@ inline Mode mode(const std::string& str) {
     return Mode::gbc;
   } else if (str == "pce") {
     return Mode::pce;
+  } else if (str == "pce_sprite") {
+    return Mode::pce_sprite;
   }
   return Mode::none;
 }
@@ -47,6 +50,8 @@ inline std::string mode(Mode mode) {
     return std::string("gbc");
   case Mode::pce:
     return std::string("pce");
+  case Mode::pce_sprite:
+    return std::string("pce_sprite");
   default:
     return std::string("none");
   }
@@ -62,6 +67,7 @@ constexpr unsigned default_bpp_for_mode(Mode mode) {
     case Mode::gbc:
       return 2;
     case Mode::pce:
+    case Mode::pce_sprite:
       return 4;
     default:
       return 4;
@@ -78,6 +84,7 @@ constexpr bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
   case Mode::gbc:
     return bpp == 2;
   case Mode::pce:
+  case Mode::pce_sprite:
     return bpp == 4;
   default:
     return false;
@@ -86,10 +93,29 @@ constexpr bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
 
 constexpr unsigned default_tile_size_for_mode(Mode mode) {
   switch (mode) {
-  case Mode::snes:
-    return 8;
+  case Mode::pce_sprite:
+    return 16;
   default:
     return 8;
+  }
+}
+
+constexpr unsigned max_tile_count_for_mode(Mode mode) {
+  switch (mode) {
+    case Mode::snes:
+      return 1024;
+    case Mode::snes_mode7:
+      return 256;
+    case Mode::gb:
+      return 256;
+    case Mode::gbc:
+      return 512;
+    case Mode::pce:
+      return 2048;
+    case Mode::pce_sprite:
+      return 0;
+    default:
+      return 0;
   }
 }
 
@@ -102,6 +128,8 @@ constexpr bool tile_width_allowed_for_mode(unsigned width, Mode mode) {
   case Mode::gbc:
   case Mode::pce:
     return width == 8;
+  case Mode::pce_sprite:
+    return width == 16;
   default:
     return false;
   }
@@ -116,6 +144,8 @@ constexpr bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
   case Mode::gbc:
   case Mode::pce:
     return height == 8;
+  case Mode::pce_sprite:
+    return height == 16;
   default:
     return false;
   }
@@ -129,6 +159,7 @@ constexpr bool tile_flipping_allowed_for_mode(Mode mode) {
   case Mode::snes_mode7:
   case Mode::gb:
   case Mode::pce:
+  case Mode::pce_sprite:
     return false;
   default:
     return false;
@@ -144,6 +175,7 @@ constexpr unsigned default_map_size_for_mode(Mode mode) {
   case Mode::gb:
   case Mode::gbc:
   case Mode::pce:
+  case Mode::pce_sprite:
     return 32;
   default:
     return 32;
@@ -161,6 +193,7 @@ constexpr unsigned default_palette_count_for_mode(Mode mode) {
     case Mode::gbc:
       return 8;
     case Mode::pce:
+    case Mode::pce_sprite:
       return 16;
     default:
       return 8;
@@ -171,6 +204,7 @@ constexpr bool col0_is_shared_for_mode(Mode mode) {
   switch (mode) {
   case Mode::snes:
   case Mode::snes_mode7:
+  case Mode::pce_sprite:
     return true;
   case Mode::gb:
   case Mode::gbc:

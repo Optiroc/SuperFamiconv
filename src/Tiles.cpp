@@ -158,7 +158,10 @@ Tileset::Tileset(const std::vector<uint8_t>& native_data, Mode mode, unsigned bp
   _tile_height = tile_height;
   _no_flip = no_flip;
 
-  if (_mode == Mode::snes || _mode == Mode::snes_mode7 || _mode == Mode::gbc || _mode == Mode::gb || _mode == Mode::pce) {
+  if (_mode == Mode::pce_sprite) {
+    // TODO: deserialize native pce sprites
+  }
+  else if (_mode == Mode::snes || _mode == Mode::snes_mode7 || _mode == Mode::gbc || _mode == Mode::gb || _mode == Mode::pce) {
     unsigned bytes_per_tile = bpp << 3;
     if (native_data.size() % bytes_per_tile != 0) {
       throw std::runtime_error("Tile data can't be deserialized (size doesn't match bpp setting)");
@@ -170,9 +173,9 @@ Tileset::Tileset(const std::vector<uint8_t>& native_data, Mode mode, unsigned bp
         Tile(std::vector<uint8_t>(&native_data[i * bytes_per_tile], &native_data[(i + 1) * bytes_per_tile]),
              mode, bpp, no_flip, 8, 8));
     }
-  }
 
-  if (_tile_width != 8 || _tile_height != 8) _tiles = remap_tiles_for_input(_tiles, _mode);
+    if (_tile_width != 8 || _tile_height != 8) _tiles = remap_tiles_for_input(_tiles, _mode);
+  }
 }
 
 void Tileset::add(const Image& image, const Palette* palette) {
@@ -214,7 +217,7 @@ void Tileset::save(const std::string& path) const {
 
 std::vector<uint8_t> Tileset::native_data() const {
   std::vector<Tile> tv;
-  if (_tile_width != 8 || _tile_height != 8) {
+  if (_mode != Mode::pce_sprite && (_tile_width != 8 || _tile_height != 8)) {
     tv = remap_tiles_for_output(_tiles, _mode);
   } else {
     tv = _tiles;

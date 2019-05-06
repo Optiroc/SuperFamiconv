@@ -73,17 +73,16 @@ int sfc_tiles(int argc, char* argv[]) {
 
     settings.mode = sfc::mode(mode_str);
 
+    // Set pce_sprite mode and sprite_mode interchangeably
+    if (settings.sprite_mode && settings.mode == sfc::Mode::pce) settings.mode = sfc::Mode::pce_sprite;
+    if (settings.mode == sfc::Mode::pce_sprite) settings.sprite_mode = true;
+
     // Mode-specific defaults
     if (!options.WasSet("bpp")) settings.bpp = sfc::default_bpp_for_mode(settings.mode);
+    if (!options.WasSet("tile-width")) settings.tile_w = sfc::default_tile_size_for_mode(settings.mode);
+    if (!options.WasSet("tile-height")) settings.tile_h = sfc::default_tile_size_for_mode(settings.mode);
     if (!options.WasSet("no-flip")) settings.no_flip = !sfc::tile_flipping_allowed_for_mode(settings.mode);
-
-    // Sprite mode
-    if (settings.sprite_mode) {
-      settings.no_discard = settings.no_flip = true;
-      // TODO: For Mode::gbc set common col0 transparency
-    }
-
-    if (!sfc::bpp_allowed_for_mode(settings.bpp, settings.mode)) throw std::runtime_error("bpp setting not allowed for specified mode");
+    if (!options.WasSet("max-tiles")) settings.max_tiles = sfc::max_tile_count_for_mode(settings.mode);
 
     if (!sfc::tile_width_allowed_for_mode(settings.tile_w, settings.mode)) {
       settings.tile_w = sfc::default_tile_size_for_mode(settings.mode);
@@ -94,6 +93,16 @@ int sfc_tiles(int argc, char* argv[]) {
       settings.tile_h = sfc::default_tile_size_for_mode(settings.mode);
       if (verbose) fmt::print("Tile height not allowed for specified mode, using default ({})\n", settings.tile_h);
     }
+
+    // Sprite mode defaults
+    if (settings.sprite_mode) {
+      settings.no_discard = settings.no_flip = true;
+
+      // TODO: For Mode::gbc set common col0 transparency
+      // if (settings.mode == sfc::Mode::gb || settings.mode == sfc::Mode::gbc ) {}
+    }
+
+    if (!sfc::bpp_allowed_for_mode(settings.bpp, settings.mode)) throw std::runtime_error("bpp setting not allowed for specified mode");
 
   } catch (const std::exception& e) {
     fmt::print(stderr, "Error: {}\n", e.what());
@@ -109,7 +118,8 @@ int sfc_tiles(int argc, char* argv[]) {
 
     if (!settings.in_data.empty()) {
       // Native data input
-      tileset = sfc::Tileset(sfc::read_binary(settings.in_data), settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_flip);
+      tileset = sfc::Tileset(sfc::read_binary(settings.in_data), settings.mode, settings.bpp,
+                             settings.tile_w, settings.tile_h, settings.no_flip);
       if (verbose) fmt::print("Loaded tiles from \"{}\" ({} tiles)\n", settings.in_data, tileset.size());
 
     } else {
@@ -117,6 +127,11 @@ int sfc_tiles(int argc, char* argv[]) {
       sfc::Image image(settings.in_image);
       std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
       if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
+
+      if (settings.mode == sfc::Mode::pce && settings.sprite_mode) {
+        if (image.width() % 16 || image.height() % 16)
+          throw std::runtime_error("pce/sprite-mode requires image dimensions to be a multiple of 16");
+      }
 
       if (verbose) fmt::print("Image sliced into {} {}x{}px tiles\n", crops.size(), settings.tile_w, settings.tile_h);
 

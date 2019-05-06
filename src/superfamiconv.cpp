@@ -2,6 +2,7 @@
 //
 // david lindecrantz <optiroc@gmail.com>
 
+// TODO: Add warning/diagnostic output for missing tiles in map generation
 // TODO: gbc sprite mode should set common color 0 transparency (palette/tiles)
 // TODO: pce sprite mode should create 16x16 data, usually from a 32xN image (tiles)
 // TODO: pce maps are not organized like nintendo's (map)
@@ -100,11 +101,17 @@ int superfamiconv(int argc, char* argv[]) {
 
     settings.mode = sfc::mode(mode_str);
 
+    // Set pce_sprite mode and sprite_mode interchangeably
+    if (settings.sprite_mode && settings.mode == sfc::Mode::pce) settings.mode = sfc::Mode::pce_sprite;
+    if (settings.mode == sfc::Mode::pce_sprite) settings.sprite_mode = true;
+
     // Mode-specific defaults
     if (!options.WasSet("bpp")) settings.bpp = sfc::default_bpp_for_mode(settings.mode);
+    if (!options.WasSet("tile-width")) settings.tile_w = sfc::default_tile_size_for_mode(settings.mode);
+    if (!options.WasSet("tile-height")) settings.tile_h = sfc::default_tile_size_for_mode(settings.mode);
     if (!options.WasSet("no-flip")) settings.no_flip = !sfc::tile_flipping_allowed_for_mode(settings.mode);
 
-    // Sprite mode
+    // Sprite mode defaults
     if (settings.sprite_mode) {
       settings.no_discard = settings.no_flip = true;
       // TODO: For Mode::gbc set common col0 transparency
@@ -127,6 +134,11 @@ int superfamiconv(int argc, char* argv[]) {
 
     sfc::Image image(settings.in_image);
     if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
+
+    if (settings.mode == sfc::Mode::pce_sprite) {
+      if (image.width() % 16 || image.height() % 16)
+        throw std::runtime_error("pce/sprite-mode requires image dimensions to be a multiple of 16");
+    }
 
     // Make palette
     sfc::Palette palette;
@@ -160,7 +172,8 @@ int superfamiconv(int argc, char* argv[]) {
     }
 
     // Make tileset
-    sfc::Tileset tileset(settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_discard, settings.no_flip);
+    sfc::Tileset tileset(settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_discard,
+                         settings.no_flip, settings.no_remap, sfc::max_tile_count_for_mode(settings.mode));
     {
       std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
 
@@ -184,7 +197,7 @@ int superfamiconv(int argc, char* argv[]) {
     }
 
     sfc::Map map(settings.mode, map_width, map_height);
-    {
+    if (settings.mode != sfc::Mode::pce_sprite) {
       std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
       if (verbose) fmt::print("Mapping {} {}x{}px tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
 
@@ -205,8 +218,12 @@ int superfamiconv(int argc, char* argv[]) {
     }
 
     if (!settings.out_map.empty()) {
-      map.save(settings.out_map);
-      if (verbose) fmt::print("Saved native map data to \"{}\"\n", settings.out_map);
+      if (settings.mode == sfc::Mode::pce_sprite) {
+        fmt::print("Map output not available in pce_sprite modee\n");
+      } else {
+        map.save(settings.out_map);
+        if (verbose) fmt::print("Saved native map data to \"{}\"\n", settings.out_map);
+      }
     }
 
     if (!settings.out_palette_act.empty()) {

@@ -80,6 +80,8 @@ int sfc_map(int argc, char* argv[]) {
 
     settings.mode = sfc::mode(mode_str);
 
+    if (settings.mode == sfc::Mode::pce_sprite) throw std::runtime_error("map output not available in pce_sprite mode");
+
     // Mode-specific defaults
     if (!options.WasSet("bpp")) settings.bpp = sfc::default_bpp_for_mode(settings.mode);
 
