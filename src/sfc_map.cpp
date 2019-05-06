@@ -140,12 +140,12 @@ int sfc_map(int argc, char* argv[]) {
 
     if (settings.mode == sfc::Mode::snes_mode7 && !settings.out_m7_data.empty()) {
       sfc::write_file(settings.out_m7_data, map.snes_mode7_interleaved_data(tileset));
-      if (verbose) fmt::print("Saved interleaved SNES mode 7 data to \"{}\"\n", settings.out_m7_data);
+      if (verbose) fmt::print("Saved snes_mode7 interleaved data to \"{}\"\n", settings.out_m7_data);
     }
 
     if (settings.mode == sfc::Mode::gbc && !settings.out_gbc_bank.empty()) {
       sfc::write_file(settings.out_gbc_bank, map.gbc_banked_data());
-      if (verbose) fmt::print("Saved banked GBC map data to \"{}\"\n", settings.out_gbc_bank);
+      if (verbose) fmt::print("Saved gbc banked map data to \"{}\"\n", settings.out_gbc_bank);
     }
 
   } catch (const std::exception& e) {

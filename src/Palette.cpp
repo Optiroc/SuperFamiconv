@@ -105,7 +105,7 @@ void Palette::add_images(std::vector<sfc::Image> palette_tiles) {
   for (auto& c : palette_tiles) {
 
     if (c.colors().size() > _max_colors_per_subpalette) {
-      fmt::print("Tile [{},{}] has more than the allowed number of colors (at {},{} in source image)\n",
+      fmt::print(stderr, "Tile [{},{}] has more than the allowed number of colors (at {},{} in source image)\n",
                  (unsigned)(c.src_coord_x() / c.width()), (unsigned)(c.src_coord_y() / c.height()),
                  c.src_coord_x(), c.src_coord_y());
     }
