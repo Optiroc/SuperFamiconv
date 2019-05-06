@@ -70,7 +70,8 @@ Palette::Palette(const std::string& path, Mode in_mode, uint32_t colors_per_subp
       rgba_vec_t colors;
       for (auto jcs : jsp)
         if (jcs.is_string()) colors.push_back(reduce_color(from_hexstring(jcs), in_mode));
-      if (colors.size() > _max_colors_per_subpalette) throw std::runtime_error("Palette in JSON doesn't match color depth / colors per subpalette");
+      if (colors.size() > _max_colors_per_subpalette)
+        throw std::runtime_error("Palette in JSON doesn't match color depth / colors per subpalette");
       add_colors(colors, false);
     }
   } catch (...) {
@@ -124,8 +125,7 @@ void Palette::add_images(std::vector<sfc::Image> palette_tiles) {
   for (auto& c : palette_tiles) {
 
     if (c.colors().size() > _max_colors_per_subpalette) {
-      fmt::print(stderr, "Tile [{},{}] has more than the allowed number of colors (at {},{} in source image)\n",
-                 (unsigned)(c.src_coord_x() / c.width()), (unsigned)(c.src_coord_y() / c.height()),
+      fmt::print(stderr, "  Tile with too many unique colors at {},{} in source image\n",
                  c.src_coord_x(), c.src_coord_y());
     }
 
@@ -183,13 +183,21 @@ const Subpalette& Palette::subpalette_matching(const Image& image) const {
   auto rc = reduce_colors(image.rgba_data(), _mode);
   rgba_set_t cs(rc.begin(), rc.end());
   cs.erase(transparent_color);
-  if (cs.size() > _max_colors_per_subpalette) throw std::runtime_error("Colors don't fit in palette"); // TODO: catch and report position
+
+  if (cs.size() > _max_colors_per_subpalette) {
+    throw std::runtime_error(fmt::format("Tile with too many unique colors at {},{} in source image",
+                                         image.src_coord_x(), image.src_coord_y()));
+  }
 
   auto match = std::find_if(_subpalettes.begin(), _subpalettes.end(), [&](const auto& val) -> bool {
     return val.diff(cs) == 0;
   });
 
-  if (match == _subpalettes.end()) throw std::runtime_error("No matching palette for image"); // TODO: catch and report position
+  if (match == _subpalettes.end()) {
+    throw std::runtime_error(fmt::format("No matching palette for tile at {},{} in source image",
+                                         image.src_coord_x(), image.src_coord_y()));
+  }
+
   return *match;
 }
 
@@ -198,7 +206,11 @@ std::vector<const Subpalette*> Palette::subpalettes_matching(const Image& image)
 
   auto rc = reduce_colors(image.rgba_data(), _mode);
   rgba_set_t cs(rc.begin(), rc.end());
-  if (cs.size() > _max_colors_per_subpalette) throw std::runtime_error("Colors don't fit in palette"); // TODO: catch and report position
+
+  if (cs.size() > _max_colors_per_subpalette) {
+    throw std::runtime_error(fmt::format("Tile with too many unique colors at {},{} in source image\n",
+                                         image.src_coord_x(), image.src_coord_y()));
+  }
 
   for (const Subpalette& sp : _subpalettes) {
     if (sp.diff(cs) == 0) sv.push_back(&sp);
