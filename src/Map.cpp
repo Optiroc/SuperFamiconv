@@ -25,9 +25,15 @@ void Map::add(const sfc::Image& image, const sfc::Tileset& tileset, const sfc::P
   }
 
   if (tileset_index == -1) {
-    // TODO: Tile missing, log warning with coordinates
-    // TODO: Add if else (tileset_index > max_tile_count_for_mode(mode))
+    fmt::print(stderr, "  No matching tile for position {},{}\n",
+               image.src_coord_x(), image.src_coord_y());
     _entries[(pos_y * _map_width) + pos_x] = Mapentry(0, 0, false, false);
+
+  } else if (tileset_index >= (int)max_tile_count_for_mode(_mode)) {
+    fmt::print(stderr, "  Mapped tile exceeds allowed map index at position {},{}\n",
+               image.src_coord_x(), image.src_coord_y());
+    _entries[(pos_y * _map_width) + pos_x] = Mapentry(0, 0, false, false);
+
   } else {
     _entries[(pos_y * _map_width) + pos_x] =
       Mapentry(tileset_index, palette_index,

@@ -2,7 +2,6 @@
 //
 // david lindecrantz <optiroc@gmail.com>
 
-// TODO: Add warning/diagnostic output for missing tiles in map generation
 // TODO: gbc sprite mode should set common color 0 transparency (palette/tiles)
 // TODO: pce sprite mode should create 16x16 data, usually from a 32xN image (tiles)
 // TODO: pce maps are not organized like nintendo's (map)
