@@ -251,9 +251,6 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
         }
       }
     }
-
-  } else if (mode == Mode::snes_mode7) {
-    throw std::runtime_error("Programmer error");
   }
 
   return tv;
@@ -276,9 +273,6 @@ std::vector<Tile> Tileset::remap_tiles_for_input(const std::vector<Tile>& tiles,
       if (metatile.size() == cells_per_tile_h * cells_per_tile_v)
         tv.push_back(Tile(metatile, _no_flip, _tile_width, _tile_height));
     }
-
-  } else if (mode == Mode::snes_mode7) {
-    throw std::runtime_error("Programmer error");
   }
 
   return tv;

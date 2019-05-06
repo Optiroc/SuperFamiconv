@@ -69,7 +69,7 @@ std::vector<uint8_t> Map::snes_mode7_interleaved_data(const Tileset& tileset) co
 
 std::vector<uint8_t> Map::gbc_banked_data() const {
   if ((width() % 32) || (height() % 32))
-    throw std::runtime_error("out-gbc-bank requires map dimensions to be multiplies of 32");
+    throw std::runtime_error("gbc/out-gbc-bank requires map dimensions to be multiples of 32");
 
   auto linear_data = native_data();
   auto banked_data = std::vector<uint8_t>(linear_data.size());

@@ -2,7 +2,9 @@
 //
 // david lindecrantz <optiroc@gmail.com>
 
-// TODO: gbc sprite mode should set common color 0 transparency
+// TODO: gbc sprite mode should set common color 0 transparency (palette/tiles)
+// TODO: pce sprite mode should create 16x16 data, usually from a 32xN image (tiles)
+// TODO: pce maps are not organized like nintendo's (map)
 // TODO: Check "shorthand" path for 16x16 tile conversion
 // TODO: Don't always pad native palette output? (Pad every palette but the last? Option?)
 
