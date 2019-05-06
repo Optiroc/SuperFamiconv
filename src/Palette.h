@@ -9,9 +9,6 @@
 
 namespace sfc {
 
-typedef std::set<rgba_t> color_set;
-typedef std::vector<color_set> color_set_vect;
-
 struct Image;
 
 struct Subpalette final {
@@ -23,22 +20,22 @@ struct Subpalette final {
   bool is_full() const { return _colors.size() == _max_colors; }
 
   rgba_t color_at(unsigned index) const { return _colors[index]; }
-  const std::vector<rgba_t> colors() const { return _colors; }
-  const std::vector<rgba_t> normalized_colors() const { return normalize_colors(_colors, _mode); }
+  const rgba_vec_t colors() const { return _colors; }
+  const rgba_vec_t normalized_colors() const { return normalize_colors(_colors, _mode); }
 
   void add(rgba_t color, bool add_duplicates = false);
-  void add(const std::vector<rgba_t>& new_colors, bool add_duplicates = false, bool overwrite = false);
+  void add(const rgba_vec_t& new_colors, bool add_duplicates = false, bool overwrite = false);
 
   Subpalette padded() const;
-  unsigned diff(const std::set<rgba_t>& new_colors) const;
+  unsigned diff(const rgba_set_t& new_colors) const;
   void sort();
 
 private:
   Mode _mode = Mode::snes;
   unsigned _max_colors;
 
-  std::vector<rgba_t> _colors;
-  std::set<rgba_t> _colors_set;
+  rgba_vec_t _colors;
+  rgba_set_t _colors_set;
 };
 
 
@@ -48,12 +45,12 @@ struct Palette final {
     _max_subpalettes(max_subpalettes),
     _max_colors_per_subpalette(max_colors){};
 
-  Palette(const std::vector<uint8_t>& native_data, Mode in_mode = Mode::snes, unsigned colors_per_subpalette = 16);
+  Palette(const byte_vec_t& native_data, Mode in_mode = Mode::snes, unsigned colors_per_subpalette = 16);
   Palette(const std::string& path, Mode in_mode = Mode::snes, unsigned colors_per_subpalette = 16);
 
   unsigned max_colors_per_subpalette() const { return _max_colors_per_subpalette; }
-  const std::vector<std::vector<rgba_t>> colors() const;
-  const std::vector<std::vector<rgba_t>> normalized_colors() const;
+  const std::vector<rgba_vec_t> colors() const;
+  const std::vector<rgba_vec_t> normalized_colors() const;
 
   void set_col0(const rgba_t color) {
     _col0 = reduce_color(color, _mode) == transparent_color ? transparent_color : color;
@@ -61,7 +58,7 @@ struct Palette final {
   }
 
   void add_images(std::vector<sfc::Image>);
-  void add_colors(const std::vector<rgba_t>& colors, bool reduce_depth = true);
+  void add_colors(const rgba_vec_t& colors, bool reduce_depth = true);
 
   int index_of(const Subpalette& subpalette) const;
   const Subpalette& subpalette_matching(const Image& image) const;
@@ -86,7 +83,7 @@ private:
   Subpalette& add_subpalette();
   unsigned subpalettes_free() const { return _max_subpalettes - (unsigned)_subpalettes.size(); }
 
-  const color_set_vect optimized_palettes(const color_set_vect& colors) const;
+  const rgba_set_vec_t optimized_palettes(const rgba_set_vec_t& colors) const;
 };
 
 } /* namespace sfc */

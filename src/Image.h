@@ -29,10 +29,10 @@ struct Image final {
 
   unsigned palette_size() const { return (unsigned)_palette.size(); }
 
-  std::vector<rgba_t> rgba_data() const;
-  std::vector<rgba_t> palette() const { return _palette; };
-  std::vector<index_t> indexed_data() const { return _indexed_data; }
-  std::set<rgba_t> colors() const { return _colors; }
+  rgba_vec_t rgba_data() const;
+  rgba_vec_t palette() const { return _palette; };
+  index_vec_t indexed_data() const { return _indexed_data; }
+  rgba_set_t colors() const { return _colors; }
 
   rgba_t rgba_color_at(unsigned index) const {
     return (_data[index * 4]) + (_data[(index * 4) + 1] << 8) +
@@ -52,17 +52,17 @@ private:
   unsigned _height;
   unsigned _src_coord_x;
   unsigned _src_coord_y;
-  std::vector<channel_t> _data;
-  std::vector<index_t> _indexed_data;
-  std::vector<rgba_t> _palette;
-  std::set<rgba_t> _colors;
+  channel_vec_t _data;
+  index_vec_t _indexed_data;
+  rgba_vec_t _palette;
+  rgba_set_t _colors;
 
   void set_pixel(const rgba_t color, const unsigned index);
   void set_pixel(const rgba_t color, const unsigned x, const unsigned y);
-  void blit(const std::vector<rgba_t>& rgba_data, const unsigned x, const unsigned y, const unsigned width);
+  void blit(const rgba_vec_t& rgba_data, const unsigned x, const unsigned y, const unsigned width);
   void set_pixel_indexed(const index_t color, const unsigned index);
   void set_pixel_indexed(const index_t color, const unsigned x, const unsigned y);
-  void blit_indexed(const std::vector<index_t>& data, const unsigned x, const unsigned y, const unsigned width);
+  void blit_indexed(const index_vec_t& data, const unsigned x, const unsigned y, const unsigned width);
 
   void set_default_palette(const unsigned indices = 256);
 };

@@ -21,9 +21,16 @@
 #include <nlohmann/json.hpp>
 #include "Mode.h"
 
-typedef uint32_t rgba_t;   // rgba color stored in little endian order
-typedef uint8_t channel_t; // rgba color channel
 typedef uint8_t index_t;   // color index (typedefd in case more than 8 bits are needed down the road)
+typedef uint8_t channel_t; // rgba color channel
+typedef uint32_t rgba_t;   // rgba color stored in little endian order
+
+typedef std::vector<uint8_t> byte_vec_t;
+typedef std::vector<index_t> index_vec_t;
+typedef std::vector<channel_t> channel_vec_t;
+typedef std::vector<rgba_t> rgba_vec_t;
+typedef std::set<rgba_t> rgba_set_t;
+typedef std::vector<rgba_set_t> rgba_set_vec_t;
 
 namespace sfc {
 
@@ -151,9 +158,9 @@ constexpr index_t bitmask_at_bpp(unsigned bpp) {
   return (index_t)m;
 }
 
-inline std::vector<rgba_t> to_rgba(std::vector<channel_t> data) {
+inline rgba_vec_t to_rgba(channel_vec_t data) {
   if (data.size() % 4 != 0) throw std::runtime_error("RGBA vector size not a multiple of 4");
-  std::vector<rgba_t> v(data.size() >> 2);
+  rgba_vec_t v(data.size() >> 2);
   for (unsigned i = 0; i < v.size(); ++i) {
     v[i] = (data[i * 4]) + (data[(i * 4) + 1] << 8) + (data[(i * 4) + 2] << 16) + (data[(i * 4) + 3] << 24);
   }
@@ -289,7 +296,7 @@ inline bool rgba_color::operator>(const rgba_color& o) const {
   return std::tie(h, l, v) > std::tie(ho, lo, vo);
 }
 
-inline void sort_colors(std::vector<rgba_t>& colors) {
+inline void sort_colors(rgba_vec_t& colors) {
   std::sort(colors.begin(), colors.end(), [](const rgba_t& a, const rgba_t& b) -> bool {
     return rgba_color(a) > rgba_color(b);
   });
@@ -362,14 +369,14 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
 }
 
 // scale standard rgba colors to system specific range
-inline std::vector<rgba_t> reduce_colors(const std::vector<rgba_t>& colors, Mode to_mode) {
+inline rgba_vec_t reduce_colors(const rgba_vec_t& colors, Mode to_mode) {
   auto vc = colors;
   for (rgba_t& color : vc) color = reduce_color(color, to_mode);
   return vc;
 }
 
-inline std::set<rgba_t> reduce_colors(const std::set<rgba_t>& colors, Mode to_mode) {
-  auto sc = std::set<rgba_t>();
+inline rgba_set_t reduce_colors(const rgba_set_t& colors, Mode to_mode) {
+  auto sc = rgba_set_t();
   for (const rgba_t& color : colors) sc.insert(reduce_color(color, to_mode));
   return sc;
 }
@@ -401,15 +408,15 @@ inline rgba_t normalize_color(const rgba_t color, Mode from_mode) {
 }
 
 // scale colors from system specific range to 8bpc RGBA range
-inline std::vector<rgba_t> normalize_colors(const std::vector<rgba_t>& colors, Mode from_mode) {
+inline rgba_vec_t normalize_colors(const rgba_vec_t& colors, Mode from_mode) {
   auto vc = colors;
   for (rgba_t& color : vc) color = normalize_color(color, from_mode);
   return vc;
 }
 
 // pack scaled rgba color to native format
-inline std::vector<uint8_t> pack_native_color(const rgba_t color, Mode mode) {
-  std::vector<uint8_t> v;
+inline byte_vec_t pack_native_color(const rgba_t color, Mode mode) {
+  byte_vec_t v;
   switch (mode) {
   case Mode::snes:
   case Mode::snes_mode7:
@@ -431,8 +438,8 @@ inline std::vector<uint8_t> pack_native_color(const rgba_t color, Mode mode) {
 }
 
 // unpack native format color to (scaled) rgba color
-inline std::vector<rgba_t> unpack_native_colors(const std::vector<uint8_t>& colors, Mode mode) {
-  std::vector<rgba_t> v;
+inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
+  rgba_vec_t v;
   switch (mode) {
   case Mode::snes:
   case Mode::snes_mode7:
@@ -466,11 +473,11 @@ inline std::vector<rgba_t> unpack_native_colors(const std::vector<uint8_t>& colo
 }
 
 // pack raw image data to native format tile data
-inline std::vector<uint8_t> pack_native_tile(const std::vector<index_t>& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
+inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
   if (width != 8 || height != 8) throw std::runtime_error("programmer error (illegal tile size in pack_native_tile())");
 
-  auto make_2bpp_tile = [](const std::vector<index_t>& in_data, unsigned plane_index) {
-    std::vector<uint8_t> p(16);
+  auto make_2bpp_tile = [](const index_vec_t& in_data, unsigned plane_index) {
+    byte_vec_t p(16);
     if (in_data.empty()) return p;
 
     index_t mask0 = 1;
@@ -491,7 +498,7 @@ inline std::vector<uint8_t> pack_native_tile(const std::vector<index_t>& data, M
     return p;
   };
 
-  std::vector<uint8_t> nd;
+  byte_vec_t nd;
 
   if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc || mode == Mode::pce) {
     unsigned planes = bpp >> 1;
@@ -508,11 +515,11 @@ inline std::vector<uint8_t> pack_native_tile(const std::vector<index_t>& data, M
 }
 
 // unpack native format tile data to raw image data
-inline std::vector<index_t> unpack_native_tile(const std::vector<uint8_t>& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
+inline index_vec_t unpack_native_tile(const byte_vec_t& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
   if (width != 8 || height != 8) throw std::runtime_error("programmer error (illegal tile size in unpack_native_tile())");
 
   auto add_1bit_plane = [](
-    std::vector<index_t>& out_data, const std::vector<uint8_t>& in_data, unsigned plane_index) {
+    index_vec_t& out_data, const byte_vec_t& in_data, unsigned plane_index) {
     int plane_offset = ((plane_index >> 1) * 16) + (plane_index & 1);
     for (int y = 0; y < 8; ++y) {
       for (int x = 0; x < 8; ++x) {
@@ -521,7 +528,7 @@ inline std::vector<index_t> unpack_native_tile(const std::vector<uint8_t>& data,
     }
   };
 
-  std::vector<index_t> ud(width * height);
+  index_vec_t ud(width * height);
 
   if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc || mode == Mode::pce) {
     for (unsigned i = 0; i < bpp; ++i) add_1bit_plane(ud, data, i);
@@ -599,12 +606,12 @@ inline std::string read_file(const std::string& path) {
 }
 
 // read binary file at path
-inline std::vector<uint8_t> read_binary(const std::string& path) {
+inline byte_vec_t read_binary(const std::string& path) {
   std::ifstream ifs(path, std::ios::binary);
   if (ifs.fail()) {
     throw std::runtime_error(fmt::format("File \"{}\" could not be opened", path));
   }
-  return std::vector<uint8_t>((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+  return byte_vec_t((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 }
 
 // write text file

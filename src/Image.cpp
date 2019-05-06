@@ -3,7 +3,7 @@
 namespace sfc {
 
 Image::Image(const std::string& path) {
-  std::vector<unsigned char> buffer;
+  byte_vec_t buffer;
   unsigned w, h;
 
   unsigned error = lodepng::load_file(buffer, path);
@@ -21,7 +21,7 @@ Image::Image(const std::string& path) {
   if (state.info_raw.colortype == LCT_PALETTE) {
     if (state.info_raw.bitdepth && state.info_raw.bitdepth < 8) {
       // unpack 2/4 bit data
-      _indexed_data = std::vector<index_t>(w * h);
+      _indexed_data = index_vec_t(w * h);
       unsigned depth = state.info_raw.bitdepth;
       unsigned ppb = 8 / state.info_raw.bitdepth;
       index_t mask = 0;
@@ -71,7 +71,7 @@ Image::Image(const std::string& path) {
   _src_coord_x = _src_coord_y = 0;
 
   auto rgba_v = rgba_data();
-  _colors = std::set<rgba_t>(rgba_v.begin(), rgba_v.end());
+  _colors = rgba_set_t(rgba_v.begin(), rgba_v.end());
 }
 
 Image::Image(const sfc::Palette& palette) {
@@ -91,7 +91,7 @@ Image::Image(const sfc::Palette& palette) {
   _src_coord_x = _src_coord_y = 0;
 
   auto rgba_v = rgba_data();
-  _colors = std::set<rgba_t>(rgba_v.begin(), rgba_v.end());
+  _colors = rgba_set_t(rgba_v.begin(), rgba_v.end());
 }
 
 Image::Image(const sfc::Tileset& tileset) {
@@ -122,7 +122,7 @@ Image::Image(const sfc::Tileset& tileset) {
   _src_coord_x = _src_coord_y = 0;
 
   auto rgba_v = rgba_data();
-  _colors = std::set<rgba_t>(rgba_v.begin(), rgba_v.end());
+  _colors = rgba_set_t(rgba_v.begin(), rgba_v.end());
 }
 
 // Make new normalized image with color indices mapped to palette
@@ -155,10 +155,10 @@ Image::Image(const Image& image, const sfc::Subpalette& subpalette)
   _src_coord_x = _src_coord_y = 0;
 
   auto rgba_v = rgba_data();
-  _colors = std::set<rgba_t>(rgba_v.begin(), rgba_v.end());
+  _colors = rgba_set_t(rgba_v.begin(), rgba_v.end());
 }
 
-std::vector<rgba_t> Image::rgba_data() const {
+rgba_vec_t Image::rgba_data() const {
   return sfc::to_rgba(_data);
 }
 
@@ -196,7 +196,7 @@ Image Image::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_hei
   }
 
   auto rgba_v = img.rgba_data();
-  img._colors = std::set<rgba_t>(rgba_v.begin(), rgba_v.end());
+  img._colors = rgba_set_t(rgba_v.begin(), rgba_v.end());
   return img;
 }
 
@@ -233,7 +233,7 @@ void Image::save_indexed(const std::string& path) {
   state.info_png.color.bitdepth = state.info_raw.bitdepth = 8;
   state.encoder.auto_convert = 0;
 
-  std::vector<uint8_t> buffer;
+  byte_vec_t buffer;
   unsigned error = lodepng::encode(buffer, _indexed_data, _width, _height, state);
   if (error) throw std::runtime_error(lodepng_error_text(error));
   lodepng::save_file(buffer, path.c_str());
@@ -263,7 +263,7 @@ inline void Image::set_pixel(const rgba_t color, const unsigned x, const unsigne
   _colors.insert(color);
 }
 
-void Image::blit(const std::vector<rgba_t>& rgba_data, const unsigned x, const unsigned y, const unsigned width) {
+void Image::blit(const rgba_vec_t& rgba_data, const unsigned x, const unsigned y, const unsigned width) {
   for (unsigned i = 0; i < rgba_data.size(); ++i) set_pixel(rgba_data[i], (i % width) + x, (i / width) + y);
 }
 
@@ -278,7 +278,7 @@ inline void Image::set_pixel_indexed(const index_t color, const unsigned x, cons
   _indexed_data[offset] = color;
 }
 
-void Image::blit_indexed(const std::vector<channel_t>& data, const unsigned x, const unsigned y, const unsigned width) {
+void Image::blit_indexed(const channel_vec_t& data, const unsigned x, const unsigned y, const unsigned width) {
   for (unsigned i = 0; i < data.size(); ++i) set_pixel_indexed(data[i], (i % width) + x, (i / width) + y);
 }
 

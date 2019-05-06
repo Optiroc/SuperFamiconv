@@ -16,7 +16,7 @@ struct Palette;
 struct Tile {
   Tile(const Image& image, Mode mode = Mode::snes, unsigned bpp = 4, bool no_flip = false);
 
-  Tile(const std::vector<uint8_t>& native_data, Mode mode = Mode::snes, unsigned bpp = 4,
+  Tile(const byte_vec_t& native_data, Mode mode = Mode::snes, unsigned bpp = 4,
        bool no_flip = false, unsigned width = 8, unsigned height = 8);
 
   Tile(const std::vector<Tile>& metatile, bool no_flip, unsigned width, unsigned height);
@@ -31,10 +31,10 @@ struct Tile {
 
   Tile(){};
 
-  const std::vector<index_t>& data() const { return _data; }
-  const std::vector<rgba_t>& palette() const { return _palette; }
-  std::vector<uint8_t> native_data() const;
-  std::vector<rgba_t> rgba_data() const;
+  const index_vec_t& data() const { return _data; }
+  const rgba_vec_t& palette() const { return _palette; }
+  byte_vec_t native_data() const;
+  rgba_vec_t rgba_data() const;
 
   bool is_h_flipped(const Tile& other) const;
   bool is_v_flipped(const Tile& other) const;
@@ -48,9 +48,9 @@ private:
   unsigned _bpp = 4;
   unsigned _width = 8;
   unsigned _height = 8;
-  std::vector<index_t> _data;
-  std::vector<std::vector<index_t>> _mirrors;
-  std::vector<rgba_t> _palette;
+  index_vec_t _data;
+  std::vector<index_vec_t> _mirrors;
+  rgba_vec_t _palette;
 };
 
 
@@ -62,7 +62,7 @@ struct Tileset {
     _no_discard(no_discard), _no_flip(no_flip), _no_remap(no_remap),
     _max_tiles(max_tiles) {};
 
-  Tileset(const std::vector<uint8_t>& native_data, Mode mode = Mode::snes, unsigned bpp = 4,
+  Tileset(const byte_vec_t& native_data, Mode mode = Mode::snes, unsigned bpp = 4,
           unsigned tile_width = 8, unsigned tile_height = 8, bool no_flip = false);
 
   unsigned tile_width() const { return _tile_width; }
@@ -75,7 +75,7 @@ struct Tileset {
   int index_of(const Tile& tile) const;
   void add(const Image& image, const Palette* palette = nullptr);
 
-  std::vector<uint8_t> native_data() const;
+  byte_vec_t native_data() const;
   void save(const std::string& path) const;
 
   unsigned discarded_tiles = 0;

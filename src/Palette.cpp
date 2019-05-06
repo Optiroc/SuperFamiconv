@@ -15,7 +15,7 @@ void Subpalette::add(rgba_t color, bool add_duplicates) {
 }
 
 // add vector of colors
-void Subpalette::add(const std::vector<rgba_t>& new_colors, bool add_duplicates, bool overwrite) {
+void Subpalette::add(const rgba_vec_t& new_colors, bool add_duplicates, bool overwrite) {
   if (overwrite) {
     _colors.clear();
     _colors_set.clear();
@@ -31,8 +31,8 @@ Subpalette Subpalette::padded() const {
 }
 
 // number of colors in new_colors not in subpalette
-unsigned Subpalette::diff(const std::set<rgba_t>& new_colors) const {
-  std::set<rgba_t> ds;
+unsigned Subpalette::diff(const rgba_set_t& new_colors) const {
+  rgba_set_t ds;
   std::set_difference(new_colors.begin(), new_colors.end(), _colors_set.begin(), _colors_set.end(), std::inserter(ds, ds.begin()));
   return (unsigned)ds.size();
 }
@@ -40,7 +40,7 @@ unsigned Subpalette::diff(const std::set<rgba_t>& new_colors) const {
 // sort colors, keeping color at index 0
 void Subpalette::sort() {
   if (_colors.size() < 3) return;
-  std::vector<rgba_t> vc(_colors.begin() + 1, _colors.end());
+  rgba_vec_t vc(_colors.begin() + 1, _colors.end());
   _colors.resize(1);
   sort_colors(vc);
   std::reverse(vc.begin(), vc.end());
@@ -59,7 +59,7 @@ Palette::Palette(const std::string& path, Mode in_mode, uint32_t colors_per_subp
     auto j = read_json_file(path);
     auto jp = j["palettes"];
     for (auto jsp : jp) {
-      std::vector<rgba_t> colors;
+      rgba_vec_t colors;
       for (auto jcs : jsp)
         if (jcs.is_string()) colors.push_back(reduce_color(from_hexstring(jcs), in_mode));
       if (colors.size() > _max_colors_per_subpalette) throw std::runtime_error("Palette in JSON doesn't match color depth / colors per subpalette");
@@ -74,7 +74,7 @@ Palette::Palette(const std::string& path, Mode in_mode, uint32_t colors_per_subp
 }
 
 // construct Palette from native data
-Palette::Palette(const std::vector<uint8_t>& native_data, Mode in_mode, unsigned colors_per_subpalette) {
+Palette::Palette(const byte_vec_t& native_data, Mode in_mode, unsigned colors_per_subpalette) {
   _mode = in_mode;
   _max_colors_per_subpalette = colors_per_subpalette;
   _max_subpalettes = default_palette_count_for_mode(_mode);
@@ -83,14 +83,14 @@ Palette::Palette(const std::vector<uint8_t>& native_data, Mode in_mode, unsigned
 
 
 // get colors
-const std::vector<std::vector<rgba_t>> Palette::colors() const {
-  std::vector<std::vector<rgba_t>> v;
+const std::vector<rgba_vec_t> Palette::colors() const {
+  std::vector<rgba_vec_t> v;
   for (auto sp : _subpalettes) v.push_back(sp.colors());
   return v;
 }
 
 // get colors normalized to RGBA8888 range
-const std::vector<std::vector<rgba_t>> Palette::normalized_colors() const {
+const std::vector<rgba_vec_t> Palette::normalized_colors() const {
   auto v = colors();
   for (auto& i : v) i = normalize_colors(i, _mode);
   return v;
@@ -101,7 +101,7 @@ const std::vector<std::vector<rgba_t>> Palette::normalized_colors() const {
 void Palette::add_images(std::vector<sfc::Image> palette_tiles) {
 
   // make vector of sets of all tiles' colors
-  color_set_vect palettes = color_set_vect();
+  rgba_set_vec_t palettes = rgba_set_vec_t();
   for (auto& c : palette_tiles) {
 
     if (c.colors().size() > _max_colors_per_subpalette) {
@@ -129,7 +129,7 @@ void Palette::add_images(std::vector<sfc::Image> palette_tiles) {
   // add subpalettes
   for (auto& cs : optimized) {
     auto& sp = add_subpalette();
-    std::vector<rgba_t> cv(cs.begin(), cs.end());
+    rgba_vec_t cv(cs.begin(), cs.end());
 
     if (_col0_is_shared) {
       auto p = std::find(cv.begin(), cv.end(), reduce_color(_col0, _mode));
@@ -140,7 +140,7 @@ void Palette::add_images(std::vector<sfc::Image> palette_tiles) {
   }
 }
 
-void Palette::add_colors(const std::vector<rgba_t>& colors, bool reduce_depth) {
+void Palette::add_colors(const rgba_vec_t& colors, bool reduce_depth) {
   auto rc = colors;
   if (reduce_depth) rc = reduce_colors(rc, _mode);
   auto splits = split_vector(rc, _max_colors_per_subpalette);
@@ -162,7 +162,7 @@ int Palette::index_of(const Subpalette& subpalette) const {
 // get first subpalette containing all colors in image
 const Subpalette& Palette::subpalette_matching(const Image& image) const {
   auto rc = reduce_colors(image.rgba_data(), _mode);
-  std::set<rgba_t> cs(rc.begin(), rc.end());
+  rgba_set_t cs(rc.begin(), rc.end());
   cs.erase(transparent_color);
   if (cs.size() > _max_colors_per_subpalette) throw std::runtime_error("Colors don't fit in palette"); // TODO: catch and report position
 
@@ -178,7 +178,7 @@ std::vector<const Subpalette*> Palette::subpalettes_matching(const Image& image)
   std::vector<const Subpalette*> sv;
 
   auto rc = reduce_colors(image.rgba_data(), _mode);
-  std::set<rgba_t> cs(rc.begin(), rc.end());
+  rgba_set_t cs(rc.begin(), rc.end());
   if (cs.size() > _max_colors_per_subpalette) throw std::runtime_error("Colors don't fit in palette"); // TODO: catch and report position
 
   for (const Subpalette& sp : _subpalettes) {
@@ -232,11 +232,11 @@ const std::string Palette::to_json() const {
 }
 
 void Palette::save(const std::string& path) const {
-  std::vector<uint8_t> data;
+  byte_vec_t data;
 
   for (auto& sp : _subpalettes) {
     Subpalette spp = sp.padded();
-    std::vector<rgba_t> colors = spp.colors();
+    rgba_vec_t colors = spp.colors();
     for (auto c : colors) {
       auto nc = pack_native_color(c, _mode);
       data.insert(data.end(), nc.begin(), nc.end());
@@ -247,12 +247,12 @@ void Palette::save(const std::string& path) const {
 }
 
 void Palette::save_act(const std::string& path) const {
-  std::vector<uint8_t> data((256 * 3) + 4);
+  byte_vec_t data((256 * 3) + 4);
   int count = 0;
 
   for (auto& sp : _subpalettes) {
     Subpalette spp = sp.padded();
-    std::vector<rgba_t> colors = spp.normalized_colors();
+    rgba_vec_t colors = spp.normalized_colors();
     for (auto c : colors) {
       rgba_color rgba(c);
       data[count * 3 + 0] = rgba.r;
@@ -278,10 +278,10 @@ Subpalette& Palette::add_subpalette() {
 }
 
 // functional form of old simple palette optimizer
-const color_set_vect Palette::optimized_palettes(const color_set_vect& colors) const {
+const rgba_set_vec_t Palette::optimized_palettes(const rgba_set_vec_t& colors) const {
 
-  auto filter_subsets = [](const color_set_vect& v) {
-    auto n = color_set_vect(v.size());
+  auto filter_subsets = [](const rgba_set_vec_t& v) {
+    auto n = rgba_set_vec_t(v.size());
     auto it = std::copy_if(v.begin(), v.end(), n.begin(), [&](auto& s){
       return !has_superset(s, v);
     });
@@ -289,8 +289,8 @@ const color_set_vect Palette::optimized_palettes(const color_set_vect& colors) c
     return n;
   };
 
-  auto filter_redundant = [](const color_set_vect& v) {
-    auto n = color_set_vect(v.size());
+  auto filter_redundant = [](const rgba_set_vec_t& v) {
+    auto n = rgba_set_vec_t(v.size());
     auto it = std::copy_if(v.begin(), v.end(), n.begin(), [&](auto& s){
       return s.size() < 1 ? false : std::find(n.begin(), n.end(), s) == n.end();
     });
@@ -298,11 +298,11 @@ const color_set_vect Palette::optimized_palettes(const color_set_vect& colors) c
     return n;
   };
 
-  auto best_fit = [&](const color_set& s, const color_set_vect& v) {
+  auto best_fit = [&](const rgba_set_t& s, const rgba_set_vec_t& v) {
     int best = -1;
     unsigned i = 0;
     for (auto& cs : v) {
-      color_set d;
+      rgba_set_t d;
       std::set_difference(s.begin(), s.end(), cs.begin(), cs.end(), std::inserter(d, d.begin()));
       if (d.size() + cs.size() <= _max_colors_per_subpalette) best = i;
       ++i;
@@ -314,7 +314,7 @@ const color_set_vect Palette::optimized_palettes(const color_set_vect& colors) c
   sets = filter_subsets(sets);
   std::sort(sets.begin(), sets.end(), [](auto& a, auto& b) { return a.size() < b.size(); });
 
-  color_set_vect opt = color_set_vect();
+  rgba_set_vec_t opt = rgba_set_vec_t();
 
   while (sets.size()) {
     auto set = vec_pop(sets);
