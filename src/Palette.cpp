@@ -236,17 +236,41 @@ const std::string Palette::description() const {
 }
 
 const std::string Palette::to_json() const {
-  auto v = normalized_colors();
-  std::vector<std::vector<std::string>> vj;
+  nlohmann::json j;
 
-  for (auto i : v) {
-    std::vector<std::string> vs;
-    for (auto j : i) vs.push_back(to_hexstring(j));
-    vj.push_back(vs);
+  {
+    auto ps = normalized_colors();
+    std::vector<std::vector<std::string>> jps;
+
+    for (auto p : ps) {
+      std::vector<std::string> jp;
+      for (auto c : p) jp.push_back(to_hexstring(c));
+      jps.push_back(jp);
+    }
+
+    j["palettes"] = jps;
   }
 
-  nlohmann::json j;
-  j["palettes"] = vj;
+  {
+    auto ps = colors();
+    std::vector<std::vector<std::vector<unsigned>>> jps;
+
+    for (auto p : ps) {
+      std::vector<std::vector<unsigned>> jp;
+      for (auto c : p) {
+        std::vector<unsigned> jpt;
+        auto rgb = rgba_color(c);
+        jpt.push_back(rgb.r);
+        jpt.push_back(rgb.g);
+        jpt.push_back(rgb.b);
+        jp.push_back(jpt);
+      }
+      jps.push_back(jp);
+    }
+
+    j["palettes_native_rgb"] = jps;
+  }
+
   return j.dump(2);
 }
 
