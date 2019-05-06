@@ -208,8 +208,9 @@ constexpr bool col0_is_shared_for_mode(Mode mode) {
     return true;
   case Mode::gb:
   case Mode::gbc:
-  case Mode::pce:
     return false;
+  case Mode::pce:
+    return true;
   default:
     return true;
   }
