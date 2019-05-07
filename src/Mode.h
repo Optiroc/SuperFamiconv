@@ -176,7 +176,7 @@ constexpr unsigned default_map_size_for_mode(Mode mode) {
   case Mode::gbc:
   case Mode::pce:
   case Mode::pce_sprite:
-    return 32;
+    return 0;
   default:
     return 32;
   }
