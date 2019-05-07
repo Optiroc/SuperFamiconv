@@ -576,7 +576,8 @@ inline index_vec_t unpack_native_tile(const byte_vec_t& data, Mode mode, unsigne
   } else if (mode == Mode::snes_mode7) {
     ud = data;
   } else if (mode == Mode::pce_sprite) {
-    // TODO
+    // TODO: read pce_sprite data
+    throw std::runtime_error("Using pce_sprite native data as input not implemented");
   }
 
   return ud;
