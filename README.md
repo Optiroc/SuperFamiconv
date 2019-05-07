@@ -5,7 +5,7 @@ Developed by David Lindecrantz and distributed under the terms of the [MIT licen
 
 
 ## dependencies
-A C++17 capable compiler.
+A C++14 capable compiler.
 
 ## building
 In a Unix-like environment simply `make` the binary. On Windows use CMake to generate a build environment.
@@ -25,11 +25,12 @@ In short hand mode, the following options are available:
 	--out-palette-image   Output: palette image
 	--out-palette-act     Output: photoshop palette
 	--out-tiles-image     Output: tiles image
+	--out-scaled-image    Output: image scaled to destination colorspace
 
 	-M --mode             Mode <default: snes>
-	-B --bpp              Bits per pixel <default: 4>
-	-W --tile-width       Tile width <default: 8>
-	-H --tile-height      Tile height <default: 8>
+	-B --bpp              Bits per pixel
+	-W --tile-width       Tile width
+	-H --tile-height      Tile height
 	-R --no-remap         Don't remap colors <switch>
 	-D --no-discard       Don't discard redundant tiles <switch>
 	-F --no-flip          Don't discard using tile flipping <switch>
@@ -47,6 +48,10 @@ The `mode` option, which is common for all commands, affects the color space han
 * `snes` 
 * `snes_mode7` 
 * `gbc` 
+* `pce` 
+* `pce_sprite` 
+
+Sensible default options are applied, and differ depending on selected mode.
 
 Example:
 
@@ -76,11 +81,12 @@ For more flexibility use the sub commands, which have the following options resp
 	
 	Settings:
 	  -M --mode             Mode <default: snes>
-	  -P --palettes         Number of subpalettes <default: 8>
-	  -C --colors           Colors per subpalette <default: 16>
-	  -W --tile-width       Tile width <default: 8>
-	  -H --tile-height      Tile height <default: 8>
+	  -P --palettes         Number of subpalettes
+	  -C --colors           Colors per subpalette
+	  -W --tile-width       Tile width
+	  -H --tile-height      Tile height
 	  -R --no-remap         Don't remap colors <switch>
+	  -S --sprite-mode      Apply sprite output settings <switch>
 	  -0 --color-zero       Set color #0
 	
 	  -v --verbose          Verbose logging <switch>
@@ -98,9 +104,9 @@ For more flexibility use the sub commands, which have the following options resp
 
 	Settings:
 	  -M --mode             Mode <default: snes>
-	  -B --bpp              Bits per pixel <default: 4>
-	  -W --tile-width       Tile width <default: 8>
-	  -H --tile-height      Tile height <default: 8>
+	  -B --bpp              Bits per pixel
+	  -W --tile-width       Tile width
+	  -H --tile-height      Tile height
 	  -R --no-remap         Don't remap colors <switch>
 	  -D --no-discard       Don't discard redundant tiles <switch>
 	  -F --no-flip          Don't discard using tile flipping <switch>
@@ -124,9 +130,9 @@ For more flexibility use the sub commands, which have the following options resp
 
 	Settings:
 	  -M --mode             Mode <default: snes>
-	  -B --bpp              Bits per pixel <default: 4>
-	  -W --tile-width       Tile width <default: 8>
-	  -H --tile-height      Tile height <default: 8>
+	  -B --bpp              Bits per pixel
+	  -W --tile-width       Tile width
+	  -H --tile-height      Tile height
 	  -F --no-flip          Don't use flipped tiles <switch>
 	  --map-width           Map width (in tiles)
 	  --map-height          Map height (in tiles)
@@ -139,7 +145,7 @@ For more flexibility use the sub commands, which have the following options resp
 
 
 ## future work
-* More output formats
+* Mode: Mega Drive
 * Better error diagnostics
 * Better documentation and example usage
 
