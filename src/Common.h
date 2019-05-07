@@ -495,13 +495,11 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
     if (in_data.empty()) return p;
 
     index_t mask0 = 1;
-    unsigned shift0 = 0;
-    for (unsigned i = 0; i < plane_index; ++i) {
-      mask0 = mask0 << 1;
-      ++shift0;
-    }
+    for (unsigned i = 0; i < plane_index; ++i) mask0 <<= 1;
     index_t mask1 = mask0 << 1;
-    unsigned shift1 = shift0 + 1;
+
+    unsigned shift0 = plane_index;
+    unsigned shift1 = plane_index + 1;
 
     for (unsigned y = 0; y < 8; ++y) {
       for (unsigned x = 0; x < 8; ++x) {
@@ -512,10 +510,32 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
     return p;
   };
 
+  auto make_bitplane_data = [](const index_vec_t& in_data, unsigned plane) {
+    if (in_data.size() % 8)
+      throw std::runtime_error("programmer error (in_data not multiple of 8 in make_bitplane_data())");
+
+    unsigned plane_size = in_data.size() >> 3;
+    byte_vec_t p(plane_size);
+
+    index_t mask = 1;
+    for (unsigned i = 0; i < plane; ++i) mask <<= 1;
+
+    for (unsigned index_b = 0, index_i = 0; index_b < plane_size; ++index_b) {
+      index_t byte = 0;
+      for (unsigned b = 0; b < 8; ++b) {
+        if (in_data[index_i + b] & mask) byte |= 1 << b;
+      }
+      p[index_b] = byte;
+      index_i += 8;
+    }
+    return p;
+  };
+
   byte_vec_t nd;
 
   if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc || mode == Mode::pce) {
-    if (width != 8 || height != 8) throw std::runtime_error("programmer error (illegal tile size in pack_native_tile())");
+    if (width != 8 || height != 8)
+      throw std::runtime_error(fmt::format("programmer error (tile size not 8x8 in pack_native_tile() for mode \"{}\")", sfc::mode(mode)));
 
     unsigned planes = bpp >> 1;
     for (unsigned i = 0; i < planes; ++i) {
@@ -525,6 +545,12 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
 
   } else if (mode == Mode::snes_mode7) {
     nd = data;
+
+  } else if (mode == Mode::pce_sprite) {
+    for (unsigned p = 0; p < 4; ++p) {
+      auto plane = make_bitplane_data(data, p);
+      nd.insert(nd.end(), plane.begin(), plane.end());
+    }
   }
 
   return nd;
