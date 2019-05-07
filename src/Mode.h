@@ -24,7 +24,7 @@ inline Mode mode(const std::string& str) {
   } else if (str == "snes_mode7") {
     return Mode::snes_mode7;
   } else if (str == "gb") {
-    //TODO:
+    //TODO: GB
     //return Mode::gb;
     return Mode::gbc;
   } else if (str == "gbc") {
@@ -44,7 +44,7 @@ inline std::string mode(Mode mode) {
   case Mode::snes_mode7:
     return std::string("snes_mode7");
   case Mode::gb:
-    //TODO:
+    //TODO: GB
     //return std::string("gb");
   case Mode::gbc:
     return std::string("gbc");
