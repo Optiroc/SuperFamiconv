@@ -44,6 +44,7 @@ struct Image final {
 
   void save(const std::string& path) const;
   void save_indexed(const std::string& path);
+  void save_scaled(const std::string& path, Mode mode);
 
   const std::string description() const;
 

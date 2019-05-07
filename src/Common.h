@@ -158,11 +158,22 @@ constexpr index_t bitmask_at_bpp(unsigned bpp) {
   return (index_t)m;
 }
 
-inline rgba_vec_t to_rgba(channel_vec_t data) {
+inline rgba_vec_t to_rgba(const channel_vec_t& data) {
   if (data.size() % 4 != 0) throw std::runtime_error("RGBA vector size not a multiple of 4");
   rgba_vec_t v(data.size() >> 2);
   for (unsigned i = 0; i < v.size(); ++i) {
     v[i] = (data[i * 4]) + (data[(i * 4) + 1] << 8) + (data[(i * 4) + 2] << 16) + (data[(i * 4) + 3] << 24);
+  }
+  return v;
+}
+
+inline byte_vec_t to_bytes(const rgba_vec_t& data) {
+  byte_vec_t v(data.size() << 2);
+  for (unsigned i = 0; i < data.size(); ++i) {
+    v[(i << 2) + 0] = data[i] & 0x000000ff;
+    v[(i << 2) + 1] = (data[i] & 0x0000ff00) >> 8;
+    v[(i << 2) + 2] = (data[i] & 0x00ff0000) >> 16;
+    v[(i << 2) + 3] = (data[i] & 0xff000000) >> 24;
   }
   return v;
 }

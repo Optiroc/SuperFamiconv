@@ -239,6 +239,12 @@ void Image::save_indexed(const std::string& path) {
   lodepng::save_file(buffer, path.c_str());
 }
 
+void Image::save_scaled(const std::string& path, Mode mode) {
+  auto scaled_data = to_bytes(normalize_colors(reduce_colors(rgba_data(), mode), mode));
+  unsigned error = lodepng::encode(path.c_str(), scaled_data, _width, _height, LCT_RGBA, 8);
+  if (error) throw std::runtime_error(lodepng_error_text(error));
+}
+
 const std::string Image::description() const {
   return fmt::format("{}x{}px, {}", width(), height(), palette_size() ? "indexed color" : "RGB color");
 }

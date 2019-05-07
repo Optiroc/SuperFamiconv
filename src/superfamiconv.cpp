@@ -26,6 +26,7 @@ struct Settings {
   std::string out_palette_image;
   std::string out_palette_act;
   std::string out_tiles_image;
+  std::string out_scaled_image;
 
   sfc::Mode mode;
   unsigned bpp;
@@ -69,6 +70,7 @@ int superfamiconv(int argc, char* argv[]) {
     options.Add(settings.out_palette_image, '\0', "out-palette-image", "Output: palette image");
     options.Add(settings.out_palette_act,   '\0', "out-palette-act",   "Output: photoshop palette");
     options.Add(settings.out_tiles_image,   '\0', "out-tiles-image",   "Output: tiles image");
+    options.Add(settings.out_scaled_image,  '\0', "out-scaled-image",  "Output: image scaled to destination colorspace");
 
     options.Add(mode_str,                    'M', "mode",              "Mode <default: snes>",              std::string("snes"), "Settings");
     options.Add(settings.bpp,                'B', "bpp",               "Bits per pixel",                    unsigned(4),         "Settings");
@@ -131,6 +133,12 @@ int superfamiconv(int argc, char* argv[]) {
 
     sfc::Image image(settings.in_image);
     if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
+
+    // Write color-scaled image
+    if (!settings.out_scaled_image.empty()) {
+      image.save_scaled(settings.out_scaled_image, settings.mode);
+      if (verbose) fmt::print("Saved image scaled to destination colorspace to \"{}\"\n", settings.out_scaled_image);
+    }
 
     if (settings.mode == sfc::Mode::pce_sprite) {
       if (image.width() % 16) throw std::runtime_error("pce/sprite-mode requires image width to be a multiple of 16");
