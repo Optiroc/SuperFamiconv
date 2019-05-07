@@ -228,7 +228,7 @@ int superfamiconv(int argc, char* argv[]) {
 
     if (!settings.out_map.empty()) {
       if (settings.mode == sfc::Mode::pce_sprite) {
-        fmt::print("Map output not available in pce_sprite modee\n");
+        fmt::print("Map output not available in pce_sprite mode\n");
       } else {
         map.save(settings.out_map);
         if (verbose) fmt::print("Saved native map data to \"{}\"\n", settings.out_map);
