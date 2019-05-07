@@ -363,6 +363,7 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
     // http://problemkaputt.de/pandocs.htm#lcdcolorpalettescgbonly
     return 0;
   case Mode::pce:
+  case Mode::pce_sprite:
     if (((color & 0xff000000) >> 24) < 0x80) {
       return transparent_color;
     } else {
@@ -408,6 +409,7 @@ inline rgba_t normalize_color(const rgba_t color, Mode from_mode) {
     // TODO: GB
     return 0;
   case Mode::pce:
+  case Mode::pce_sprite:
     c.r = scale_up(c.r, 5);
     c.g = scale_up(c.g, 5);
     c.b = scale_up(c.b, 5);
@@ -439,6 +441,7 @@ inline byte_vec_t pack_native_color(const rgba_t color, Mode mode) {
     // TODO: GB
     break;
   case Mode::pce:
+  case Mode::pce_sprite:
     v.push_back(((color >> 16) & 0x07) | (color << 3 & 0x38) | ((color >> 2) & 0xc0));
     v.push_back((color >> 10) & 0x01);
     break;
@@ -468,6 +471,7 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
     // TODO: GB
     break;
   case Mode::pce:
+  case Mode::pce_sprite:
     if (colors.size() % 2 != 0) {
       throw std::runtime_error("pce native palette size not a multiple of 2");
     }
@@ -485,7 +489,6 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
 
 // pack raw image data to native format tile data
 inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
-  if (width != 8 || height != 8) throw std::runtime_error("programmer error (illegal tile size in pack_native_tile())");
 
   auto make_2bpp_tile = [](const index_vec_t& in_data, unsigned plane_index) {
     byte_vec_t p(16);
@@ -512,6 +515,8 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
   byte_vec_t nd;
 
   if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc || mode == Mode::pce) {
+    if (width != 8 || height != 8) throw std::runtime_error("programmer error (illegal tile size in pack_native_tile())");
+
     unsigned planes = bpp >> 1;
     for (unsigned i = 0; i < planes; ++i) {
       auto plane = make_2bpp_tile(data, i * 2);
@@ -527,7 +532,6 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
 
 // unpack native format tile data to raw image data
 inline index_vec_t unpack_native_tile(const byte_vec_t& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
-  if (width != 8 || height != 8) throw std::runtime_error("programmer error (illegal tile size in unpack_native_tile())");
 
   auto add_1bit_plane = [](
     index_vec_t& out_data, const byte_vec_t& in_data, unsigned plane_index) {
@@ -545,6 +549,8 @@ inline index_vec_t unpack_native_tile(const byte_vec_t& data, Mode mode, unsigne
     for (unsigned i = 0; i < bpp; ++i) add_1bit_plane(ud, data, i);
   } else if (mode == Mode::snes_mode7) {
     ud = data;
+  } else if (mode == Mode::pce_sprite) {
+    // TODO
   }
 
   return ud;

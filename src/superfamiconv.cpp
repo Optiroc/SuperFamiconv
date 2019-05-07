@@ -141,8 +141,8 @@ int superfamiconv(int argc, char* argv[]) {
     }
 
     if (settings.mode == sfc::Mode::pce_sprite) {
-      if (image.width() % 16) throw std::runtime_error("pce/sprite-mode requires image width to be a multiple of 16");
-      if (image.height() % 8) throw std::runtime_error("pce/sprite-mode requires image height to be a multiple of 8");
+      if (image.width() % 16 || image.height() % 16)
+        throw std::runtime_error("pce/sprite-mode requires image dimensions to be a multiple of 16");
     }
 
     // Make palette
