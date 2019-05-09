@@ -2,6 +2,7 @@
 //
 // david lindecrantz <optiroc@gmail.com>
 
+// TODO: In sprite-mode, output matched palette metadata
 // TODO: unpack_native_tile() for pce_sprite data
 // TODO: Check "shorthand" path for 16x16 tile conversion
 // TODO: Don't always pad native palette output? (Pad every palette but the last? Option?)
