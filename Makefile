@@ -9,11 +9,19 @@ CC  := gcc
 CXX := g++
 
 FLAGS     := -Wall -Wextra -I$(INC_DIR)
-CXX_FLAGS := -std=c++14 $(FLAGS)
-CC_FLAGS  := -std=c99 $(FLAGS)
+CXX_FLAGS := -std=c++14
+CC_FLAGS  := -std=c99
 LD_FLAGS  :=
 
-ifeq ($(OS),Windows_NT)
+ifneq ($(OS),Windows_NT)
+  UNAME_S := $(shell uname -s)
+  ifeq ($(UNAME_S),Darwin)
+    FLAGS += -mmacosx-version-min=10.10
+    LD_FLAGS += -mmacosx-version-min=10.10
+  endif
+  #ifeq ($(UNAME_S),Linux)
+  #endif
+else
   CC := x86_64-w64-mingw32-gcc
   CXX := x86_64-w64-mingw32-g++
   LD_FLAGS += -static -static-libgcc -static-libstdc++
@@ -45,11 +53,11 @@ $(BIN_DIR)/superfamiconv : $(OBJ_DIR)/superfamiconv.o $(OBJ_DIR)/sfc_palette.o $
 
 $(OBJ_DIR)/%.o : ./**/%.cpp $(HEADERS)
 	@mkdir -pv $(dir $@)
-	$(CXX) $(CXX_FLAGS) -c $< -o $@
+	$(CXX) $(CXX_FLAGS) $(FLAGS) -c $< -o $@
 
 $(OBJ_DIR)/%.o : ./**/%.c $(HEADERS)
 	@mkdir -pv $(dir $@)
-	$(CC) $(CC_FLAGS) -c $< -o $@
+	$(CC) $(CC_FLAGS) $(FLAGS) -c $< -o $@
 
 $(BIN_DIR):
 	@mkdir -pv $@
