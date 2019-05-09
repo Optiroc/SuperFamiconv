@@ -219,8 +219,8 @@ struct hsva_color final {
 
 // rgba to hsva
 inline hsva_color::hsva_color(const rgba_color& rgba) {
-  float rgb_max = fmax(fmax(rgba.r, rgba.g), rgba.b);
-  float rgb_min = fmin(fmin(rgba.r, rgba.g), rgba.b);
+  float rgb_max = (float)fmax(fmax(rgba.r, rgba.g), rgba.b);
+  float rgb_min = (float)fmin(fmin(rgba.r, rgba.g), rgba.b);
   float rgb_delta = rgb_max - rgb_min;
 
   if (rgb_delta > 0) {
@@ -514,7 +514,7 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
     if (in_data.size() % 8)
       throw std::runtime_error("programmer error (in_data not multiple of 8 in make_bitplane_data())");
 
-    unsigned plane_size = in_data.size() >> 3;
+    size_t plane_size = in_data.size() >> 3;
     byte_vec_t p(plane_size);
 
     index_t mask = 1;
