@@ -35,7 +35,6 @@ int sfc_tiles(int argc, char* argv[]) {
 
   try {
     bool help = false;
-    bool dummy = false;
     std::string mode_str;
 
     Options options;
@@ -61,7 +60,6 @@ int sfc_tiles(int argc, char* argv[]) {
 
     options.AddSwitch(verbose,               'v', "verbose",        "Verbose logging", false, "_");
     options.AddSwitch(help,                  'h', "help",           "Show this help",  false, "_");
-    options.AddSwitch(dummy,                 '9', std::string(),    std::string(),     false);
     // clang-format on
 
     if (!options.Parse(argc, argv)) return 1;
@@ -162,6 +160,7 @@ int sfc_tiles(int argc, char* argv[]) {
       }
     }
 
+    // Write data
     if (!settings.out_data.empty()) {
       tileset.save(settings.out_data);
       if (verbose) fmt::print("Saved native tile data to \"{}\"\n", settings.out_data);

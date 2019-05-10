@@ -36,7 +36,6 @@ int sfc_palette(int argc, char* argv[]) {
   try {
     bool help = false;
     std::string mode_str;
-    bool dummy = false;
 
     Options options;
     options.IndentDescription = sfc::Constants::options_indent;
@@ -60,7 +59,6 @@ int sfc_palette(int argc, char* argv[]) {
 
     options.AddSwitch(verbose,               'v', "verbose",        "Verbose logging", false, "_");
     options.AddSwitch(help,                  'h', "help",           "Show this help",  false, "_");
-    options.AddSwitch(dummy,                 '9', std::string(),    std::string(),     false);
     // clang-format on
 
     if (!options.Parse(argc, argv)) return 1;
@@ -134,6 +132,7 @@ int sfc_palette(int argc, char* argv[]) {
       palette.sort();
     }
 
+    // Write data
     if (!settings.out_data.empty()) {
       palette.save(settings.out_data);
       if (verbose) fmt::print("Saved native palette data to \"{}\"\n", settings.out_data);

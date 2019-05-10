@@ -233,7 +233,7 @@ int superfamiconv(int argc, char* argv[]) {
 
     if (!settings.out_map.empty()) {
       if (settings.mode == sfc::Mode::pce_sprite) {
-        fmt::print("Map output not available in pce_sprite mode\n");
+        fmt::print(stderr, "Map output not available in pce_sprite mode\n");
       } else {
         map.save(settings.out_map);
         if (verbose) fmt::print("Saved native map data to \"{}\"\n", settings.out_map);
@@ -267,17 +267,17 @@ int superfamiconv(int argc, char* argv[]) {
 
 
 int main(int argc, char* argv[]) {
-  // If first argument is a subcommand, replace with dummy parameter and pass along
+  // If first argument is a subcommand, remove it and pass along
   if (argc > 1 && std::strcmp(argv[1], "palette") == 0) {
-    std::strcpy(argv[1], "-9");
+    std::strcpy(argv[1], "");
     return sfc_palette(argc, argv);
 
   } else if (argc > 1 && std::strcmp(argv[1], "tiles") == 0) {
-    std::strcpy(argv[1], "-9");
+    std::strcpy(argv[1], "");
     return sfc_tiles(argc, argv);
 
   } else if (argc > 1 && std::strcmp(argv[1], "map") == 0) {
-    std::strcpy(argv[1], "-9");
+    std::strcpy(argv[1], "");
     return sfc_map(argc, argv);
 
   } else {

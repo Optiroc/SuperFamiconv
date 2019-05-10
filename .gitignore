@@ -3,6 +3,5 @@
 bin
 SuperFamiconv.xcodeproj/xcuserdata/optiroc.xcuserdatad
 SuperFamiconv.xcodeproj/project.xcworkspace/xcuserdata/optiroc.xcuserdatad
-test_out
-test_data
-test_tiled
+docs
+tests
