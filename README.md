@@ -34,6 +34,7 @@ In short hand mode, the following options are available:
 	-R --no-remap         Don't remap colors <switch>
 	-D --no-discard       Don't discard redundant tiles <switch>
 	-F --no-flip          Don't discard using tile flipping <switch>
+	-T --tile-base-offset Tile base offset for map data
 	-S --sprite-mode      Apply sprite output settings <switch>
 	--color-zero          Set color #0
 
@@ -134,6 +135,7 @@ For more flexibility use the sub commands, which have the following options resp
 	  -W --tile-width       Tile width
 	  -H --tile-height      Tile height
 	  -F --no-flip          Don't use flipped tiles <switch>
+	  -T --tile-base-offset Tile base offset for map data
 	  --map-width           Map width (in tiles)
 	  --map-height          Map height (in tiles)
 	  --split-width         Split output into columns of <tiles> width

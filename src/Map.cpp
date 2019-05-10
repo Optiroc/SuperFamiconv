@@ -52,6 +52,12 @@ Mapentry Map::entry_at(unsigned x, unsigned y) const {
   }
 }
 
+void Map::add_base_offset(int offset) {
+  for (auto& e : _entries) {
+    e.tile_index = (unsigned)std::max(0, (int)e.tile_index + offset);
+  }
+}
+
 byte_vec_t Map::native_data(bool column_order, unsigned split_w, unsigned split_h) const {
   byte_vec_t data;
   for (auto& vm : collect_entries(column_order, split_w, split_h)) {

@@ -37,6 +37,7 @@ struct Settings {
   bool no_remap;
   bool no_discard;
   bool no_flip;
+  int tile_base_offset;
   bool sprite_mode;
   std::string color_zero;
 };
@@ -80,6 +81,7 @@ int superfamiconv(int argc, char* argv[]) {
     options.AddSwitch(settings.no_remap,     'R', "no-remap",          "Don't remap colors",                false,               "Settings");
     options.AddSwitch(settings.no_discard,   'D', "no-discard",        "Don't discard redundant tiles",     false,               "Settings");
     options.AddSwitch(settings.no_flip,      'F', "no-flip",           "Don't discard using tile flipping", false,               "Settings");
+    options.Add(settings.tile_base_offset,   'T', "tile-base-offset",  "Tile base offset for map data",     int(0),              "Settings");
     options.AddSwitch(settings.sprite_mode,  'S', "sprite-mode",       "Apply sprite output settings",      false,               "Settings");
     options.Add(settings.color_zero,        '\0', "color-zero",        "Set color #0", std::string(),                            "Settings");
 
@@ -214,6 +216,8 @@ int superfamiconv(int argc, char* argv[]) {
       for (unsigned i = 0; i < crops.size(); ++i) {
         map.add(crops[i], tileset, palette, settings.bpp, i % map_width, i / map_width);
       }
+
+      if (settings.tile_base_offset) map.add_base_offset(settings.tile_base_offset);
     }
 
     // Write data

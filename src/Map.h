@@ -43,6 +43,8 @@ struct Map final {
   void add(const Image& image, const Tileset& tileset, const Palette& palette, unsigned bpp, unsigned pos_x, unsigned pos_y);
   Mapentry entry_at(unsigned x, unsigned y) const;
 
+  void add_base_offset(int offset);
+
   byte_vec_t native_data(bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
   byte_vec_t snes_mode7_interleaved_data(const Tileset& tileset) const;
   byte_vec_t gbc_banked_data() const;
