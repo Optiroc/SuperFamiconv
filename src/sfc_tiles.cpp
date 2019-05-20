@@ -150,6 +150,9 @@ int sfc_tiles(int argc, char* argv[]) {
       }
 
       for (auto& img : crops) tileset.add(img, &palette);
+      if (tileset.is_full()) {
+        throw std::runtime_error(fmt::format("Tileset exceeds maximum size ({} entries generated, {} maximum)", tileset.size(), tileset.max()));
+      }
       if (verbose) {
         if (settings.no_discard) {
           fmt::print("Created tileset with {} entries\n", tileset.size());

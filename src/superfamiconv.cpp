@@ -2,11 +2,12 @@
 //
 // david lindecrantz <optiroc@gmail.com>
 
-// TODO: In sprite-mode, output matched palette metadata
 // TODO: unpack_native_tile() for pce_sprite data
 // TODO: Check "shorthand" path for 16x16 tile conversion
+// TODO: Check map output with tiles using duplicate colors (#8)
 // TODO: Don't always pad native palette output? (Pad every palette but the last? Option?)
 // TODO: Add more palette packing algorithms
+// MAYBE: In sprite-mode, output matched palette metadata
 
 #include <Options.h>
 #include "Common.h"
@@ -190,6 +191,9 @@ int superfamiconv(int argc, char* argv[]) {
       std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
 
       for (auto& crop : crops) tileset.add(crop, &palette);
+      if (tileset.is_full()) {
+        throw std::runtime_error(fmt::format("Tileset exceeds maximum size ({} entries generated, {} maximum)", tileset.size(), tileset.max()));
+      }
       if (verbose) {
         if (settings.no_discard) {
           fmt::print("Created tileset with {} entries\n", tileset.size());

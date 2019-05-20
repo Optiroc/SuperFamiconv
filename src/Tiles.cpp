@@ -186,11 +186,9 @@ void Tileset::add(const Image& image, const Palette* palette) {
   }
 
   if (_no_discard) {
-    if (is_full()) throw std::runtime_error("Tileset reached maximum size");
     _tiles.push_back(tile);
   } else {
     if (std::find(_tiles.begin(), _tiles.end(), tile) == _tiles.end()) {
-      if (is_full()) throw std::runtime_error("Tileset reached maximum size");
       _tiles.push_back(tile);
     } else {
       ++discarded_tiles;
