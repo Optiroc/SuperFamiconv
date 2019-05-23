@@ -1,85 +1,15 @@
-BasedOnStyle: Google
+---
+BasedOnStyle: LLVM
+ColumnLimit: 130
+---
 Language: Cpp
-Standard: Cpp11
-
-ColumnLimit: 0
-IndentWidth: 2
-ContinuationIndentWidth: 2
-UseTab: Never
-
-MaxEmptyLinesToKeep: 2
-KeepEmptyLinesAtTheStartOfBlocks: false
-
-BinPackArguments: true
-BinPackParameters: true
-
-AlignConsecutiveAssignments: false
-AlignConsecutiveDeclarations: false
-AlignOperands: true
-AlignTrailingComments: true
-AlignEscapedNewlinesLeft: true
-
-ConstructorInitializerAllOnOneLineOrOnePerLine: false
-ConstructorInitializerIndentWidth: 0
-
-BraceWrapping:
-  AfterClass: false
-  AfterStruct: false
-  AfterUnion: false
-  AfterEnum: false
-  AfterFunction: false
-  AfterControlStatement: false
-  AfterNamespace: false
-  AfterObjCDeclaration: false
-  BeforeCatch: false
-  BeforeElse: false
-  IndentBraces: false
-
-BreakBeforeBraces: Custom
-BreakBeforeBinaryOperators: None
-BreakBeforeTernaryOperators: false
-BreakConstructorInitializersBeforeComma: false
 AlwaysBreakBeforeMultilineStrings: true
-AlwaysBreakTemplateDeclarations: true
-Cpp11BracedListStyle: true
-
-IndentCaseLabels: false
-IndentWrappedFunctionNames: true
-IndentFunctionDeclarationAfterType: true
-
-AlignAfterOpenBracket: true
-AccessModifierOffset: -2
+AlwaysBreakTemplateDeclarations: Yes
+CompactNamespaces: true
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 2
 DerivePointerAlignment: false
+MaxEmptyLinesToKeep: 2
 PointerAlignment: Left
-
-NamespaceIndentation: Inner
-SpaceBeforeAssignmentOperators: true
-SpacesInSquareBrackets: false
-SpaceBeforeParens: ControlStatements
-SpacesInParentheses: false
-SpaceInEmptyParentheses: false
-SpaceAfterCStyleCast: false
-SpacesInCStyleCastParentheses: false
-SpacesBeforeTrailingComments: 1
-SpacesInAngles: false
-SpacesInContainerLiterals: false
-
-AllowShortBlocksOnASingleLine: true
-AllowShortIfStatementsOnASingleLine: true
-AllowShortLoopsOnASingleLine: true
-AllowShortCaseLabelsOnASingleLine: true
-AllowShortFunctionsOnASingleLine: Inline
-
-# SortIncludes: false
-# SpaceAfterTemplateKeyword: true
-
-# MacroBlockBegin: "*_MACRO_START"
-# MacroBlockEnd: "*_MACRO_END"
-
-# Allow putting all parameters of a function declaration onto the next line
-# even if BinPackParameters is false.
-# AllowAllParametersOfDeclarationOnNextLine: true
-
-# A regular expression that describes comments with special meaning, which
-# should not be split into lines or otherwise changed.
-# CommentPragmas: ""
+SortIncludes: false
+...

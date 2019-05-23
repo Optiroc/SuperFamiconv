@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Common.h"
+
 #include "Image.h"
 #include "Palette.h"
 #include "Tiles.h"
@@ -17,10 +18,7 @@ struct Tileset;
 
 struct Mapentry final {
   Mapentry(unsigned tile_index = 0, unsigned palette_index = 0, bool flip_h = false, bool flip_v = false)
-  : tile_index(tile_index),
-    palette_index(palette_index),
-    flip_h(flip_h),
-    flip_v(flip_v){};
+  : tile_index(tile_index), palette_index(palette_index), flip_h(flip_h), flip_v(flip_v){};
 
   unsigned tile_index = 0;
   unsigned palette_index = 0;
@@ -31,9 +29,7 @@ struct Mapentry final {
 
 struct Map final {
   Map(Mode mode = Mode::snes, unsigned map_width = 32, unsigned map_height = 32)
-  : _mode(mode),
-    _map_width(map_width),
-    _map_height(map_height) {
+  : _mode(mode), _map_width(map_width), _map_height(map_height) {
     _entries.resize(map_width * map_height);
   };
 
@@ -68,7 +64,8 @@ inline byte_vec_t pack_native_mapentry(const Mapentry& entry, Mode mode) {
   switch (mode) {
   case Mode::snes:
     v.push_back(entry.tile_index & 0xff);
-    v.push_back(((entry.tile_index >> 8) & 0x03) | ((entry.palette_index << 2) & 0x1c) | (entry.flip_h << 6) | (entry.flip_v << 7));
+    v.push_back(((entry.tile_index >> 8) & 0x03) | ((entry.palette_index << 2) & 0x1c) | (entry.flip_h << 6) |
+                (entry.flip_v << 7));
     break;
 
   case Mode::snes_mode7:
@@ -90,7 +87,7 @@ inline byte_vec_t pack_native_mapentry(const Mapentry& entry, Mode mode) {
     break;
 
   default:
-      break;
+    break;
   }
   return v;
 }

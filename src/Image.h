@@ -5,6 +5,7 @@
 #pragma once
 
 #include <LodePNG/lodepng.h>
+
 #include "Common.h"
 #include "Palette.h"
 #include "Tiles.h"
@@ -35,8 +36,7 @@ struct Image final {
   rgba_set_t colors() const { return _colors; }
 
   rgba_t rgba_color_at(unsigned index) const {
-    return (_data[index * 4]) + (_data[(index * 4) + 1] << 8) +
-           (_data[(index * 4) + 2] << 16) + (_data[(index * 4) + 3] << 24);
+    return (_data[index * 4]) + (_data[(index * 4) + 1] << 8) + (_data[(index * 4) + 2] << 16) + (_data[(index * 4) + 3] << 24);
   }
 
   Image crop(unsigned x, unsigned y, unsigned width, unsigned height) const;

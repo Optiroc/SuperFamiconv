@@ -4,35 +4,37 @@
 //  david lindecrantz <optiroc@gmail.com>
 
 #include <Options.h>
+
 #include "Common.h"
+
 #include "Image.h"
 #include "Map.h"
 #include "Palette.h"
 #include "Tiles.h"
 
 namespace SfcMap {
-  struct Settings {
-    std::string in_image;
-    std::string in_palette;
-    std::string in_tileset;
-    std::string out_data;
-    std::string out_json;
-    std::string out_m7_data;
-    std::string out_gbc_bank;
+struct Settings {
+  std::string in_image;
+  std::string in_palette;
+  std::string in_tileset;
+  std::string out_data;
+  std::string out_json;
+  std::string out_m7_data;
+  std::string out_gbc_bank;
 
-    sfc::Mode mode;
-    unsigned bpp;
-    unsigned tile_w;
-    unsigned tile_h;
-    bool no_flip;
-    int tile_base_offset;
-    unsigned map_w;
-    unsigned map_h;
-    unsigned map_split_w;
-    unsigned map_split_h;
-    bool column_order;
-  };
+  sfc::Mode mode;
+  unsigned bpp;
+  unsigned tile_w;
+  unsigned tile_h;
+  bool no_flip;
+  int tile_base_offset;
+  unsigned map_w;
+  unsigned map_h;
+  unsigned map_split_w;
+  unsigned map_split_h;
+  bool column_order;
 };
+}; // namespace SfcMap
 
 int sfc_map(int argc, char* argv[]) {
   SfcMap::Settings settings = {};
@@ -71,7 +73,8 @@ int sfc_map(int argc, char* argv[]) {
     options.AddSwitch(help,                   'h', "help",           "Show this help",  false, "_");
     // clang-format on
 
-    if (!options.Parse(argc, argv)) return 1;
+    if (!options.Parse(argc, argv))
+      return 1;
 
     if (argc <= 2 || help) {
       fmt::print(options.Usage());
@@ -80,12 +83,15 @@ int sfc_map(int argc, char* argv[]) {
 
     settings.mode = sfc::mode(mode_str);
 
-    if (settings.mode == sfc::Mode::pce_sprite) throw std::runtime_error("map output not available in pce_sprite mode");
+    if (settings.mode == sfc::Mode::pce_sprite)
+      throw std::runtime_error("map output not available in pce_sprite mode");
 
     // Mode-specific defaults
-    if (!options.WasSet("bpp")) settings.bpp = sfc::default_bpp_for_mode(settings.mode);
+    if (!options.WasSet("bpp"))
+      settings.bpp = sfc::default_bpp_for_mode(settings.mode);
 
-    if (!sfc::bpp_allowed_for_mode(settings.bpp, settings.mode)) throw std::runtime_error("bpp setting not compatible with specified mode");
+    if (!sfc::bpp_allowed_for_mode(settings.bpp, settings.mode))
+      throw std::runtime_error("bpp setting not compatible with specified mode");
 
   } catch (const std::exception& e) {
     fmt::print(stderr, "Error: {}\n", e.what());
@@ -93,62 +99,81 @@ int sfc_map(int argc, char* argv[]) {
   }
 
   try {
-    if (settings.in_image.empty()) throw std::runtime_error("input image required");
-    if (settings.in_palette.empty()) throw std::runtime_error("input palette required");
-    if (settings.in_tileset.empty()) throw std::runtime_error("input tileset required");
+    if (settings.in_image.empty())
+      throw std::runtime_error("input image required");
+    if (settings.in_palette.empty())
+      throw std::runtime_error("input palette required");
+    if (settings.in_tileset.empty())
+      throw std::runtime_error("input tileset required");
 
-    if (verbose) fmt::print("Performing map operation in \"{}\" mode\n", sfc::mode(settings.mode));
+    if (verbose)
+      fmt::print("Performing map operation in \"{}\" mode\n", sfc::mode(settings.mode));
 
-    if (settings.map_split_w == 0) settings.map_split_w = sfc::default_map_size_for_mode(settings.mode);
-    if (settings.map_split_h == 0) settings.map_split_h = sfc::default_map_size_for_mode(settings.mode);
+    if (settings.map_split_w == 0)
+      settings.map_split_w = sfc::default_map_size_for_mode(settings.mode);
+    if (settings.map_split_h == 0)
+      settings.map_split_h = sfc::default_map_size_for_mode(settings.mode);
 
     sfc::Image image(settings.in_image);
-    if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
+    if (verbose)
+      fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
 
-    if (settings.map_w == 0) settings.map_w = sfc::div_ceil(image.width(), settings.tile_w);
-    if (settings.map_h == 0) settings.map_h = sfc::div_ceil(image.height(), settings.tile_h);
+    if (settings.map_w == 0)
+      settings.map_w = sfc::div_ceil(image.width(), settings.tile_w);
+    if (settings.map_h == 0)
+      settings.map_h = sfc::div_ceil(image.height(), settings.tile_h);
 
     if (settings.map_w * settings.tile_w != image.width() || settings.map_h * settings.tile_h != image.height()) {
       image = image.crop(0, 0, settings.map_w * settings.tile_w, settings.map_h * settings.tile_h);
     }
 
     sfc::Palette palette(settings.in_palette, settings.mode, sfc::palette_size_at_bpp(settings.bpp));
-    if (verbose) fmt::print("Loaded palette from \"{}\" ({})\n", settings.in_palette, palette.description());
+    if (verbose)
+      fmt::print("Loaded palette from \"{}\" ({})\n", settings.in_palette, palette.description());
 
-    sfc::Tileset tileset(sfc::read_binary(settings.in_tileset), settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_flip);
-    if (verbose) fmt::print("Loaded tiles from \"{}\" ({} entries)\n", settings.in_tileset, tileset.size());
+    sfc::Tileset tileset(sfc::read_binary(settings.in_tileset), settings.mode, settings.bpp, settings.tile_w, settings.tile_h,
+                         settings.no_flip);
+    if (verbose)
+      fmt::print("Loaded tiles from \"{}\" ({} entries)\n", settings.in_tileset, tileset.size());
 
     std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
-    if (verbose) fmt::print("Mapping {} {}x{}px tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
+    if (verbose)
+      fmt::print("Mapping {} {}x{}px tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
 
     sfc::Map map(settings.mode, settings.map_w, settings.map_h);
     for (unsigned i = 0; i < crops.size(); ++i) {
       map.add(crops[i], tileset, palette, settings.bpp, i % settings.map_w, i / settings.map_w);
     }
 
-    if (settings.tile_base_offset) map.add_base_offset(settings.tile_base_offset);
+    if (settings.tile_base_offset)
+      map.add_base_offset(settings.tile_base_offset);
 
     // Write data
-    if (verbose && settings.column_order) fmt::print("Using column-major order for output\n");
+    if (verbose && settings.column_order)
+      fmt::print("Using column-major order for output\n");
 
     if (!settings.out_data.empty()) {
       map.save(settings.out_data, settings.column_order, settings.map_split_w, settings.map_split_h);
-      if (verbose) fmt::print("Saved native map data to \"{}\"\n", settings.out_data);
+      if (verbose)
+        fmt::print("Saved native map data to \"{}\"\n", settings.out_data);
     }
 
     if (!settings.out_json.empty()) {
       sfc::write_file(settings.out_json, map.to_json(settings.column_order, settings.map_split_w, settings.map_split_h));
-      if (verbose) fmt::print("Saved json map data to \"{}\"\n", settings.out_json);
+      if (verbose)
+        fmt::print("Saved json map data to \"{}\"\n", settings.out_json);
     }
 
     if (settings.mode == sfc::Mode::snes_mode7 && !settings.out_m7_data.empty()) {
       sfc::write_file(settings.out_m7_data, map.snes_mode7_interleaved_data(tileset));
-      if (verbose) fmt::print("Saved snes_mode7 interleaved data to \"{}\"\n", settings.out_m7_data);
+      if (verbose)
+        fmt::print("Saved snes_mode7 interleaved data to \"{}\"\n", settings.out_m7_data);
     }
 
     if (settings.mode == sfc::Mode::gbc && !settings.out_gbc_bank.empty()) {
       sfc::write_file(settings.out_gbc_bank, map.gbc_banked_data());
-      if (verbose) fmt::print("Saved gbc banked map data to \"{}\"\n", settings.out_gbc_bank);
+      if (verbose)
+        fmt::print("Saved gbc banked map data to \"{}\"\n", settings.out_gbc_bank);
     }
 
   } catch (const std::exception& e) {

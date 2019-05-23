@@ -79,6 +79,12 @@
       "vector": "cpp",
       "any": "cpp",
       "list": "cpp",
-      "unordered_map": "cpp"
+      "unordered_map": "cpp",
+      "csignal": "cpp",
+      "deque": "cpp",
+      "random": "cpp",
+      "regex": "cpp",
+      "stack": "cpp",
+      "variant": "cpp"
     }
   }

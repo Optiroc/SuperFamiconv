@@ -7,14 +7,16 @@ Image::Image(const std::string& path) {
   unsigned w, h;
 
   unsigned error = lodepng::load_file(buffer, path);
-  if (error) throw std::runtime_error(lodepng_error_text(error));
+  if (error)
+    throw std::runtime_error(lodepng_error_text(error));
 
   lodepng::State state;
   state.decoder.color_convert = false;
   state.decoder.ignore_crc = true;
 
   error = lodepng::decode(_data, w, h, state, buffer);
-  if (error) throw std::runtime_error(lodepng_error_text(error));
+  if (error)
+    throw std::runtime_error(lodepng_error_text(error));
 
   bool needs_conversion = false;
 
@@ -25,7 +27,8 @@ Image::Image(const std::string& path) {
       unsigned depth = state.info_raw.bitdepth;
       unsigned ppb = 8 / state.info_raw.bitdepth;
       index_t mask = 0;
-      for (unsigned i = 0; i < depth; ++i) mask = (mask << 1) + 1;
+      for (unsigned i = 0; i < depth; ++i)
+        mask = (mask << 1) + 1;
 
       for (unsigned i = 0; i < _indexed_data.size(); ++i) {
         unsigned pack_shift = 8 - depth - ((i * depth) % 8);
@@ -46,8 +49,7 @@ Image::Image(const std::string& path) {
     state.info_raw.colortype = LCT_RGBA;
   }
 
-  if (state.info_png.color.colortype == LCT_RGB ||
-      state.info_png.color.colortype == LCT_GREY ||
+  if (state.info_png.color.colortype == LCT_RGB || state.info_png.color.colortype == LCT_GREY ||
       state.info_png.color.colortype == LCT_GREY_ALPHA) {
     state.info_raw.colortype = LCT_RGBA;
     needs_conversion = true;
@@ -62,7 +64,8 @@ Image::Image(const std::string& path) {
     _data.clear();
     state.decoder.color_convert = true;
     error = lodepng::decode(_data, w, h, state, buffer);
-    if (error) throw std::runtime_error(lodepng_error_text(error));
+    if (error)
+      throw std::runtime_error(lodepng_error_text(error));
   }
 
   _width = w;
@@ -76,7 +79,8 @@ Image::Image(const std::string& path) {
 
 Image::Image(const sfc::Palette& palette) {
   auto v = palette.normalized_colors();
-  if (v.empty() || v[0].empty()) throw std::runtime_error("No colors");
+  if (v.empty() || v[0].empty())
+    throw std::runtime_error("No colors");
 
   _width = palette.max_colors_per_subpalette();
   _height = (unsigned)v.size();
@@ -85,7 +89,8 @@ Image::Image(const sfc::Palette& palette) {
 
   for (unsigned y = 0; y < v.size(); ++y) {
     auto vy = v[y];
-    for (unsigned x = 0; x < vy.size(); ++x) set_pixel(sfc::rgba_color(vy[x]), x, y);
+    for (unsigned x = 0; x < vy.size(); ++x)
+      set_pixel(sfc::rgba_color(vy[x]), x, y);
   }
 
   _src_coord_x = _src_coord_y = 0;
@@ -108,7 +113,8 @@ Image::Image(const sfc::Tileset& tileset) {
   std::fill(_data.begin(), _data.end(), 0);
   _indexed_data.resize(_width * _height);
   std::fill(_indexed_data.begin(), _indexed_data.end(), 0);
-  if (_data.empty()) return;
+  if (_data.empty())
+    return;
 
   _palette = tileset.tiles()[0].palette();
 
@@ -127,10 +133,9 @@ Image::Image(const sfc::Tileset& tileset) {
 
 // Make new normalized image with color indices mapped to palette
 Image::Image(const Image& image, const sfc::Subpalette& subpalette)
-: _width(image.width()), _height(image.height()),
-  _palette(subpalette.normalized_colors())
-{
-  if (_palette.empty()) throw std::runtime_error("No colors");
+    : _width(image.width()), _height(image.height()), _palette(subpalette.normalized_colors()) {
+  if (_palette.empty())
+    throw std::runtime_error("No colors");
 
   unsigned size = _width * _height;
   _indexed_data.resize(size);
@@ -158,9 +163,7 @@ Image::Image(const Image& image, const sfc::Subpalette& subpalette)
   _colors = rgba_set_t(rgba_v.begin(), rgba_v.end());
 }
 
-rgba_vec_t Image::rgba_data() const {
-  return sfc::to_rgba(_data);
-}
+rgba_vec_t Image::rgba_data() const { return sfc::to_rgba(_data); }
 
 Image Image::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_height) const {
   Image img;
@@ -173,11 +176,13 @@ Image Image::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_hei
 
   uint32_t fillval = transparent_color;
   size_t fillsize = img._data.size();
-  for (size_t i = 0; i < fillsize; i += 4) std::memcpy(img._data.data() + i, &fillval, sizeof(fillval));
+  for (size_t i = 0; i < fillsize; i += 4)
+    std::memcpy(img._data.data() + i, &fillval, sizeof(fillval));
 
   if (x > _width || y > _height) {
     // Crop outside source image: return empty
-    if (_indexed_data.size()) img._indexed_data.resize(crop_width * crop_height);
+    if (_indexed_data.size())
+      img._indexed_data.resize(crop_width * crop_height);
     return img;
   }
 
@@ -217,11 +222,13 @@ std::vector<Image> Image::crops(unsigned tile_width, unsigned tile_height) const
 
 void Image::save(const std::string& path) const {
   unsigned error = lodepng::encode(path.c_str(), _data, _width, _height, LCT_RGBA, 8);
-  if (error) throw std::runtime_error(lodepng_error_text(error));
+  if (error)
+    throw std::runtime_error(lodepng_error_text(error));
 }
 
 void Image::save_indexed(const std::string& path) {
-  if (_palette.empty()) set_default_palette();
+  if (_palette.empty())
+    set_default_palette();
 
   lodepng::State state;
   for (const auto& c : _palette) {
@@ -235,14 +242,16 @@ void Image::save_indexed(const std::string& path) {
 
   byte_vec_t buffer;
   unsigned error = lodepng::encode(buffer, _indexed_data, _width, _height, state);
-  if (error) throw std::runtime_error(lodepng_error_text(error));
+  if (error)
+    throw std::runtime_error(lodepng_error_text(error));
   lodepng::save_file(buffer, path.c_str());
 }
 
 void Image::save_scaled(const std::string& path, Mode mode) {
   auto scaled_data = to_bytes(normalize_colors(reduce_colors(rgba_data(), mode), mode));
   unsigned error = lodepng::encode(path.c_str(), scaled_data, _width, _height, LCT_RGBA, 8);
-  if (error) throw std::runtime_error(lodepng_error_text(error));
+  if (error)
+    throw std::runtime_error(lodepng_error_text(error));
 }
 
 const std::string Image::description() const {
@@ -251,7 +260,8 @@ const std::string Image::description() const {
 
 inline void Image::set_pixel(const rgba_t color, const unsigned index) {
   const unsigned offset = index * 4;
-  if ((offset + 3) > _data.size()) return;
+  if ((offset + 3) > _data.size())
+    return;
   _data[offset + 0] = (channel_t)(color & 0xff);
   _data[offset + 1] = (channel_t)((color >> 8) & 0xff);
   _data[offset + 2] = (channel_t)((color >> 16) & 0xff);
@@ -261,7 +271,8 @@ inline void Image::set_pixel(const rgba_t color, const unsigned index) {
 
 inline void Image::set_pixel(const rgba_t color, const unsigned x, const unsigned y) {
   const unsigned offset = ((y * _width) + x) * 4;
-  if ((offset + 3) > _data.size()) return;
+  if ((offset + 3) > _data.size())
+    return;
   _data[offset + 0] = (channel_t)(color & 0xff);
   _data[offset + 1] = (channel_t)((color >> 8) & 0xff);
   _data[offset + 2] = (channel_t)((color >> 16) & 0xff);
@@ -270,22 +281,26 @@ inline void Image::set_pixel(const rgba_t color, const unsigned x, const unsigne
 }
 
 void Image::blit(const rgba_vec_t& rgba_data, const unsigned x, const unsigned y, const unsigned width) {
-  for (unsigned i = 0; i < rgba_data.size(); ++i) set_pixel(rgba_data[i], (i % width) + x, (i / width) + y);
+  for (unsigned i = 0; i < rgba_data.size(); ++i)
+    set_pixel(rgba_data[i], (i % width) + x, (i / width) + y);
 }
 
 inline void Image::set_pixel_indexed(const index_t color, const unsigned index) {
-  if ((index) > _indexed_data.size()) return;
+  if ((index) > _indexed_data.size())
+    return;
   _indexed_data[index] = color;
 }
 
 inline void Image::set_pixel_indexed(const index_t color, const unsigned x, const unsigned y) {
   const unsigned offset = (y * _width) + x;
-  if (offset > _indexed_data.size()) return;
+  if (offset > _indexed_data.size())
+    return;
   _indexed_data[offset] = color;
 }
 
 void Image::blit_indexed(const channel_vec_t& data, const unsigned x, const unsigned y, const unsigned width) {
-  for (unsigned i = 0; i < data.size(); ++i) set_pixel_indexed(data[i], (i % width) + x, (i / width) + y);
+  for (unsigned i = 0; i < data.size(); ++i)
+    set_pixel_indexed(data[i], (i % width) + x, (i / width) + y);
 }
 
 void Image::set_default_palette(const unsigned indices) {

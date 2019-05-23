@@ -10,7 +10,9 @@
 // MAYBE: In sprite-mode, output matched palette metadata
 
 #include <Options.h>
+
 #include "Common.h"
+
 #include "Image.h"
 #include "Map.h"
 #include "Palette.h"
@@ -57,6 +59,7 @@ int superfamiconv(int argc, char* argv[]) {
     Options options;
     options.IndentDescription = sfc::Constants::options_indent;
 
+    // clang-format off
     options.Header =
       "Usage: superfamiconv <command> [<options>]\n\n"
 
@@ -65,7 +68,6 @@ int superfamiconv(int argc, char* argv[]) {
 
       "Shorthand mode options:\n";
 
-    // clang-format off
     options.Add(settings.in_image,           'i', "in-image",          "Input: image");
     options.Add(settings.out_palette,        'p', "out-palette",       "Output: palette data");
     options.Add(settings.out_tiles,          't', "out-tiles",         "Output: tile data");
@@ -91,7 +93,8 @@ int superfamiconv(int argc, char* argv[]) {
     options.AddSwitch(help,                  'h', "help",              "Show this help",  false, "_");
     // clang-format on
 
-    if (!options.Parse(argc, argv)) return 1;
+    if (!options.Parse(argc, argv))
+      return 1;
 
     if (argc <= 1 || help) {
       fmt::print(options.Usage());
@@ -106,14 +109,20 @@ int superfamiconv(int argc, char* argv[]) {
     settings.mode = sfc::mode(mode_str);
 
     // Set pce_sprite mode and sprite_mode interchangeably
-    if (settings.sprite_mode && settings.mode == sfc::Mode::pce) settings.mode = sfc::Mode::pce_sprite;
-    if (settings.mode == sfc::Mode::pce_sprite) settings.sprite_mode = true;
+    if (settings.sprite_mode && settings.mode == sfc::Mode::pce)
+      settings.mode = sfc::Mode::pce_sprite;
+    if (settings.mode == sfc::Mode::pce_sprite)
+      settings.sprite_mode = true;
 
     // Mode-specific defaults
-    if (!options.WasSet("bpp")) settings.bpp = sfc::default_bpp_for_mode(settings.mode);
-    if (!options.WasSet("tile-width")) settings.tile_w = sfc::default_tile_size_for_mode(settings.mode);
-    if (!options.WasSet("tile-height")) settings.tile_h = sfc::default_tile_size_for_mode(settings.mode);
-    if (!options.WasSet("no-flip")) settings.no_flip = !sfc::tile_flipping_allowed_for_mode(settings.mode);
+    if (!options.WasSet("bpp"))
+      settings.bpp = sfc::default_bpp_for_mode(settings.mode);
+    if (!options.WasSet("tile-width"))
+      settings.tile_w = sfc::default_tile_size_for_mode(settings.mode);
+    if (!options.WasSet("tile-height"))
+      settings.tile_h = sfc::default_tile_size_for_mode(settings.mode);
+    if (!options.WasSet("no-flip"))
+      settings.no_flip = !sfc::tile_flipping_allowed_for_mode(settings.mode);
 
     // Sprite mode defaults
     if (settings.sprite_mode) {
@@ -131,17 +140,21 @@ int superfamiconv(int argc, char* argv[]) {
   }
 
   try {
-    if (settings.in_image.empty()) throw std::runtime_error("Input image required");
+    if (settings.in_image.empty())
+      throw std::runtime_error("Input image required");
 
-    if (verbose) fmt::print("Performing conversion in \"{}\" mode\n", sfc::mode(settings.mode));
+    if (verbose)
+      fmt::print("Performing conversion in \"{}\" mode\n", sfc::mode(settings.mode));
 
     sfc::Image image(settings.in_image);
-    if (verbose) fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
+    if (verbose)
+      fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
 
     // Write color-scaled image
     if (!settings.out_scaled_image.empty()) {
       image.save_scaled(settings.out_scaled_image, settings.mode);
-      if (verbose) fmt::print("Saved image scaled to destination colorspace to \"{}\"\n", settings.out_scaled_image);
+      if (verbose)
+        fmt::print("Saved image scaled to destination colorspace to \"{}\"\n", settings.out_scaled_image);
     }
 
     if (settings.mode == sfc::Mode::pce_sprite) {
@@ -156,50 +169,57 @@ int superfamiconv(int argc, char* argv[]) {
       unsigned colors_per_palette = sfc::palette_size_at_bpp(settings.bpp);
 
       if (settings.no_remap) {
-        if (image.palette_size() == 0) throw std::runtime_error("no-remap requires indexed color image");
-        if (verbose) fmt::print("Mapping palette straight from indexed color image\n");
+        if (image.palette_size() == 0)
+          throw std::runtime_error("no-remap requires indexed color image");
+        if (verbose)
+          fmt::print("Mapping palette straight from indexed color image\n");
 
         palette = sfc::Palette(settings.mode, palette_count, colors_per_palette);
         palette.add_colors(image.palette());
 
       } else {
-        if (verbose) fmt::print("Mapping optimized palette ({}x{} entries)\n", palette_count, colors_per_palette);
+        if (verbose)
+          fmt::print("Mapping optimized palette ({}x{} entries)\n", palette_count, colors_per_palette);
 
         palette = sfc::Palette(settings.mode, palette_count, colors_per_palette);
 
         col0 = col0_forced ? col0 : image.crop(0, 0, 1, 1).rgba_data()[0];
 
         if (settings.sprite_mode) {
-          if (verbose) fmt::print("Setting color zero to transparent\n");
+          if (verbose)
+            fmt::print("Setting color zero to transparent\n");
           palette.prime_col0(sfc::transparent_color);
-        }
-        else if (col0_forced || sfc::col0_is_shared_for_mode(settings.mode)) {
-          if (verbose) fmt::print("Setting color zero to {}\n", sfc::to_hexstring(col0, true, true));
+        } else if (col0_forced || sfc::col0_is_shared_for_mode(settings.mode)) {
+          if (verbose)
+            fmt::print("Setting color zero to {}\n", sfc::to_hexstring(col0, true, true));
           palette.prime_col0(col0);
         }
 
         palette.add_images(image.crops(settings.tile_w, settings.tile_h));
         palette.sort();
       }
-      if (verbose) fmt::print("Created palette with {}\n", palette.description());
+      if (verbose)
+        fmt::print("Created palette with {}\n", palette.description());
     }
 
     // Make tileset
-    sfc::Tileset tileset(settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_discard,
-                         settings.no_flip, settings.no_remap, sfc::max_tile_count_for_mode(settings.mode));
+    sfc::Tileset tileset(settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_discard, settings.no_flip,
+                         settings.no_remap, sfc::max_tile_count_for_mode(settings.mode));
     {
       std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
 
-      for (auto& crop : crops) tileset.add(crop, &palette);
+      for (auto& crop : crops)
+        tileset.add(crop, &palette);
       if (tileset.is_full()) {
-        throw std::runtime_error(fmt::format("Tileset exceeds maximum size ({} entries generated, {} maximum)", tileset.size(), tileset.max()));
+        throw std::runtime_error(
+          fmt::format("Tileset exceeds maximum size ({} entries generated, {} maximum)", tileset.size(), tileset.max()));
       }
       if (verbose) {
         if (settings.no_discard) {
           fmt::print("Created tileset with {} entries\n", tileset.size());
         } else {
-          fmt::print("Created optimized tileset with {} entries (discarded {} redundant tiles)\n",
-                     tileset.size(), tileset.discarded_tiles);
+          fmt::print("Created optimized tileset with {} entries (discarded {} redundant tiles)\n", tileset.size(),
+                     tileset.discarded_tiles);
         }
       }
     }
@@ -215,24 +235,28 @@ int superfamiconv(int argc, char* argv[]) {
     sfc::Map map(settings.mode, map_width, map_height);
     if (settings.mode != sfc::Mode::pce_sprite) {
       std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
-      if (verbose) fmt::print("Mapping {} {}x{}px tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
+      if (verbose)
+        fmt::print("Mapping {} {}x{}px tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
 
       for (unsigned i = 0; i < crops.size(); ++i) {
         map.add(crops[i], tileset, palette, settings.bpp, i % map_width, i / map_width);
       }
 
-      if (settings.tile_base_offset) map.add_base_offset(settings.tile_base_offset);
+      if (settings.tile_base_offset)
+        map.add_base_offset(settings.tile_base_offset);
     }
 
     // Write data
     if (!settings.out_palette.empty()) {
       palette.save(settings.out_palette);
-      if (verbose) fmt::print("Saved native palette data to \"{}\"\n", settings.out_palette);
+      if (verbose)
+        fmt::print("Saved native palette data to \"{}\"\n", settings.out_palette);
     }
 
     if (!settings.out_tiles.empty()) {
       tileset.save(settings.out_tiles);
-      if (verbose) fmt::print("Saved native tile data to \"{}\"\n", settings.out_tiles);
+      if (verbose)
+        fmt::print("Saved native tile data to \"{}\"\n", settings.out_tiles);
     }
 
     if (!settings.out_map.empty()) {
@@ -240,25 +264,29 @@ int superfamiconv(int argc, char* argv[]) {
         fmt::print(stderr, "Map output not available in pce_sprite mode\n");
       } else {
         map.save(settings.out_map);
-        if (verbose) fmt::print("Saved native map data to \"{}\"\n", settings.out_map);
+        if (verbose)
+          fmt::print("Saved native map data to \"{}\"\n", settings.out_map);
       }
     }
 
     if (!settings.out_palette_act.empty()) {
       palette.save_act(settings.out_palette_act);
-      if (verbose) fmt::print("Saved photoshop palette to \"{}\"\n", settings.out_palette_act);
+      if (verbose)
+        fmt::print("Saved photoshop palette to \"{}\"\n", settings.out_palette_act);
     }
 
     if (!settings.out_palette_image.empty()) {
       sfc::Image palette_image(palette);
       palette_image.save(settings.out_palette_image);
-      if (verbose) fmt::print("Saved palette image to \"{}\"\n", settings.out_palette_image);
+      if (verbose)
+        fmt::print("Saved palette image to \"{}\"\n", settings.out_palette_image);
     }
 
     if (!settings.out_tiles_image.empty()) {
       sfc::Image tileset_image(tileset);
       tileset_image.save(settings.out_tiles_image);
-      if (verbose) fmt::print("Saved tileset image to \"{}\"\n", settings.out_tiles_image);
+      if (verbose)
+        fmt::print("Saved tileset image to \"{}\"\n", settings.out_tiles_image);
     }
 
   } catch (const std::exception& e) {
@@ -268,7 +296,6 @@ int superfamiconv(int argc, char* argv[]) {
 
   return 0;
 }
-
 
 int main(int argc, char* argv[]) {
   // If first argument is a subcommand, remove it and pass along

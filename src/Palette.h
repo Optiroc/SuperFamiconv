@@ -12,9 +12,7 @@ namespace sfc {
 struct Image;
 
 struct Subpalette final {
-  Subpalette(Mode mode, unsigned max_colors)
-  : _mode(mode),
-    _max_colors(max_colors){};
+  Subpalette(Mode mode, unsigned max_colors) : _mode(mode), _max_colors(max_colors){};
 
   Mode mode() const { return _mode; }
   bool is_full() const { return _colors.size() == _max_colors; }
@@ -39,12 +37,9 @@ private:
   rgba_set_t _colors_set;
 };
 
-
 struct Palette final {
   Palette(Mode mode = Mode::snes, unsigned max_subpalettes = 0, unsigned max_colors = 0)
-  : _mode(mode),
-    _max_subpalettes(max_subpalettes),
-    _max_colors_per_subpalette(max_colors){};
+      : _mode(mode), _max_subpalettes(max_subpalettes), _max_colors_per_subpalette(max_colors){};
 
   Palette(const byte_vec_t& native_data, Mode in_mode = Mode::snes, unsigned colors_per_subpalette = 16);
   Palette(const std::string& path, Mode in_mode = Mode::snes, unsigned colors_per_subpalette = 16);

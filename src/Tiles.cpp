@@ -3,14 +3,13 @@
 namespace sfc {
 
 Tile::Tile(const Image& image, Mode mode, unsigned bpp, bool no_flip)
-: _mode(mode), _bpp(bpp),
-  _width(image.width()), _height(image.height()),
-  _palette(image.palette())
-{
-  if (image.indexed_data().empty()) throw std::runtime_error("Can't create tile without indexed data");
+    : _mode(mode), _bpp(bpp), _width(image.width()), _height(image.height()), _palette(image.palette()) {
+  if (image.indexed_data().empty())
+    throw std::runtime_error("Can't create tile without indexed data");
 
   index_t mask = bitmask_at_bpp(_bpp);
-  for (index_t ip : image.indexed_data()) _data.push_back(ip & mask);
+  for (index_t ip : image.indexed_data())
+    _data.push_back(ip & mask);
 
   if (!no_flip) {
     _mirrors.push_back(mirror(_data, _width, true, false));
@@ -20,10 +19,7 @@ Tile::Tile(const Image& image, Mode mode, unsigned bpp, bool no_flip)
 }
 
 Tile::Tile(const byte_vec_t& native_data, Mode mode, unsigned bpp, bool no_flip, unsigned width, unsigned height)
-: _mode(mode), _bpp(bpp),
-  _width(width), _height(height),
-  _data(unpack_native_tile(native_data, mode, bpp, width, height))
-{
+    : _mode(mode), _bpp(bpp), _width(width), _height(height), _data(unpack_native_tile(native_data, mode, bpp, width, height)) {
   _palette.resize(palette_size_at_bpp(bpp));
   channel_t add = 0x100 / _palette.size();
   for (unsigned i = 0; i < _palette.size(); ++i) {
@@ -39,7 +35,8 @@ Tile::Tile(const byte_vec_t& native_data, Mode mode, unsigned bpp, bool no_flip,
 }
 
 Tile::Tile(const std::vector<Tile>& metatile, bool no_flip, unsigned width, unsigned height) {
-  if (metatile.empty()) return;
+  if (metatile.empty())
+    return;
 
   _mode = metatile[0]._mode;
   _bpp = metatile[0]._bpp;
@@ -71,23 +68,30 @@ Tile::Tile(const std::vector<Tile>& metatile, bool no_flip, unsigned width, unsi
 }
 
 bool Tile::is_h_flipped(const Tile& other) const {
-  if (other._data == _data) return false;
-  if (_mirrors.empty()) throw std::runtime_error("Programmer error");
-  if (other._data == _mirrors[0] || other._data == _mirrors[2]) return true;
+  if (other._data == _data)
+    return false;
+  if (_mirrors.empty())
+    throw std::runtime_error("Programmer error");
+  if (other._data == _mirrors[0] || other._data == _mirrors[2])
+    return true;
   return false;
 }
 
 bool Tile::is_v_flipped(const Tile& other) const {
-  if (other._data == _data) return false;
-  if (_mirrors.empty()) throw std::runtime_error("Programmer error");
-  if (other._data == _mirrors[1] || other._data == _mirrors[2]) return true;
+  if (other._data == _data)
+    return false;
+  if (_mirrors.empty())
+    throw std::runtime_error("Programmer error");
+  if (other._data == _mirrors[1] || other._data == _mirrors[2])
+    return true;
   return false;
 }
 
 bool Tile::operator==(const Tile& other) const {
-  if (other._data == _data) return true;
+  if (other._data == _data)
+    return true;
   if (!_mirrors.empty()) {
-    return std::any_of(_mirrors.begin(), _mirrors.end(), [&](auto& m){ return m == other._data; });
+    return std::any_of(_mirrors.begin(), _mirrors.end(), [&](auto& m) { return m == other._data; });
   }
   return false;
 }
@@ -135,19 +139,17 @@ std::vector<Tile> Tile::crops(unsigned tile_width, unsigned tile_height) const {
   return tv;
 }
 
-byte_vec_t Tile::native_data() const {
-  return pack_native_tile(_data, _mode, _bpp, _width, _height);
-}
+byte_vec_t Tile::native_data() const { return pack_native_tile(_data, _mode, _bpp, _width, _height); }
 
 rgba_vec_t Tile::rgba_data() const {
   rgba_vec_t v(_data.size());
-  for (unsigned i = 0; i < _data.size(); ++i) v[i] = _palette[_data[i]];
+  for (unsigned i = 0; i < _data.size(); ++i)
+    v[i] = _palette[_data[i]];
   return v;
 }
 
-
-Tileset::Tileset(const byte_vec_t& native_data, Mode mode, unsigned bpp,
-                 unsigned tile_width, unsigned tile_height, bool no_flip) {
+Tileset::Tileset(const byte_vec_t& native_data, Mode mode, unsigned bpp, unsigned tile_width, unsigned tile_height,
+                 bool no_flip) {
   _mode = mode;
   _bpp = bpp;
   _tile_width = tile_width;
@@ -156,8 +158,7 @@ Tileset::Tileset(const byte_vec_t& native_data, Mode mode, unsigned bpp,
 
   if (_mode == Mode::pce_sprite) {
     // TODO: deserialize native pce sprites
-  }
-  else if (_mode == Mode::snes || _mode == Mode::snes_mode7 || _mode == Mode::gbc || _mode == Mode::gb || _mode == Mode::pce) {
+  } else if (_mode == Mode::snes || _mode == Mode::snes_mode7 || _mode == Mode::gbc || _mode == Mode::gb || _mode == Mode::pce) {
     unsigned bytes_per_tile = bpp << 3;
     if (native_data.size() % bytes_per_tile != 0) {
       throw std::runtime_error("Tile data can't be deserialized (size doesn't match bpp setting)");
@@ -166,11 +167,11 @@ Tileset::Tileset(const byte_vec_t& native_data, Mode mode, unsigned bpp,
     unsigned tiles = (unsigned)native_data.size() / bytes_per_tile;
     for (unsigned i = 0; i < tiles; ++i) {
       _tiles.push_back(
-        Tile(byte_vec_t(&native_data[i * bytes_per_tile], &native_data[(i + 1) * bytes_per_tile]),
-             mode, bpp, no_flip, 8, 8));
+        Tile(byte_vec_t(&native_data[i * bytes_per_tile], &native_data[(i + 1) * bytes_per_tile]), mode, bpp, no_flip, 8, 8));
     }
 
-    if (_tile_width != 8 || _tile_height != 8) _tiles = remap_tiles_for_input(_tiles, _mode);
+    if (_tile_width != 8 || _tile_height != 8)
+      _tiles = remap_tiles_for_input(_tiles, _mode);
   }
 }
 
@@ -180,7 +181,8 @@ void Tileset::add(const Image& image, const Palette* palette) {
   if (_no_remap) {
     tile = Tile(image, _mode, _bpp, _no_flip);
   } else {
-    if (palette == nullptr) throw std::runtime_error("Can't remap tile without palette");
+    if (palette == nullptr)
+      throw std::runtime_error("Can't remap tile without palette");
     Image remapped_image = Image(image, palette->subpalette_matching(image));
     tile = Tile(remapped_image, _mode, _bpp, _no_flip);
   }
@@ -205,9 +207,7 @@ int Tileset::index_of(const Tile& tile) const {
   }
 }
 
-void Tileset::save(const std::string& path) const {
-  write_file(path, native_data());
-}
+void Tileset::save(const std::string& path) const { write_file(path, native_data()); }
 
 byte_vec_t Tileset::native_data() const {
   std::vector<Tile> tv;
@@ -239,8 +239,8 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
     tv.resize(cells_per_row * cell_rows);
 
     for (unsigned i = 0; i < tiles.size(); ++i) {
-      unsigned base_pos = (((i / tiles_per_row) * cells_per_tile_v) * cells_per_row) +
-                          ((i % tiles_per_row) << (cells_per_tile_h - 1));
+      unsigned base_pos =
+        (((i / tiles_per_row) * cells_per_tile_v) * cells_per_row) + ((i % tiles_per_row) << (cells_per_tile_h - 1));
       auto ct = tiles[i].crops(8, 8);
       for (unsigned cy = 0; cy < cells_per_tile_v; ++cy) {
         for (unsigned cx = 0; cx < cells_per_tile_h; ++cx) {
@@ -264,7 +264,8 @@ std::vector<Tile> Tileset::remap_tiles_for_input(const std::vector<Tile>& tiles,
       std::vector<Tile> metatile;
       for (unsigned yo = 0; yo < cells_per_tile_v; ++yo) {
         for (unsigned xo = 0; xo < cells_per_tile_h; ++xo) {
-          if ((i + (yo * 16) + xo) < tiles.size()) metatile.push_back(tiles[i + (yo * 16) + xo]);
+          if ((i + (yo * 16) + xo) < tiles.size())
+            metatile.push_back(tiles[i + (yo * 16) + xo]);
         }
       }
       if (metatile.size() == cells_per_tile_h * cells_per_tile_v)
@@ -274,6 +275,5 @@ std::vector<Tile> Tileset::remap_tiles_for_input(const std::vector<Tile>& tiles,
 
   return tv;
 }
-
 
 } /* namespace sfc */

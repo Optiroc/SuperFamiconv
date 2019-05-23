@@ -2,7 +2,8 @@
 
 namespace sfc {
 
-void Map::add(const sfc::Image& image, const sfc::Tileset& tileset, const sfc::Palette& palette, unsigned bpp, unsigned pos_x, unsigned pos_y) {
+void Map::add(const sfc::Image& image, const sfc::Tileset& tileset, const sfc::Palette& palette, unsigned bpp, unsigned pos_x,
+              unsigned pos_y) {
   if (((pos_y * _map_width) + pos_x) > _entries.size())
     throw std::runtime_error("Map entry out of bounds");
 
@@ -25,26 +26,25 @@ void Map::add(const sfc::Image& image, const sfc::Tileset& tileset, const sfc::P
   }
 
   if (tileset_index == -1) {
-    fmt::print(stderr, "  No matching tile for position {},{}\n",
-               image.src_coord_x(), image.src_coord_y());
+    fmt::print(stderr, "  No matching tile for position {},{}\n", image.src_coord_x(), image.src_coord_y());
     _entries[(pos_y * _map_width) + pos_x] = Mapentry(0, 0, false, false);
 
   } else if (tileset_index >= (int)max_tile_count_for_mode(_mode)) {
-    fmt::print(stderr, "  Mapped tile exceeds allowed map index at position {},{}\n",
-               image.src_coord_x(), image.src_coord_y());
+    fmt::print(stderr, "  Mapped tile exceeds allowed map index at position {},{}\n", image.src_coord_x(), image.src_coord_y());
     _entries[(pos_y * _map_width) + pos_x] = Mapentry(0, 0, false, false);
 
   } else {
     _entries[(pos_y * _map_width) + pos_x] =
-      Mapentry(tileset_index, palette_index,
-               tileset.tiles()[tileset_index].is_h_flipped(matched_tile),
+      Mapentry(tileset_index, palette_index, tileset.tiles()[tileset_index].is_h_flipped(matched_tile),
                tileset.tiles()[tileset_index].is_v_flipped(matched_tile));
   }
 }
 
 Mapentry Map::entry_at(unsigned x, unsigned y) const {
-  if (x > _map_width) x = _map_width;
-  if (y > _map_height) y = _map_height;
+  if (x > _map_width)
+    x = _map_width;
+  if (y > _map_height)
+    y = _map_height;
   if (((y * _map_width) + x) > _entries.size()) {
     return Mapentry();
   } else {
@@ -75,8 +75,10 @@ byte_vec_t Map::snes_mode7_interleaved_data(const Tileset& tileset) const {
 
   size_t sz = (tile_data.size() > map_data.size()) ? tile_data.size() : map_data.size();
   byte_vec_t data = byte_vec_t(sz * 2);
-  for (unsigned i = 0; i < map_data.size(); ++i) data[(i << 1)] = map_data[i];
-  for (unsigned i = 0; i < tile_data.size(); ++i) data[(i << 1) + 1] = tile_data[i];
+  for (unsigned i = 0; i < map_data.size(); ++i)
+    data[(i << 1)] = map_data[i];
+  for (unsigned i = 0; i < tile_data.size(); ++i)
+    data[(i << 1) + 1] = tile_data[i];
 
   return data;
 }
@@ -106,7 +108,8 @@ const std::string Map::to_json(bool column_order, unsigned split_w, unsigned spl
 
     if (tile_flipping_allowed_for_mode(_mode) && default_palette_count_for_mode(_mode) > 1) {
       for (auto& m : vm) {
-        ja.push_back({{"tile", m.tile_index}, {"palette", m.palette_index}, {"flip_h", (int)m.flip_h}, {"flip_v", (int)m.flip_v}});
+        ja.push_back(
+          {{"tile", m.tile_index}, {"palette", m.palette_index}, {"flip_h", (int)m.flip_h}, {"flip_v", (int)m.flip_v}});
       }
     } else if (tile_flipping_allowed_for_mode(_mode)) {
       for (auto& m : vm) {
@@ -134,8 +137,10 @@ const std::string Map::to_json(bool column_order, unsigned split_w, unsigned spl
 std::vector<std::vector<Mapentry>> Map::collect_entries(bool column_order, unsigned split_w, unsigned split_h) const {
   std::vector<std::vector<Mapentry>> vvm;
 
-  if (split_w > _map_width || split_w == 0) split_w = _map_width;
-  if (split_h > _map_height || split_h == 0) split_h = _map_height;
+  if (split_w > _map_width || split_w == 0)
+    split_w = _map_width;
+  if (split_h > _map_height || split_h == 0)
+    split_h = _map_height;
 
   if (split_w == _map_width && split_h == _map_height) {
     vvm.push_back(_entries);
