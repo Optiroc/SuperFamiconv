@@ -166,12 +166,6 @@ int sfc_tiles(int argc, char* argv[]) {
           fmt::print("Remapping tile data from palette \"{}\" ({})\n", settings.in_palette, palette.description());
       }
 
-      if (settings.sprite_mode && sfc::col0_is_shared_for_sprite_mode(settings.mode)) {
-        if (verbose)
-          fmt::print("Treating color zero as transparent ({}/sprite-mode)\n", sfc::mode(settings.mode));
-        palette.set_color(0, sfc::transparent_color);
-      }
-
       for (auto& img : crops)
         tileset.add(img, &palette);
       if (tileset.is_full()) {
