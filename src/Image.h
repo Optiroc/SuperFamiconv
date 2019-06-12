@@ -20,7 +20,7 @@ struct Image final {
   Image(){};
   Image(const std::string& path);
   Image(const sfc::Palette& palette);
-  Image(const sfc::Tileset& tileset);
+  Image(const sfc::Tileset& tileset, unsigned width = 128);
   Image(const Image& image, const sfc::Subpalette& subpalette);
 
   unsigned width() const { return _width; }

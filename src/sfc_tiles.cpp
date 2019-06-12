@@ -28,6 +28,7 @@ struct Settings {
   bool no_remap;
   bool sprite_mode;
   unsigned max_tiles;
+  unsigned out_image_width;
 };
 }; // namespace SfcTiles
 
@@ -59,6 +60,7 @@ int sfc_tiles(int argc, char* argv[]) {
     options.AddSwitch(settings.no_flip,      'F', "no-flip",        "Don't discard using tile flipping", false,               "Settings");
     options.AddSwitch(settings.sprite_mode,  'S', "sprite-mode",    "Apply sprite output settings",      false,               "Settings");
     options.Add(settings.max_tiles,          'T', "max-tiles",      "Maximum number of tiles",           unsigned(),          "Settings");
+    options.Add(settings.out_image_width,   '\0', "out-image-width","Width of out-image",                unsigned(),          "Settings");
 
     options.AddSwitch(verbose,               'v', "verbose",        "Verbose logging", false, "_");
     options.AddSwitch(help,                  'h', "help",           "Show this help",  false, "_");
@@ -190,7 +192,7 @@ int sfc_tiles(int argc, char* argv[]) {
     }
 
     if (!settings.out_image.empty()) {
-      sfc::Image tileset_image(tileset);
+      sfc::Image tileset_image(tileset, settings.out_image_width);
       if (!settings.in_data.empty()) {
         tileset_image.save_indexed(settings.out_image);
       } else {
