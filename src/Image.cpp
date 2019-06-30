@@ -99,7 +99,10 @@ Image::Image(const sfc::Palette& palette) {
   _colors = rgba_set_t(rgba_v.begin(), rgba_v.end());
 }
 
-Image::Image(const sfc::Tileset& tileset, const unsigned image_width) {
+Image::Image(const sfc::Tileset& tileset, unsigned image_width) {
+  if (!image_width)
+    image_width = 128;
+
   const auto tiles = tileset.tiles();
   const unsigned tile_width = tileset.tile_width();
   const unsigned tile_height = tileset.tile_height();
