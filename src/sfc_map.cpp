@@ -128,6 +128,8 @@ int sfc_map(int argc, char* argv[]) {
     }
 
     sfc::Palette palette(settings.in_palette, settings.mode, sfc::palette_size_at_bpp(settings.bpp));
+    if (palette.size() < 1)
+      throw std::runtime_error("Input palette size is zero");
     if (verbose)
       fmt::print("Loaded palette from \"{}\" ({})\n", settings.in_palette, palette.description());
 

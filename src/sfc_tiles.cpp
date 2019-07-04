@@ -164,6 +164,8 @@ int sfc_tiles(int argc, char* argv[]) {
         if (settings.in_palette.empty())
           throw std::runtime_error("Input palette required (except in --no-remap mode)");
         palette = sfc::Palette(settings.in_palette, settings.mode, sfc::palette_size_at_bpp(settings.bpp));
+        if (palette.size() < 1)
+          throw std::runtime_error("Input palette size is zero");
         if (verbose)
           fmt::print("Remapping tile data from palette \"{}\" ({})\n", settings.in_palette, palette.description());
       }
