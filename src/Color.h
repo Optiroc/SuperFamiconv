@@ -34,17 +34,20 @@ inline std::string to_hexstring(rgba_t value, bool pound = true, bool alpha = fa
 // css style hex string to rgba value
 inline rgba_t from_hexstring(const std::string& str) {
   std::string s = str;
-  if (s.at(0) == '#')
-    s.erase(0, 1);
+  s.erase(std::remove(s.begin(), s.end(), '#'), str.end());
+  s.erase(std::remove(s.begin(), s.end(), '"'), str.end());
+  s.erase(std::remove(s.begin(), s.end(), '\''), str.end());
+
   if (s.size() == 6)
     s.insert(6, 2, 'f');
   if (s.size() != 8)
     throw std::runtime_error("Argument color-zero not a 6 or 8 character hex-string");
+
   uint32_t i;
   if (sscanf(s.c_str(), "%x", &i) == 1) {
     return reverse_bytes(i);
   } else {
-    throw std::runtime_error("Failed to interpret argument color-zero");
+    throw std::runtime_error("Failed to interpret color string");
   };
 }
 
