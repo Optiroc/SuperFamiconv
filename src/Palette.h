@@ -28,6 +28,7 @@ struct Subpalette final {
   Subpalette padded() const;
   unsigned diff(const rgba_set_t& new_colors) const;
   void sort();
+  bool check_col0_duplicates();
 
 private:
   Mode _mode = Mode::snes;
@@ -51,6 +52,7 @@ struct Palette final {
 
   void set_color(unsigned index, const rgba_t color);
   void prime_col0(const rgba_t color);
+  void check_col0_duplicates();
 
   void add_images(std::vector<sfc::Image>);
   void add_colors(const rgba_vec_t& colors, bool reduce_depth = true);

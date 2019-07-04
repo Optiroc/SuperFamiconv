@@ -61,6 +61,18 @@ void Subpalette::sort() {
   _colors.insert(_colors.end(), vc.begin(), vc.end());
 }
 
+// if there are duplicates of color zero, set alpha of color zero to 0
+bool Subpalette::check_col0_duplicates() {
+  if (_colors.size() <= 1)
+    return false;
+  if (std::find(std::next(_colors.begin()), _colors.end(), _colors[0]) != _colors.end()) {
+    _colors[0] = _colors[0] & 0x00ffffff;
+    _colors_set = rgba_set_t(_colors.begin(), _colors.end());
+    return true;
+  }
+  return false;
+}
+
 
 // construct Palette by deserializing json or binary
 Palette::Palette(const std::string& path, Mode in_mode, uint32_t colors_per_subpalette) {
@@ -85,6 +97,7 @@ Palette::Palette(const std::string& path, Mode in_mode, uint32_t colors_per_subp
   } catch (...) {
     // load binary
     add_colors(unpack_native_colors(read_binary(path), in_mode), false);
+    check_col0_duplicates();
   }
 
   if (_subpalettes.empty())
@@ -97,6 +110,7 @@ Palette::Palette(const byte_vec_t& native_data, Mode in_mode, unsigned colors_pe
   _max_colors_per_subpalette = colors_per_subpalette;
   _max_subpalettes = default_palette_count_for_mode(_mode);
   add_colors(unpack_native_colors(native_data, in_mode), false);
+  check_col0_duplicates();
 }
 
 
@@ -136,6 +150,16 @@ void Palette::prime_col0(const rgba_t color) {
   _col0_is_shared = true;
 }
 
+// if there are duplicates of color zero, set alpha of color zero to 0
+void Palette::check_col0_duplicates() {
+  if (sfc::col0_is_shared_for_mode(_mode)) {
+    bool fixed = false;
+    for (auto& sp : _subpalettes)
+      fixed |= sp.check_col0_duplicates();
+    if (fixed)
+      fmt::print("Palette contains duplicates of color zero, treating color zero as transparent\n");
+  }
+}
 
 // add optimized subpalettes containing colors in palette_tiles
 void Palette::add_images(std::vector<sfc::Image> palette_tiles) {
