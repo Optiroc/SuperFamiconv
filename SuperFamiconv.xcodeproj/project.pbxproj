@@ -35,6 +35,7 @@
 /* Begin PBXFileReference section */
 		2A39C6BD227835E000A97D33 /* lodepng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lodepng.cpp; sourceTree = "<group>"; };
 		2A39C6BE227835E000A97D33 /* lodepng.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lodepng.h; sourceTree = "<group>"; };
+		2A6B64C622CE7AC90055B9E3 /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Color.h; sourceTree = "<group>"; };
 		2A75C17E227050F600803ABF /* time.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = time.h; sourceTree = "<group>"; };
 		2A75C17F227050F600803ABF /* ostream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ostream.h; sourceTree = "<group>"; };
 		2A75C180227050F600803ABF /* format-inl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "format-inl.h"; sourceTree = "<group>"; };
@@ -102,16 +103,17 @@
 				2AB6F34B1E12F70200F2AE78 /* sfc_palette.cpp */,
 				2AB6F34C1E12F70200F2AE78 /* sfc_tiles.cpp */,
 				2AB6F34A1E12F70200F2AE78 /* sfc_map.cpp */,
+				2A6B64C622CE7AC90055B9E3 /* Color.h */,
 				2AB6F37C1E130E4900F2AE78 /* Common.h */,
-				2AB6F37E1E133CE300F2AE78 /* Image.h */,
 				2A8169841E1AD52500668B8F /* Image.cpp */,
-				2AA93759227E1E4600A9C98D /* Mode.h */,
-				2AB6F3781E130CD600F2AE78 /* Palette.h */,
-				2A8169881E1AD58A00668B8F /* Palette.cpp */,
-				2A893EE51E22FCA20032D146 /* Map.h */,
+				2AB6F37E1E133CE300F2AE78 /* Image.h */,
 				2A893EE61E22FCDA0032D146 /* Map.cpp */,
-				2AD9CC901E1985D100BA0593 /* Tiles.h */,
+				2A893EE51E22FCA20032D146 /* Map.h */,
+				2AA93759227E1E4600A9C98D /* Mode.h */,
+				2A8169881E1AD58A00668B8F /* Palette.cpp */,
+				2AB6F3781E130CD600F2AE78 /* Palette.h */,
 				2A81698C1E1AD5DD00668B8F /* Tiles.cpp */,
+				2AD9CC901E1985D100BA0593 /* Tiles.h */,
 			);
 			path = src;
 			sourceTree = "<group>";
