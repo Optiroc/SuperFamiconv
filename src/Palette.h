@@ -45,6 +45,7 @@ struct Palette final {
   Palette(const std::string& path, Mode in_mode = Mode::snes, unsigned colors_per_subpalette = 16);
 
   unsigned max_colors_per_subpalette() const { return _max_colors_per_subpalette; }
+  unsigned size() const;
   const std::vector<rgba_vec_t> colors() const;
   const std::vector<rgba_vec_t> normalized_colors() const;
 

@@ -100,6 +100,14 @@ Palette::Palette(const byte_vec_t& native_data, Mode in_mode, unsigned colors_pe
 }
 
 
+// total number of colors
+unsigned Palette::size() const {
+  unsigned count = 0;
+  for (auto sp : _subpalettes)
+    count += sp.colors().size();
+  return count;
+}
+
 // get colors
 const std::vector<rgba_vec_t> Palette::colors() const {
   std::vector<rgba_vec_t> v;
