@@ -84,7 +84,10 @@ struct rgba_color final {
   channel_t a = {};
 
   rgba_color(){};
-  rgba_color(rgba_t c) : r(c & 0x000000ff), g((c & 0x0000ff00) >> 8), b((c & 0x00ff0000) >> 16), a((c & 0xff000000) >> 24){};
+  rgba_color(rgba_t c) : r(c & 0x000000ff), g((c & 0x0000ff00) >> 8), b((c & 0x00ff0000) >> 16), a((c & 0xff000000) >> 24) {
+    if (a < 0x80)
+      r = g = b = a = 0;
+  };
 
   operator rgba_t() {
     rgba_t i = r;
