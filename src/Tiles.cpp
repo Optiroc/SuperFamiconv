@@ -199,7 +199,7 @@ void Tileset::add(const Image& image, const Palette* palette) {
 }
 
 int Tileset::index_of(const Tile& tile) const {
-  auto index = std::find(_tiles.begin(), _tiles.end(), tile);
+  const auto index = std::find(_tiles.begin(), _tiles.end(), tile);
   if (index != _tiles.end()) {
     return (int)std::distance(_tiles.begin(), index);
   } else {
@@ -241,7 +241,7 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
     for (unsigned i = 0; i < tiles.size(); ++i) {
       unsigned base_pos =
         (((i / tiles_per_row) * cells_per_tile_v) * cells_per_row) + ((i % tiles_per_row) << (cells_per_tile_h - 1));
-      auto ct = tiles[i].crops(8, 8);
+      const auto ct = tiles[i].crops(8, 8);
       for (unsigned cy = 0; cy < cells_per_tile_v; ++cy) {
         for (unsigned cx = 0; cx < cells_per_tile_h; ++cx) {
           tv[base_pos + (cy * cells_per_row) + cx] = ct[(cy * cells_per_tile_v) + cx];

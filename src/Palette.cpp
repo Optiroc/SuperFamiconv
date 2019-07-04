@@ -72,9 +72,9 @@ Palette::Palette(const std::string& path, Mode in_mode, uint32_t colors_per_subp
     // load json
     auto j = read_json_file(path);
     auto jp = j["palettes"];
-    for (auto jsp : jp) {
+    for (const auto& jsp : jp) {
       rgba_vec_t colors;
-      for (auto jcs : jsp) {
+      for (const auto& jcs : jsp) {
         if (jcs.is_string())
           colors.push_back(reduce_color(from_hexstring(jcs), in_mode));
       }
@@ -103,7 +103,7 @@ Palette::Palette(const byte_vec_t& native_data, Mode in_mode, unsigned colors_pe
 // total number of colors
 unsigned Palette::size() const {
   unsigned count = 0;
-  for (auto sp : _subpalettes)
+  for (const auto& sp : _subpalettes)
     count += sp.colors().size();
   return count;
 }
@@ -111,7 +111,7 @@ unsigned Palette::size() const {
 // get colors
 const std::vector<rgba_vec_t> Palette::colors() const {
   std::vector<rgba_vec_t> v;
-  for (auto sp : _subpalettes)
+  for (const auto& sp : _subpalettes)
     v.push_back(sp.colors());
   return v;
 }
@@ -142,7 +142,7 @@ void Palette::add_images(std::vector<sfc::Image> palette_tiles) {
 
   // make vector of sets of all tiles' colors
   rgba_set_vec_t palettes = rgba_set_vec_t();
-  for (auto& c : palette_tiles) {
+  for (const auto& c : palette_tiles) {
 
     if (c.colors().size() > _max_colors_per_subpalette) {
       fmt::print(stderr, "  Tile with too many unique colors at {},{} in source image\n", c.src_coord_x(), c.src_coord_y());
@@ -252,7 +252,7 @@ const std::string Palette::description() const {
   int total = 0;
   std::string s = "";
 
-  for (auto i : v) {
+  for (const auto& i : v) {
     total += i.size();
     s += fmt::format("{},", i.size());
   }
@@ -276,9 +276,9 @@ const std::string Palette::to_json() const {
     auto ps = normalized_colors();
     std::vector<std::vector<std::string>> jps;
 
-    for (auto p : ps) {
+    for (const auto& p : ps) {
       std::vector<std::string> jp;
-      for (auto c : p)
+      for (const auto& c : p)
         jp.push_back(to_hexstring(c));
       jps.push_back(jp);
     }
@@ -290,9 +290,9 @@ const std::string Palette::to_json() const {
     auto ps = colors();
     std::vector<std::vector<std::vector<unsigned>>> jps;
 
-    for (auto p : ps) {
+    for (const auto& p : ps) {
       std::vector<std::vector<unsigned>> jp;
-      for (auto c : p) {
+      for (const auto& c : p) {
         std::vector<unsigned> jpt;
         auto rgb = rgba_color(c);
         jpt.push_back(rgb.r);
@@ -312,10 +312,10 @@ const std::string Palette::to_json() const {
 void Palette::save(const std::string& path) const {
   byte_vec_t data;
 
-  for (auto& sp : _subpalettes) {
+  for (const auto& sp : _subpalettes) {
     Subpalette spp = sp.padded();
     rgba_vec_t colors = spp.colors();
-    for (auto c : colors) {
+    for (const auto& c : colors) {
       auto nc = pack_native_color(c, _mode);
       data.insert(data.end(), nc.begin(), nc.end());
     }
@@ -328,10 +328,10 @@ void Palette::save_act(const std::string& path) const {
   byte_vec_t data((256 * 3) + 4);
   int count = 0;
 
-  for (auto& sp : _subpalettes) {
+  for (const auto& sp : _subpalettes) {
     Subpalette spp = sp.padded();
     rgba_vec_t colors = spp.normalized_colors();
-    for (auto c : colors) {
+    for (const auto& c : colors) {
       rgba_color rgba(c);
       data[count * 3 + 0] = rgba.r;
       data[count * 3 + 1] = rgba.g;

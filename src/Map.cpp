@@ -12,8 +12,8 @@ void Map::add(const sfc::Image& image, const sfc::Tileset& tileset, const sfc::P
   Tile matched_tile;
   {
     // search all viable palette mappings of image in tileset
-    auto spv = palette.subpalettes_matching(image);
-    for (auto p : spv) {
+    const auto spv = palette.subpalettes_matching(image);
+    for (const auto& p : spv) {
       const Image remapped_image = Image(image, *p);
       Tile remapped_tile(remapped_image, _mode, bpp, true);
       tileset_index = tileset.index_of(remapped_tile);
@@ -60,8 +60,8 @@ void Map::add_base_offset(int offset) {
 
 byte_vec_t Map::native_data(bool column_order, unsigned split_w, unsigned split_h) const {
   byte_vec_t data;
-  for (auto& vm : collect_entries(column_order, split_w, split_h)) {
-    for (auto& m : vm) {
+  for (const auto& vm : collect_entries(column_order, split_w, split_h)) {
+    for (const auto& m : vm) {
       auto nd = sfc::pack_native_mapentry(m, _mode);
       data.insert(data.end(), nd.begin(), nd.end());
     }
@@ -87,7 +87,7 @@ byte_vec_t Map::gbc_banked_data() const {
   if ((width() % 32) || (height() % 32))
     throw std::runtime_error("gbc/out-gbc-bank requires map dimensions to be multiples of 32");
 
-  auto linear_data = native_data();
+  const auto linear_data = native_data();
   auto banked_data = byte_vec_t(linear_data.size());
   for (unsigned i = 0; i < linear_data.size(); ++i) {
     banked_data[!(i % 2) ? i >> 2 : (i >> 2) + (32 * 32)] = linear_data[i];
@@ -101,26 +101,26 @@ void Map::save(const std::string& path, bool column_order, unsigned split_w, uns
 
 const std::string Map::to_json(bool column_order, unsigned split_w, unsigned split_h) const {
   nlohmann::json j;
-  auto vmm = collect_entries(column_order, split_w, split_h);
+  const auto vmm = collect_entries(column_order, split_w, split_h);
 
-  for (auto& vm : vmm) {
+  for (const auto& vm : vmm) {
     nlohmann::json ja = nlohmann::json::array();
 
     if (tile_flipping_allowed_for_mode(_mode) && default_palette_count_for_mode(_mode) > 1) {
-      for (auto& m : vm) {
+      for (const auto& m : vm) {
         ja.push_back(
           {{"tile", m.tile_index}, {"palette", m.palette_index}, {"flip_h", (int)m.flip_h}, {"flip_v", (int)m.flip_v}});
       }
     } else if (tile_flipping_allowed_for_mode(_mode)) {
-      for (auto& m : vm) {
+      for (const auto& m : vm) {
         ja.push_back({{"tile", m.tile_index}, {"flip_h", (int)m.flip_h}, {"flip_v", (int)m.flip_v}});
       }
     } else if (default_palette_count_for_mode(_mode) > 1) {
-      for (auto& m : vm) {
+      for (const auto& m : vm) {
         ja.push_back({{"tile", m.tile_index}, {"palette", m.palette_index}});
       }
     } else {
-      for (auto& m : vm) {
+      for (const auto& m : vm) {
         ja.push_back({{"tile", m.tile_index}});
       }
     }
