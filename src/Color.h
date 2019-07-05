@@ -34,9 +34,9 @@ inline std::string to_hexstring(rgba_t value, bool pound = true, bool alpha = fa
 // css style hex string to rgba value
 inline rgba_t from_hexstring(const std::string& str) {
   std::string s = str;
-  s.erase(std::remove(s.begin(), s.end(), '#'), str.end());
-  s.erase(std::remove(s.begin(), s.end(), '"'), str.end());
-  s.erase(std::remove(s.begin(), s.end(), '\''), str.end());
+  s.erase(std::remove(s.begin(), s.end(), '#'), s.end());
+  s.erase(std::remove(s.begin(), s.end(), '"'), s.end());
+  s.erase(std::remove(s.begin(), s.end(), '\''), s.end());
 
   if (s.size() == 6)
     s.insert(6, 2, 'f');
