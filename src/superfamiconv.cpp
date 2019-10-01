@@ -7,7 +7,6 @@
 // TODO: Check map output with tiles using duplicate colors (#8)
 // TODO: Don't always pad native palette output? (Pad every palette but the last? Option?)
 // TODO: Add more palette packing algorithms
-// MAYBE: In sprite-mode, output matched palette metadata
 
 #include <Options.h>
 

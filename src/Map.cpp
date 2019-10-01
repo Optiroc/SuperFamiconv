@@ -89,9 +89,8 @@ byte_vec_t Map::gbc_banked_data() const {
 
   const auto linear_data = native_data();
   auto banked_data = byte_vec_t(linear_data.size());
-  for (unsigned i = 0; i < linear_data.size(); ++i) {
-    banked_data[!(i % 2) ? i >> 2 : (i >> 2) + (32 * 32)] = linear_data[i];
-  }
+  for (unsigned i = 0; i < linear_data.size() >> 1; ++i) banked_data[i] = linear_data[i << 1];
+  for (unsigned i = 0; i < linear_data.size() >> 1; ++i) banked_data[i + (linear_data.size() >> 1)] = linear_data[(i << 1) + 1];
   return banked_data;
 }
 
