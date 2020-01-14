@@ -34,9 +34,9 @@ void Map::add(const sfc::Image& image, const sfc::Tileset& tileset, const sfc::P
     _entries[(pos_y * _map_width) + pos_x] = Mapentry(0, 0, false, false);
 
   } else {
+    const TileFlipped flipped = tileset.tiles()[tileset_index].is_flipped(matched_tile);
     _entries[(pos_y * _map_width) + pos_x] =
-      Mapentry(tileset_index, palette_index, tileset.tiles()[tileset_index].is_h_flipped(matched_tile),
-               tileset.tiles()[tileset_index].is_v_flipped(matched_tile));
+      Mapentry(tileset_index, palette_index, flipped.h, flipped.v);
   }
 }
 

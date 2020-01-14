@@ -67,26 +67,6 @@ Tile::Tile(const std::vector<Tile>& metatile, bool no_flip, unsigned width, unsi
   }
 }
 
-bool Tile::is_h_flipped(const Tile& other) const {
-  if (other._data == _data)
-    return false;
-  if (_mirrors.empty())
-    throw std::runtime_error("Programmer error");
-  if (other._data == _mirrors[0] || other._data == _mirrors[2])
-    return true;
-  return false;
-}
-
-bool Tile::is_v_flipped(const Tile& other) const {
-  if (other._data == _data)
-    return false;
-  if (_mirrors.empty())
-    throw std::runtime_error("Programmer error");
-  if (other._data == _mirrors[1] || other._data == _mirrors[2])
-    return true;
-  return false;
-}
-
 bool Tile::operator==(const Tile& other) const {
   if (other._data == _data)
     return true;
@@ -94,6 +74,25 @@ bool Tile::operator==(const Tile& other) const {
     return std::any_of(_mirrors.begin(), _mirrors.end(), [&](auto& m) { return m == other._data; });
   }
   return false;
+}
+
+TileFlipped Tile::is_flipped(const Tile& other) const {
+  TileFlipped flipped;
+  if (other._data == _data)
+    return flipped;
+
+  if (_mirrors.empty())
+    throw std::runtime_error("Programmer error");
+
+  if (other._data == _mirrors[0]) {
+    flipped.h = true;
+  } else if (other._data == _mirrors[1]) {
+    flipped.v = true;
+  } else if (other._data == _mirrors[2]) {
+    flipped.h = flipped.v = true;
+  }
+
+  return flipped;
 }
 
 Tile Tile::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_height) const {

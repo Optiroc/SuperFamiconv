@@ -13,6 +13,11 @@ namespace sfc {
 struct Image;
 struct Palette;
 
+struct TileFlipped {
+  bool h = false;
+  bool v = false;
+};
+
 struct Tile {
   Tile(const Image& image, Mode mode = Mode::snes, unsigned bpp = 4, bool no_flip = false);
 
@@ -33,9 +38,9 @@ struct Tile {
   byte_vec_t native_data() const;
   rgba_vec_t rgba_data() const;
 
-  bool is_h_flipped(const Tile& other) const;
-  bool is_v_flipped(const Tile& other) const;
   bool operator==(const Tile& other) const;
+
+  TileFlipped is_flipped(const Tile& other) const;
 
   Tile crop(unsigned x, unsigned y, unsigned width, unsigned height) const;
   std::vector<Tile> crops(unsigned tile_width, unsigned tile_height) const;
