@@ -22,8 +22,6 @@ ifneq ($(OS),Windows_NT)
   #ifeq ($(UNAME_S),Linux)
   #endif
 else
-  CC := x86_64-w64-mingw32-gcc
-  CXX := x86_64-w64-mingw32-g++
   LD_FLAGS += -static -static-libgcc -static-libstdc++
 endif
 
