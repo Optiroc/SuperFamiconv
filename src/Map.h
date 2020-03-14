@@ -28,8 +28,8 @@ struct Mapentry final {
 
 
 struct Map final {
-  Map(Mode mode = Mode::snes, unsigned map_width = 32, unsigned map_height = 32)
-  : _mode(mode), _map_width(map_width), _map_height(map_height) {
+  Map(Mode mode = Mode::snes, unsigned map_width = 32, unsigned map_height = 32, unsigned tile_width = 8, unsigned tile_height = 8)
+  : _mode(mode), _map_width(map_width), _map_height(map_height), _tile_width(tile_width), _tile_height(tile_height) {
     _entries.resize(map_width * map_height);
   };
 
@@ -52,6 +52,8 @@ private:
   Mode _mode = Mode::snes;
   unsigned _map_width = 32;
   unsigned _map_height = 32;
+  unsigned _tile_width = 8;
+  unsigned _tile_height = 8;
 
   std::vector<Mapentry> _entries;
 

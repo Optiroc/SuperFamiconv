@@ -48,7 +48,14 @@ Mapentry Map::entry_at(unsigned x, unsigned y) const {
   if (((y * _map_width) + x) > _entries.size()) {
     return Mapentry();
   } else {
-    return _entries[(y * _map_width) + x];
+    Mapentry entry = _entries[(y * _map_width) + x];
+    if (_tile_width == 8 && _tile_height == 8)
+      return entry;
+    // SNES non-8x8 tilemap
+    unsigned tile_col = entry.tile_index % 8;
+    unsigned tile_row = entry.tile_index / 8;
+    entry.tile_index = tile_col * (_tile_width == 8 ? 1 : 2) + tile_row * (_tile_height == 8 ? 16 : 32);
+    return entry;
   }
 }
 

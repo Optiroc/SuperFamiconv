@@ -231,7 +231,7 @@ int superfamiconv(int argc, char* argv[]) {
       image = image.crop(0, 0, map_width * settings.tile_w, map_height * settings.tile_h);
     }
 
-    sfc::Map map(settings.mode, map_width, map_height);
+    sfc::Map map(settings.mode, map_width, map_height, settings.tile_w, settings.tile_h);
     if (settings.mode != sfc::Mode::pce_sprite) {
       std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
       if (verbose)

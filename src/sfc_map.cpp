@@ -142,7 +142,7 @@ int sfc_map(int argc, char* argv[]) {
     if (verbose)
       fmt::print("Mapping {} {}x{}px tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
 
-    sfc::Map map(settings.mode, settings.map_w, settings.map_h);
+    sfc::Map map(settings.mode, settings.map_w, settings.map_h, settings.tile_w, settings.tile_h);
     for (unsigned i = 0; i < crops.size(); ++i) {
       map.add(crops[i], tileset, palette, settings.bpp, i % settings.map_w, i / settings.map_w);
     }
