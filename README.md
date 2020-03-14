@@ -148,6 +148,7 @@ For more flexibility use the sub commands, which have the following options resp
 
 ## future work
 * Mode: Mega Drive
+* Mode: Game Boy Advance
 * Better error diagnostics
 * Better documentation and example usage
 
