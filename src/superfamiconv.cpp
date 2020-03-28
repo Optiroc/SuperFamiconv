@@ -182,7 +182,7 @@ int superfamiconv(int argc, char* argv[]) {
 
         palette = sfc::Palette(settings.mode, palette_count, colors_per_palette);
 
-        col0 = col0_forced ? col0 : image.crop(0, 0, 1, 1).rgba_data()[0];
+        col0 = col0_forced ? col0 : image.crop(0, 0, 1, 1, settings.mode).rgba_data()[0];
 
         if (settings.sprite_mode) {
           if (verbose)
@@ -194,7 +194,7 @@ int superfamiconv(int argc, char* argv[]) {
           palette.prime_col0(col0);
         }
 
-        palette.add_images(image.crops(settings.tile_w, settings.tile_h));
+        palette.add_images(image.crops(settings.tile_w, settings.tile_h, settings.mode));
         palette.sort();
       }
       if (verbose)
@@ -205,7 +205,7 @@ int superfamiconv(int argc, char* argv[]) {
     sfc::Tileset tileset(settings.mode, settings.bpp, settings.tile_w, settings.tile_h, settings.no_discard, settings.no_flip,
                          settings.no_remap, sfc::max_tile_count_for_mode(settings.mode));
     {
-      std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
+      std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h, settings.mode);
 
       for (auto& crop : crops)
         tileset.add(crop, &palette);
@@ -228,12 +228,12 @@ int superfamiconv(int argc, char* argv[]) {
     unsigned map_height = sfc::div_ceil(image.height(), settings.tile_h);
 
     if (map_width * settings.tile_w != image.width() || map_height * settings.tile_h != image.height()) {
-      image = image.crop(0, 0, map_width * settings.tile_w, map_height * settings.tile_h);
+      image = image.crop(0, 0, map_width * settings.tile_w, map_height * settings.tile_h, settings.mode);
     }
 
     sfc::Map map(settings.mode, map_width, map_height, settings.tile_w, settings.tile_h);
     if (settings.mode != sfc::Mode::pce_sprite) {
-      std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
+      std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h, settings.mode);
       if (verbose)
         fmt::print("Mapping {} {}x{}px tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
 

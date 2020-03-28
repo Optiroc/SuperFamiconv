@@ -48,7 +48,9 @@ The `mode` option, which is common for all commands, affects the color space han
 
 * `snes` 
 * `snes_mode7` 
+* `gb` 
 * `gbc` 
+* `gba` 
 * `pce` 
 * `pce_sprite` 
 
@@ -148,7 +150,6 @@ For more flexibility use the sub commands, which have the following options resp
 
 ## future work
 * Mode: Mega Drive
-* Mode: Game Boy Advance
 * Better error diagnostics
 * Better documentation and example usage
 

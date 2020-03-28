@@ -335,16 +335,11 @@ const std::string Palette::to_json() const {
 
 void Palette::save(const std::string& path) const {
   byte_vec_t data;
-
   for (const auto& sp : _subpalettes) {
     Subpalette spp = sp.padded();
-    rgba_vec_t colors = spp.colors();
-    for (const auto& c : colors) {
-      auto nc = pack_native_color(c, _mode);
-      data.insert(data.end(), nc.begin(), nc.end());
-    }
+    auto nc = pack_native_colors(spp.colors(), _mode);
+    data.insert(data.end(), nc.begin(), nc.end());
   }
-
   write_file(path, data);
 }
 

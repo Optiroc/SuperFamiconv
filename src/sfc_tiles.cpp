@@ -138,7 +138,7 @@ int sfc_tiles(int argc, char* argv[]) {
     } else {
       // Image input
       sfc::Image image(settings.in_image);
-      std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
+      std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h, settings.mode);
       if (verbose)
         fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
 

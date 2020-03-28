@@ -124,7 +124,7 @@ int sfc_map(int argc, char* argv[]) {
       settings.map_h = sfc::div_ceil(image.height(), settings.tile_h);
 
     if (settings.map_w * settings.tile_w != image.width() || settings.map_h * settings.tile_h != image.height()) {
-      image = image.crop(0, 0, settings.map_w * settings.tile_w, settings.map_h * settings.tile_h);
+      image = image.crop(0, 0, settings.map_w * settings.tile_w, settings.map_h * settings.tile_h, settings.mode);
     }
 
     sfc::Palette palette(settings.in_palette, settings.mode, sfc::palette_size_at_bpp(settings.bpp));
@@ -138,7 +138,7 @@ int sfc_map(int argc, char* argv[]) {
     if (verbose)
       fmt::print("Loaded tiles from \"{}\" ({} entries)\n", settings.in_tileset, tileset.size());
 
-    std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h);
+    std::vector<sfc::Image> crops = image.crops(settings.tile_w, settings.tile_h, settings.mode);
     if (verbose)
       fmt::print("Mapping {} {}x{}px tiles from image\n", crops.size(), settings.tile_w, settings.tile_h);
 

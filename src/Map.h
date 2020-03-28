@@ -66,8 +66,7 @@ inline byte_vec_t pack_native_mapentry(const Mapentry& entry, Mode mode) {
   switch (mode) {
   case Mode::snes:
     v.push_back(entry.tile_index & 0xff);
-    v.push_back(((entry.tile_index >> 8) & 0x03) | ((entry.palette_index << 2) & 0x1c) | (entry.flip_h << 6) |
-                (entry.flip_v << 7));
+    v.push_back(((entry.tile_index >> 8) & 0x03) | ((entry.palette_index << 2) & 0x1c) | (entry.flip_h << 6) | (entry.flip_v << 7));
     break;
 
   case Mode::snes_mode7:
@@ -81,6 +80,11 @@ inline byte_vec_t pack_native_mapentry(const Mapentry& entry, Mode mode) {
   case Mode::gbc:
     v.push_back(entry.tile_index & 0xff);
     v.push_back(((entry.palette_index) & 0x07) | ((entry.tile_index >> 5) & 0x08) | (entry.flip_h << 5) | (entry.flip_v << 6));
+    break;
+
+  case Mode::gba:
+    v.push_back(entry.tile_index & 0xff);
+    v.push_back(((entry.tile_index >> 8) & 0x03) | (entry.flip_h << 2) | (entry.flip_v << 3) | ((entry.palette_index << 4) & 0xf0));
     break;
 
   case Mode::pce:

@@ -39,8 +39,8 @@ struct Image final {
     return (_data[index * 4]) + (_data[(index * 4) + 1] << 8) + (_data[(index * 4) + 2] << 16) + (_data[(index * 4) + 3] << 24);
   }
 
-  Image crop(unsigned x, unsigned y, unsigned width, unsigned height) const;
-  std::vector<Image> crops(unsigned tile_width, unsigned tile_height) const;
+  Image crop(unsigned x, unsigned y, unsigned width, unsigned height, Mode mode) const;
+  std::vector<Image> crops(unsigned tile_width, unsigned tile_height, Mode mode) const;
 
   void save(const std::string& path) const;
   void save_indexed(const std::string& path);

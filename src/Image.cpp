@@ -167,7 +167,7 @@ Image::Image(const Image& image, const sfc::Subpalette& subpalette)
 
 rgba_vec_t Image::rgba_data() const { return sfc::to_rgba(_data); }
 
-Image Image::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_height) const {
+Image Image::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_height, Mode mode) const {
   Image img;
   img._palette = _palette;
   img._width = crop_width;
@@ -176,7 +176,7 @@ Image Image::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_hei
   img._src_coord_y = y;
   img._data.resize(crop_width * crop_height * 4);
 
-  uint32_t fillval = transparent_color;
+  uint32_t fillval = mode == Mode::gb ? 0xff000000 : transparent_color;
   size_t fillsize = img._data.size();
   for (size_t i = 0; i < fillsize; i += 4)
     std::memcpy(img._data.data() + i, &fillval, sizeof(fillval));
@@ -207,13 +207,13 @@ Image Image::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_hei
   return img;
 }
 
-std::vector<Image> Image::crops(unsigned tile_width, unsigned tile_height) const {
+std::vector<Image> Image::crops(unsigned tile_width, unsigned tile_height, Mode mode) const {
   std::vector<Image> v;
   unsigned x = 0;
   unsigned y = 0;
   while (y < _height) {
     while (x < _width) {
-      v.push_back(crop(x, y, tile_width, tile_height));
+      v.push_back(crop(x, y, tile_width, tile_height, mode));
       x += tile_width;
     }
     x = 0;

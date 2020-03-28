@@ -127,7 +127,7 @@ int sfc_palette(int argc, char* argv[]) {
 
       palette = sfc::Palette(settings.mode, settings.palettes, settings.colors);
 
-      col0 = col0_forced ? col0 : image.crop(0, 0, 1, 1).rgba_data()[0];
+      col0 = col0_forced ? col0 : image.crop(0, 0, 1, 1, settings.mode).rgba_data()[0];
 
       if (settings.sprite_mode) {
         if (verbose)
@@ -139,7 +139,7 @@ int sfc_palette(int argc, char* argv[]) {
         palette.prime_col0(col0);
       }
 
-      palette.add_images(image.crops(settings.tile_w, settings.tile_h));
+      palette.add_images(image.crops(settings.tile_w, settings.tile_h, settings.mode));
     }
 
     if (verbose)
