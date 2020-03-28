@@ -381,7 +381,7 @@ const rgba_set_vec_t Palette::optimized_palettes(const rgba_set_vec_t& colors) c
 
   auto filter_subsets = [](const rgba_set_vec_t& v) {
     auto n = rgba_set_vec_t(v.size());
-    auto it = std::copy_if(v.begin(), v.end(), n.begin(), [&](auto& s) { return !has_superset(s, v); });
+    auto it = std::copy_if(v.begin(), v.end(), n.begin(), [&](const auto& s) { return !has_superset(s, v); });
     n.resize(std::distance(n.begin(), it));
     return n;
   };

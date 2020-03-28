@@ -51,6 +51,7 @@ The `mode` option, which is common for all commands, affects the color space han
 * `gb` 
 * `gbc` 
 * `gba` 
+* `gba_affine` 
 * `pce` 
 * `pce_sprite` 
 

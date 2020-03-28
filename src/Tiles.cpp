@@ -71,7 +71,7 @@ bool Tile::operator==(const Tile& other) const {
   if (other._data == _data)
     return true;
   if (!_mirrors.empty()) {
-    return std::any_of(_mirrors.begin(), _mirrors.end(), [&](auto& m) { return m == other._data; });
+    return std::any_of(_mirrors.begin(), _mirrors.end(), [&](const auto& m) { return m == other._data; });
   }
   return false;
 }
@@ -157,7 +157,7 @@ Tileset::Tileset(const byte_vec_t& native_data, Mode mode, unsigned bpp, unsigne
 
   if (_mode == Mode::pce_sprite) {
     // TODO: deserialize native pce sprites
-  } else if (_mode == Mode::snes || _mode == Mode::snes_mode7 || _mode == Mode::gbc || _mode == Mode::gb || _mode == Mode::pce) {
+  } else {
     unsigned bytes_per_tile = bpp << 3;
     if (native_data.size() % bytes_per_tile != 0) {
       throw std::runtime_error("Tile data can't be deserialized (size doesn't match bpp setting)");

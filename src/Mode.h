@@ -15,6 +15,7 @@ enum class Mode {
   gb,
   gbc,
   gba,
+  gba_affine,
   pce,
   pce_sprite
 };
@@ -30,6 +31,8 @@ inline Mode mode(const std::string& str) {
     return Mode::gbc;
   } else if (str == "gba") {
     return Mode::gba;
+  } else if (str == "gba_affine") {
+    return Mode::gba_affine;
   } else if (str == "pce") {
     return Mode::pce;
   } else if (str == "pce_sprite") {
@@ -50,6 +53,8 @@ inline std::string mode(Mode mode) {
     return std::string("gbc");
   case Mode::gba:
     return std::string("gba");
+  case Mode::gba_affine:
+    return std::string("gba_affine");
   case Mode::pce:
     return std::string("pce");
   case Mode::pce_sprite:
@@ -70,6 +75,8 @@ constexpr unsigned default_bpp_for_mode(Mode mode) {
     return 2;
   case Mode::gba:
     return 4;
+  case Mode::gba_affine:
+    return 8;
   case Mode::pce:
   case Mode::pce_sprite:
     return 4;
@@ -89,6 +96,8 @@ constexpr bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
     return bpp == 2;
   case Mode::gba:
     return bpp == 4 || bpp == 8;
+  case Mode::gba_affine:
+    return bpp == 8;
   case Mode::pce:
   case Mode::pce_sprite:
     return bpp == 4;
@@ -118,6 +127,8 @@ constexpr unsigned max_tile_count_for_mode(Mode mode) {
     return 512;
   case Mode::gba:
     return 1024;
+  case Mode::gba_affine:
+    return 256;
   case Mode::pce:
     return 2048;
   case Mode::pce_sprite:
@@ -135,6 +146,7 @@ constexpr bool tile_width_allowed_for_mode(unsigned width, Mode mode) {
   case Mode::gb:
   case Mode::gbc:
   case Mode::gba:
+  case Mode::gba_affine:
   case Mode::pce:
     return width == 8;
   case Mode::pce_sprite:
@@ -152,6 +164,7 @@ constexpr bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
   case Mode::gb:
   case Mode::gbc:
   case Mode::gba:
+  case Mode::gba_affine:
   case Mode::pce:
     return height == 8;
   case Mode::pce_sprite:
@@ -169,6 +182,7 @@ constexpr bool tile_flipping_allowed_for_mode(Mode mode) {
     return true;
   case Mode::snes_mode7:
   case Mode::gb:
+  case Mode::gba_affine:
   case Mode::pce:
   case Mode::pce_sprite:
     return false;
@@ -183,6 +197,7 @@ constexpr unsigned default_map_size_for_mode(Mode mode) {
   case Mode::gb:
   case Mode::gbc:
   case Mode::gba:
+  case Mode::gba_affine:
   case Mode::pce:
     return 32;
   case Mode::snes_mode7:
@@ -206,6 +221,8 @@ constexpr unsigned default_palette_count_for_mode(Mode mode) {
     return 8;
   case Mode::gba:
     return 16;
+  case Mode::gba_affine:
+    return 1;
   case Mode::pce:
   case Mode::pce_sprite:
     return 16;
@@ -219,6 +236,7 @@ constexpr bool col0_is_shared_for_mode(Mode mode) {
   case Mode::snes:
   case Mode::snes_mode7:
   case Mode::gba:
+  case Mode::gba_affine:
   case Mode::pce_sprite:
     return true;
   case Mode::gb:
@@ -235,11 +253,12 @@ constexpr bool col0_is_shared_for_sprite_mode(Mode mode) {
   switch (mode) {
   case Mode::snes:
   case Mode::snes_mode7:
-  case Mode::pce_sprite:
   case Mode::gb:
   case Mode::gbc:
   case Mode::gba:
+  case Mode::gba_affine:
   case Mode::pce:
+  case Mode::pce_sprite:
     return true;
   default:
     return true;
@@ -257,6 +276,7 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
   case Mode::snes_mode7:
   case Mode::gbc:
   case Mode::gba:
+  case Mode::gba_affine:
     if (((color & 0xff000000) >> 24) < 0x80) {
       return transparent_color;
     } else {
@@ -322,6 +342,7 @@ inline rgba_t normalize_color(const rgba_t color, Mode from_mode) {
   case Mode::snes_mode7:
   case Mode::gbc:
   case Mode::gba:
+  case Mode::gba_affine:
     c.r = scale_up(c.r, 3);
     c.g = scale_up(c.g, 3);
     c.b = scale_up(c.b, 3);
@@ -365,6 +386,7 @@ inline byte_vec_t pack_native_color(const rgba_t color, Mode mode) {
   case Mode::snes_mode7:
   case Mode::gbc:
   case Mode::gba:
+  case Mode::gba_affine:
     v.push_back((color & 0x1f) | ((color >> 3) & 0xe0));
     v.push_back(((color >> 11) & 0x03) | ((color >> 14) & 0x7c));
     break;
@@ -413,6 +435,7 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
   case Mode::snes_mode7:
   case Mode::gbc:
   case Mode::gba:
+  case Mode::gba_affine:
     if (colors.size() % 2 != 0) {
       throw std::runtime_error("native palette size not a multiple of 2");
     }
@@ -462,7 +485,8 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
 
 inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
 
-  auto make_2bpp_tile = [](const index_vec_t& in_data, unsigned plane_index) {
+  // snes/gameboy style bit planes
+  auto make_2bit_planes = [](const index_vec_t& in_data, unsigned plane_index) {
     byte_vec_t p(16);
     if (in_data.empty())
       return p;
@@ -484,9 +508,10 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
     return p;
   };
 
-  auto make_bitplane_data = [](const index_vec_t& in_data, unsigned plane) {
+  // regular bit planes
+  auto make_1bit_planes = [](const index_vec_t& in_data, unsigned plane) {
     if (in_data.size() % 8)
-      throw std::runtime_error("programmer error (in_data not multiple of 8 in make_bitplane_data())");
+      throw std::runtime_error("programmer error (in_data not multiple of 8 in make_1bit_planes)");
 
     size_t plane_size = in_data.size() >> 3;
     byte_vec_t p(plane_size);
@@ -507,6 +532,18 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
     return p;
   };
 
+  // gba style 2 pixels per byte data
+  auto make_4bpp_bitpack = [](const index_vec_t& in_data) {
+    if (in_data.size() % 2)
+      throw std::runtime_error("programmer error (in_data not multiple of 2 in make_4bpp_bitpack)");
+
+    byte_vec_t bv(in_data.size() >> 1);
+    for (unsigned i = 0; i < bv.size(); ++i)
+      bv[i] = (0x0f & in_data[i << 1]) | (0xf0 & (in_data[(i << 1) + 1] << 4));
+
+    return bv;
+  };
+
   byte_vec_t nd;
 
   if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc || mode == Mode::pce) {
@@ -516,16 +553,23 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
 
     unsigned planes = bpp >> 1;
     for (unsigned i = 0; i < planes; ++i) {
-      auto plane = make_2bpp_tile(data, i * 2);
+      auto plane = make_2bit_planes(data, i * 2);
       nd.insert(nd.end(), plane.begin(), plane.end());
     }
 
   } else if (mode == Mode::snes_mode7) {
     nd = data;
 
+  } else if (mode == Mode::gba || mode == Mode::gba_affine) {
+    if (bpp == 8) {
+      nd = data;
+    } else if (bpp == 4) {
+      nd = make_4bpp_bitpack(data);
+    }
+
   } else if (mode == Mode::pce_sprite) {
     for (unsigned p = 0; p < 4; ++p) {
-      auto plane = make_bitplane_data(data, p);
+      auto plane = make_1bit_planes(data, p);
       nd.insert(nd.end(), plane.begin(), plane.end());
     }
   }
@@ -549,8 +593,20 @@ inline index_vec_t unpack_native_tile(const byte_vec_t& data, Mode mode, unsigne
   if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc || mode == Mode::pce) {
     for (unsigned i = 0; i < bpp; ++i)
       add_1bit_plane(ud, data, i);
+
   } else if (mode == Mode::snes_mode7) {
     ud = data;
+
+  } else if (mode == Mode::gba || mode == Mode::gba_affine) {
+    if (bpp == 4) {
+      for (unsigned i = 0; i < data.size(); ++i) {
+        ud[(i << 1) + 0] = data[i] & 0x0f;
+        ud[(i << 1) + 1] = (data[i] & 0xf0) >> 4;
+      }
+    } else {
+      ud = data;
+    }
+
   } else if (mode == Mode::pce_sprite) {
     // TODO: read pce_sprite data
     throw std::runtime_error("Using pce_sprite native data as input not implemented");

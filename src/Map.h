@@ -87,6 +87,10 @@ inline byte_vec_t pack_native_mapentry(const Mapentry& entry, Mode mode) {
     v.push_back(((entry.tile_index >> 8) & 0x03) | (entry.flip_h << 2) | (entry.flip_v << 3) | ((entry.palette_index << 4) & 0xf0));
     break;
 
+  case Mode::gba_affine:
+    v.push_back(entry.tile_index & 0xff);
+    break;
+
   case Mode::pce:
     v.push_back(entry.tile_index & 0xff);
     v.push_back(((entry.tile_index >> 8) & 0x0f) | ((entry.palette_index << 4) & 0xf0));
