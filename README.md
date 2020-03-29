@@ -52,6 +52,7 @@ The `mode` option, which is common for all commands, affects the color space han
 * `gbc` 
 * `gba` 
 * `gba_affine` 
+* `md` 
 * `pce` 
 * `pce_sprite` 
 
@@ -150,7 +151,6 @@ For more flexibility use the sub commands, which have the following options resp
 
 
 ## future work
-* Mode: Mega Drive
 * Better error diagnostics
 * Better documentation and example usage
 

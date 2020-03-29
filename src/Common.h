@@ -36,7 +36,7 @@ typedef std::vector<rgba_set_t> rgba_set_vec_t;
 
 namespace sfc {
 
-constexpr const char* VERSION = "0.9.1";
+constexpr const char* VERSION = "0.9.2";
 
 constexpr const char* COPYRIGHT = "Copyright (c) 2017-2020 David Lindecrantz";
 
