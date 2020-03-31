@@ -376,7 +376,7 @@ Subpalette& Palette::add_subpalette() {
   return sp;
 }
 
-// functional form of old simple palette optimizer
+// functional form of old "greedy best fit" style palette optimizer
 const rgba_set_vec_t Palette::optimized_palettes(const rgba_set_vec_t& colors) const {
 
   auto filter_subsets = [](const rgba_set_vec_t& v) {

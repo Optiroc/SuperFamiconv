@@ -4,9 +4,7 @@
 // david lindecrantz <optiroc@gmail.com>
 
 #include <Options.h>
-
 #include "Common.h"
-
 #include "Image.h"
 #include "Palette.h"
 #include "Tiles.h"

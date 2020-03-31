@@ -6,12 +6,9 @@
 // TODO: Check "shorthand" path for 16x16 tile conversion
 // TODO: Check map output with tiles using duplicate colors (#8)
 // TODO: Don't always pad native palette output? (Pad every palette but the last? Option?)
-// TODO: Add more palette packing algorithms
 
 #include <Options.h>
-
 #include "Common.h"
-
 #include "Image.h"
 #include "Map.h"
 #include "Palette.h"

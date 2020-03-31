@@ -2,8 +2,7 @@
 
 namespace sfc {
 
-void Map::add(const sfc::Image& image, const sfc::Tileset& tileset, const sfc::Palette& palette, unsigned bpp, unsigned pos_x,
-              unsigned pos_y) {
+void Map::add(const sfc::Image& image, const sfc::Tileset& tileset, const sfc::Palette& palette, unsigned bpp, unsigned pos_x, unsigned pos_y) {
   if (((pos_y * _map_width) + pos_x) > _entries.size())
     throw std::runtime_error("Map entry out of bounds");
 
@@ -51,7 +50,8 @@ Mapentry Map::entry_at(unsigned x, unsigned y) const {
     Mapentry entry = _entries[(y * _map_width) + x];
     if (_tile_width == 8 && _tile_height == 8)
       return entry;
-    // SNES non-8x8 tilemap
+
+    // snes non-8x8 tilemap
     unsigned tile_col = entry.tile_index % 8;
     unsigned tile_row = entry.tile_index / 8;
     entry.tile_index = tile_col * (_tile_width == 8 ? 1 : 2) + tile_row * (_tile_height == 8 ? 16 : 32);

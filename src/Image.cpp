@@ -165,7 +165,9 @@ Image::Image(const Image& image, const sfc::Subpalette& subpalette)
   _colors = rgba_set_t(rgba_v.begin(), rgba_v.end());
 }
 
-rgba_vec_t Image::rgba_data() const { return sfc::to_rgba(_data); }
+rgba_vec_t Image::rgba_data() const {
+  return sfc::to_rgba(_data);
+}
 
 Image Image::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_height, Mode mode) const {
   Image img;

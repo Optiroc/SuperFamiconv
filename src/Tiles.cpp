@@ -104,9 +104,7 @@ Tile Tile::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_heigh
   t._palette = _palette;
   t._data.resize(crop_width * crop_height);
 
-  if (x > _width || y > _height) {
-    // no blit
-  } else {
+  if (!(x > _width || y > _height)) {
     unsigned blit_width = (x + crop_width > _width) ? _width - x : crop_width;
     unsigned blit_height = (y + crop_height > _height) ? _height - y : crop_height;
     for (unsigned iy = 0; iy < blit_height; ++iy) {
@@ -138,7 +136,9 @@ std::vector<Tile> Tile::crops(unsigned tile_width, unsigned tile_height) const {
   return tv;
 }
 
-byte_vec_t Tile::native_data() const { return pack_native_tile(_data, _mode, _bpp, _width, _height); }
+byte_vec_t Tile::native_data() const {
+  return pack_native_tile(_data, _mode, _bpp, _width, _height);
+}
 
 rgba_vec_t Tile::rgba_data() const {
   rgba_vec_t v(_data.size());
@@ -147,8 +147,7 @@ rgba_vec_t Tile::rgba_data() const {
   return v;
 }
 
-Tileset::Tileset(const byte_vec_t& native_data, Mode mode, unsigned bpp, unsigned tile_width, unsigned tile_height,
-                 bool no_flip) {
+Tileset::Tileset(const byte_vec_t& native_data, Mode mode, unsigned bpp, unsigned tile_width, unsigned tile_height, bool no_flip) {
   _mode = mode;
   _bpp = bpp;
   _tile_width = tile_width;
@@ -206,7 +205,9 @@ int Tileset::index_of(const Tile& tile) const {
   }
 }
 
-void Tileset::save(const std::string& path) const { write_file(path, native_data()); }
+void Tileset::save(const std::string& path) const {
+  write_file(path, native_data());
+}
 
 byte_vec_t Tileset::native_data() const {
   std::vector<Tile> tv;
@@ -228,13 +229,12 @@ byte_vec_t Tileset::native_data() const {
 std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles, Mode mode) const {
   std::vector<Tile> tv;
 
-  if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc || mode == Mode::pce) {
+  if (mode == Mode::snes && (_tile_width == 16 || _tile_height == 16)) {
     const unsigned cells_per_tile_h = _tile_width / 8;
     const unsigned cells_per_tile_v = _tile_height / 8;
     const unsigned cells_per_row = 16;
     const unsigned tiles_per_row = cells_per_row / cells_per_tile_h;
     const unsigned cell_rows = div_ceil((int)tiles.size(), tiles_per_row) * cells_per_tile_v;
-
     tv.resize(cells_per_row * cell_rows);
 
     for (unsigned i = 0; i < tiles.size(); ++i) {
@@ -247,6 +247,9 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
         }
       }
     }
+
+  } else {
+    throw std::runtime_error("programmer error (remap_tiles_for_output invoked erroneously invoked)");
   }
 
   return tv;
@@ -255,7 +258,7 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
 std::vector<Tile> Tileset::remap_tiles_for_input(const std::vector<Tile>& tiles, Mode mode) const {
   std::vector<Tile> tv;
 
-  if (mode == Mode::snes || mode == Mode::gbc || mode == Mode::gb || mode == Mode::pce) {
+  if (mode == Mode::snes && (_tile_width == 16 || _tile_height == 16)) {
     const unsigned cells_per_tile_h = _tile_width / 8;
     const unsigned cells_per_tile_v = _tile_height / 8;
 
@@ -270,6 +273,9 @@ std::vector<Tile> Tileset::remap_tiles_for_input(const std::vector<Tile>& tiles,
       if (metatile.size() == cells_per_tile_h * cells_per_tile_v)
         tv.push_back(Tile(metatile, _no_flip, _tile_width, _tile_height));
     }
+
+  } else {
+    throw std::runtime_error("programmer error (remap_tiles_for_input invoked erroneously invoked)");
   }
 
   return tv;

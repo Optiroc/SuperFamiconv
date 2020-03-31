@@ -31,9 +31,6 @@ typedef std::vector<rgba_t> rgba_vec_t;
 typedef std::set<rgba_t> rgba_set_t;
 typedef std::vector<rgba_set_t> rgba_set_vec_t;
 
-#include "Color.h"
-#include "Mode.h"
-
 namespace sfc {
 
 constexpr const char* VERSION = "0.9.2";
@@ -227,6 +224,14 @@ constexpr int div_ceil(int numerator, int denominator) {
   return (numerator / denominator) + (((numerator < 0) ^ (denominator > 0)) && (numerator % denominator));
 }
 
+constexpr double rad2deg(const double rad) {
+  return rad * (180.0 / M_PI);
+}
+
+constexpr double deg2rad(const double deg) {
+  return deg * (M_PI / 180.0);
+}
+
 template <typename T>
 std::vector<T> split_vector(const T& vect, unsigned split_size) {
   std::vector<T> sv;
@@ -270,3 +275,6 @@ bool has_superset(const std::set<T>& set, const std::vector<std::set<T>>& super)
 }
 
 } /* namespace sfc */
+
+#include "Color.h"
+#include "Mode.h"

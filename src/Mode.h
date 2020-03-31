@@ -108,7 +108,7 @@ constexpr bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
   case Mode::pce:
   case Mode::pce_sprite:
     return bpp == 4;
-  default:
+  case Mode::none:
     return false;
   }
 }
@@ -331,7 +331,7 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
       return (scaled & 0x00ffffff) + 0xff000000;
     }
     break;
-  default:
+  case Mode::none:
     return 0;
   }
 }
@@ -379,7 +379,7 @@ inline rgba_t normalize_color(const rgba_t color, Mode from_mode) {
     c.b = scale_up(c.b, 5);
     c.a = scale_up(c.a, 5);
     return c;
-  default:
+  case Mode::none:
     return 0;
   }
 }
