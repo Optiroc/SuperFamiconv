@@ -169,7 +169,7 @@ void Palette::add_images(std::vector<sfc::Image> palette_tiles) {
   for (const auto& c : palette_tiles) {
 
     if (c.colors().size() > _max_colors_per_subpalette) {
-      fmt::print(stderr, "  Tile with too many unique colors at {},{} in source image\n", c.src_coord_x(), c.src_coord_y());
+      fmt::print(stderr, "  Tile with too many ({} > {}) unique colors at {},{} in source image\n", c.colors().size(), _max_colors_per_subpalette, c.src_coord_x(), c.src_coord_y());
     }
 
     if (_col0_is_shared) {
@@ -232,7 +232,7 @@ const Subpalette& Palette::subpalette_matching(const Image& image) const {
 
   if (cs.size() > _max_colors_per_subpalette) {
     throw std::runtime_error(
-      fmt::format("Tile with too many unique colors at {},{} in source image", image.src_coord_x(), image.src_coord_y()));
+      fmt::format("Tile with too many ({} > {}) unique colors at {},{} in source image", cs.size(), _max_colors_per_subpalette, image.src_coord_x(), image.src_coord_y()));
   }
 
   auto match = std::find_if(_subpalettes.begin(), _subpalettes.end(), [&](const auto& val) -> bool { return val.diff(cs) == 0; });
