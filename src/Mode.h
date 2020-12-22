@@ -64,29 +64,27 @@ inline std::string mode(Mode mode) {
     return std::string("pce");
   case Mode::pce_sprite:
     return std::string("pce_sprite");
-  case Mode::none:
+  default:
     return std::string("none");
   }
 }
 
 constexpr unsigned default_bpp_for_mode(Mode mode) {
   switch (mode) {
-  case Mode::snes:
-    return 4;
-  case Mode::snes_mode7:
-    return 8;
   case Mode::gb:
   case Mode::gbc:
     return 2;
+  case Mode::snes:
   case Mode::gba:
-    return 4;
-  case Mode::gba_affine:
-    return 8;
   case Mode::md:
   case Mode::pce:
   case Mode::pce_sprite:
-    return 4;
   case Mode::none:
+    return 4;
+  case Mode::snes_mode7:
+  case Mode::gba_affine:
+    return 8;
+  default:
     return 4;
   }
 }
@@ -124,24 +122,19 @@ constexpr unsigned default_tile_size_for_mode(Mode mode) {
 
 constexpr unsigned max_tile_count_for_mode(Mode mode) {
   switch (mode) {
-  case Mode::snes:
-    return 1024;
   case Mode::snes_mode7:
-    return 256;
   case Mode::gb:
+  case Mode::gba_affine:
     return 256;
   case Mode::gbc:
     return 512;
+  case Mode::snes:
   case Mode::gba:
     return 1024;
-  case Mode::gba_affine:
-    return 256;
   case Mode::md:
   case Mode::pce:
     return 2048;
-  case Mode::pce_sprite:
-    return 0;
-  case Mode::none:
+  default:
     return 0;
   }
 }
@@ -160,7 +153,7 @@ constexpr bool tile_width_allowed_for_mode(unsigned width, Mode mode) {
     return width == 8;
   case Mode::pce_sprite:
     return width == 16;
-  case Mode::none:
+  default:
     return false;
   }
 }
@@ -179,7 +172,7 @@ constexpr bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
     return height == 8;
   case Mode::pce_sprite:
     return height == 16;
-  case Mode::none:
+  default:
     return false;
   }
 }
@@ -191,13 +184,7 @@ constexpr bool tile_flipping_allowed_for_mode(Mode mode) {
   case Mode::gba:
   case Mode::md:
     return true;
-  case Mode::snes_mode7:
-  case Mode::gb:
-  case Mode::gba_affine:
-  case Mode::pce:
-  case Mode::pce_sprite:
-    return false;
-  case Mode::none:
+  default:
     return false;
   }
 }
@@ -214,52 +201,37 @@ constexpr unsigned default_map_size_for_mode(Mode mode) {
     return 32;
   case Mode::snes_mode7:
     return 128;
-  case Mode::pce_sprite:
-    return 0;
-  case Mode::none:
+  default:
     return 0;
   }
 }
 
 constexpr unsigned default_palette_count_for_mode(Mode mode) {
   switch (mode) {
-  case Mode::snes:
-    return 8;
   case Mode::snes_mode7:
-    return 1;
   case Mode::gb:
-    return 1;
-  case Mode::gbc:
-    return 8;
-  case Mode::gba:
-    return 16;
   case Mode::gba_affine:
     return 1;
   case Mode::md:
     return 4;
+  case Mode::snes:
+  case Mode::gbc:
+    return 8;
+  case Mode::gba:
   case Mode::pce:
   case Mode::pce_sprite:
     return 16;
-  case Mode::none:
+  default:
     return 0;
   }
 }
 
 constexpr bool col0_is_shared_for_mode(Mode mode) {
   switch (mode) {
-  case Mode::snes:
-  case Mode::snes_mode7:
-  case Mode::gba:
-  case Mode::gba_affine:
-  case Mode::md:
-  case Mode::pce_sprite:
-    return true;
   case Mode::gb:
   case Mode::gbc:
     return false;
-  case Mode::pce:
-    return true;
-  case Mode::none:
+  default:
     return true;
   }
 }
@@ -276,7 +248,7 @@ constexpr bool col0_is_shared_for_sprite_mode(Mode mode) {
   case Mode::pce:
   case Mode::pce_sprite:
     return true;
-  case Mode::none:
+  default:
     return false;
   }
 }
