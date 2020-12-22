@@ -35,3 +35,4 @@ else(MSVC)
 endif(MSVC)
 
 add_executable(superfamiconv ${SOURCES})
+install(TARGETS superfamiconv DESTINATION bin)
