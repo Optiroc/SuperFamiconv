@@ -5,3 +5,8 @@ SuperFamiconv.xcodeproj/xcuserdata/optiroc.xcuserdatad
 SuperFamiconv.xcodeproj/project.xcworkspace/xcuserdata/optiroc.xcuserdatad
 docs
 tests
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+superfamiconv
