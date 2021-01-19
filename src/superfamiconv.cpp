@@ -3,12 +3,13 @@
 // david lindecrantz <optiroc@gmail.com>
 
 // TODO: unpack_native_tile() for pce_sprite data
-// TODO: Check "shorthand" path for 16x16 tile conversion
 // TODO: Check map output with tiles using duplicate colors (#8)
 // TODO: Don't always pad native palette output? (Pad every palette but the last? Option?)
 
 #include <Options.h>
 #include "Common.h"
+#include "Color.h"
+#include "Mode.h"
 #include "Image.h"
 #include "Map.h"
 #include "Palette.h"
@@ -26,37 +27,39 @@ struct Settings {
   std::string out_palette_image;
   std::string out_palette_act;
   std::string out_tiles_image;
-  std::string out_scaled_image;
+  std::string out_quant_image;
 
   sfc::Mode mode;
   unsigned bpp;
   unsigned tile_w;
   unsigned tile_h;
-
   bool no_remap;
   bool no_discard;
   bool no_flip;
+  //bool lossy;
   int tile_base_offset;
   bool sprite_mode;
   std::string color_zero;
+  //sfc::dither::Mode dither_mode;
 };
 
 int superfamiconv(int argc, char* argv[]) {
   Settings settings = {};
   bool verbose = false;
   bool col0_forced = false;
-  rgba_t col0 = 0;
+  sfc::rgba_u32 col0 = 0;
 
   try {
     bool help;
     bool license;
     std::string mode_str;
+    std::string dither_str;
 
     Options options;
-    options.IndentDescription = sfc::Constants::options_indent;
+    options.indent_description = sfc::Constants::options_indent;
 
     // clang-format off
-    options.Header =
+    options.header =
       "Usage: superfamiconv <command> [<options>]\n\n"
 
       "Available commands: palette, tiles, map or blank for \"shorthand mode\"\n"
@@ -64,36 +67,38 @@ int superfamiconv(int argc, char* argv[]) {
 
       "Shorthand mode options:\n";
 
-    options.Add(settings.in_image,           'i', "in-image",          "Input: image");
-    options.Add(settings.out_palette,        'p', "out-palette",       "Output: palette data");
-    options.Add(settings.out_tiles,          't', "out-tiles",         "Output: tile data");
-    options.Add(settings.out_map,            'm', "out-map",           "Output: map data");
-    options.Add(settings.out_palette_image, '\0', "out-palette-image", "Output: palette image");
-    options.Add(settings.out_palette_act,   '\0', "out-palette-act",   "Output: photoshop palette");
-    options.Add(settings.out_tiles_image,   '\0', "out-tiles-image",   "Output: tiles image");
-    options.Add(settings.out_scaled_image,  '\0', "out-scaled-image",  "Output: image scaled to destination colorspace");
+    options.add(settings.in_image,           'i', "in-image",          "Input: image");
+    options.add(settings.out_palette,        'p', "out-palette",       "Output: palette data");
+    options.add(settings.out_tiles,          't', "out-tiles",         "Output: tile data");
+    options.add(settings.out_map,            'm', "out-map",           "Output: map data");
+    options.add(settings.out_palette_image, '\0', "out-palette-image", "Output: palette image");
+    options.add(settings.out_palette_act,   '\0', "out-palette-act",   "Output: photoshop palette");
+    options.add(settings.out_tiles_image,   '\0', "out-tiles-image",   "Output: tiles image");
+    options.add(settings.out_quant_image,   '\0', "out-quant-image",   "Output: image quantized to palette/colorspace");
 
-    options.Add(mode_str,                    'M', "mode",              "Mode <default: snes>",              std::string("snes"), "Settings");
-    options.Add(settings.bpp,                'B', "bpp",               "Bits per pixel",                    unsigned(4),         "Settings");
-    options.Add(settings.tile_w,             'W', "tile-width",        "Tile width",                        unsigned(8),         "Settings");
-    options.Add(settings.tile_h,             'H', "tile-height",       "Tile height",                       unsigned(8),         "Settings");
-    options.AddSwitch(settings.no_remap,     'R', "no-remap",          "Don't remap colors",                false,               "Settings");
-    options.AddSwitch(settings.no_discard,   'D', "no-discard",        "Don't discard redundant tiles",     false,               "Settings");
-    options.AddSwitch(settings.no_flip,      'F', "no-flip",           "Don't discard using tile flipping", false,               "Settings");
-    options.Add(settings.tile_base_offset,   'T', "tile-base-offset",  "Tile base offset for map data",     int(0),              "Settings");
-    options.AddSwitch(settings.sprite_mode,  'S', "sprite-mode",       "Apply sprite output settings",      false,               "Settings");
-    options.Add(settings.color_zero,        '\0', "color-zero",        "Set color #0", std::string(),                            "Settings");
+    options.add(mode_str,                    'M', "mode",              "Mode <default: snes>",              std::string("snes"), "Settings");
+    options.add(settings.bpp,                'B', "bpp",               "Bits per pixel",                    unsigned(4),         "Settings");
+    options.add(settings.tile_w,             'W', "tile-width",        "Tile width",                        unsigned(8),         "Settings");
+    options.add(settings.tile_h,             'H', "tile-height",       "Tile height",                       unsigned(8),         "Settings");
+    options.add_switch(settings.no_remap,    'R', "no-remap",          "Don't remap colors",                false,               "Settings");
+    options.add_switch(settings.no_discard,  'D', "no-discard",        "Don't discard redundant tiles",     false,               "Settings");
+    options.add_switch(settings.no_flip,     'F', "no-flip",           "Don't discard using tile flipping", false,               "Settings");
+    options.add(settings.tile_base_offset,   'T', "tile-base-offset",  "Tile base offset for map data",     int(0),              "Settings");
+    options.add_switch(settings.sprite_mode, 'S', "sprite-mode",       "Apply sprite output settings",      false,               "Settings");
+ // options.add_switch(settings.lossy,       'L', "lossy",             "Allow lossy conversion",            false,               "Settings");
+    options.add(settings.color_zero,        '\0', "color-zero",        "Set color #0", std::string(),                            "Settings");
+ // options.add(dither_str,                 '\0', "dither",            "Dithering algorithm",               std::string("none"), "Settings");
 
-    options.AddSwitch(verbose,               'v', "verbose",           "Verbose logging", false, "_");
-    options.AddSwitch(license,               'l', "license",           "Show licenses",   false, "_");
-    options.AddSwitch(help,                  'h', "help",              "Show this help",  false, "_");
+    options.add_switch(verbose,              'v', "verbose",           "Verbose logging", false, "_");
+    options.add_switch(license,              'l', "license",           "Show licenses",   false, "_");
+    options.add_switch(help,                 'h', "help",              "Show this help",  false, "_");
     // clang-format on
 
-    if (!options.Parse(argc, argv))
+    if (!options.parse(argc, argv))
       return 1;
 
     if (argc <= 1 || help) {
-      fmt::print(options.Usage());
+      fmt::print(options.usage());
       return 0;
     }
 
@@ -103,6 +108,7 @@ int superfamiconv(int argc, char* argv[]) {
     }
 
     settings.mode = sfc::mode(mode_str);
+    //settings.dither_mode = sfc::dither::mode(dither_str);
 
     // Set pce_sprite mode and sprite_mode interchangeably
     if (settings.sprite_mode && settings.mode == sfc::Mode::pce)
@@ -111,13 +117,13 @@ int superfamiconv(int argc, char* argv[]) {
       settings.sprite_mode = true;
 
     // Mode-specific defaults
-    if (!options.WasSet("bpp"))
+    if (!options.was_set("bpp"))
       settings.bpp = sfc::default_bpp_for_mode(settings.mode);
-    if (!options.WasSet("tile-width"))
+    if (!options.was_set("tile-width"))
       settings.tile_w = sfc::default_tile_size_for_mode(settings.mode);
-    if (!options.WasSet("tile-height"))
+    if (!options.was_set("tile-height"))
       settings.tile_h = sfc::default_tile_size_for_mode(settings.mode);
-    if (!options.WasSet("no-flip"))
+    if (!options.was_set("no-flip"))
       settings.no_flip = !sfc::tile_flipping_allowed_for_mode(settings.mode);
 
     // Sprite mode defaults
@@ -141,16 +147,23 @@ int superfamiconv(int argc, char* argv[]) {
 
     if (verbose)
       fmt::print("Performing conversion in \"{}\" mode\n", sfc::mode(settings.mode));
+      //if (settings.lossy)
+      //  fmt::print("Lossy conversion enabled, {}.\n", sfc::dither::descripton(settings.dither_mode));
 
     sfc::Image image(settings.in_image);
     if (verbose)
       fmt::print("Loaded image from \"{}\" ({})\n", settings.in_image, image.description());
 
-    // Write color-scaled image
-    if (!settings.out_scaled_image.empty()) {
-      image.save_scaled(settings.out_scaled_image, settings.mode);
+    // Write quantized color image
+    if (!settings.out_quant_image.empty()) {
+      unsigned color_count = sfc::palette_size_at_bpp(settings.bpp);
+      //unsigned color_count = sfc::default_palette_count_for_mode(settings.mode) * sfc::palette_size_at_bpp(settings.bpp);
+      //sfc::Image quant_img = image.quantize(color_count > 256 ? 256 : color_count, settings.mode, settings.dither_mode);
+      sfc::Image quant_img = image.quantize(color_count > 256 ? 256 : color_count, settings.mode);
+      quant_img.save(settings.out_quant_image);
+
       if (verbose)
-        fmt::print("Saved image scaled to destination colorspace to \"{}\"\n", settings.out_scaled_image);
+        fmt::print("Saved image quantized to palette/colorspace to \"{}\"\n", settings.out_quant_image);
     }
 
     if (settings.mode == sfc::Mode::pce_sprite) {
@@ -172,6 +185,9 @@ int superfamiconv(int argc, char* argv[]) {
 
         palette = sfc::Palette(settings.mode, palette_count, colors_per_palette);
         palette.add_colors(image.palette());
+
+        auto mc_palette = sfc::mediancut_palette(sfc::to_rgba_color_vec(image.rgba_data()), 8);
+
 
       } else {
         if (verbose)

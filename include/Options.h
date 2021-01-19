@@ -29,29 +29,28 @@
 
 class Options {
 public:
-    Options() : IndentFlag(2), IndentDescription(18), optval(256) {}
+    Options() : indent_flag(2), indent_description(18), _optval(256) {}
 
     template <typename T>
-    void Add(T& var, char flag, std::string long_flag, std::string description = "", T default_val = T(), std::string group = "");
-    void AddSwitch(bool& var, char flag, std::string long_flag, std::string description = "", bool default_val = false, std::string group = "");
+    void add(T& var, char flag, std::string long_flag, std::string description = "", T default_val = T(), std::string group = "");
+    void add_switch(bool& var, char flag, std::string long_flag, std::string description = "", bool default_val = false, std::string group = "");
 
-    bool Parse(int argc, char **argv);
-    bool WasSet(const std::string& long_flag);
+    bool parse(int argc, char **argv);
+    bool was_set(const std::string& long_flag);
 
-    std::string Usage();
-    std::string Header;
-    unsigned IndentFlag;
-    unsigned IndentDescription;
+    std::string usage();
+    std::string header;
+    unsigned indent_flag;
+    unsigned indent_description;
 
 private:
-    std::set<std::string> long_flags;
-    std::vector<struct option> options;
-    std::map<int, std::function<void(std::string)>> setters;
-    std::map<std::string, std::vector<std::string>> usage;
-    std::set<int> was_set;
-
-    int optval;
-    std::string optstr;
+    std::set<std::string> _long_flags;
+    std::vector<struct option> _options;
+    std::map<int, std::function<void(std::string)>> _setters;
+    std::map<std::string, std::vector<std::string>> _usage;
+    std::set<int> _was_set;
+    std::string _optstr;
+    int _optval;
 
     template <typename T>
     void set(T& var, std::string optarg);
@@ -66,38 +65,38 @@ private:
 };
 
 template <typename T>
-inline void Options::Add(T& var, char flag, std::string long_flag, std::string description, T default_val, std::string group) {
+inline void Options::add(T& var, char flag, std::string long_flag, std::string description, T default_val, std::string group) {
     struct option op;
     this->add_entry<T&>(op, flag, long_flag, description, group, true);
 
     op.has_arg = required_argument;
     var = default_val;
 
-    this->setters[op.val] = std::bind(&Options::set<T>, this, std::ref(var), std::placeholders::_1);
-    this->options.push_back(op);
+    this->_setters[op.val] = std::bind(&Options::set<T>, this, std::ref(var), std::placeholders::_1);
+    this->_options.push_back(op);
 }
 
-inline void Options::AddSwitch(bool& var, char flag, std::string long_flag, std::string description, bool default_val, std::string group) {
+inline void Options::add_switch(bool& var, char flag, std::string long_flag, std::string description, bool default_val, std::string group) {
     struct option op;
     this->add_entry<bool&>(op, flag, long_flag, description, group);
 
     op.has_arg = optional_argument;
     var = default_val;
 
-    this->setters[op.val] = [&var](std::string) {
+    this->_setters[op.val] = [&var](std::string) {
         var = !var;
     };
 
-    this->options.push_back(op);
+    this->_options.push_back(op);
 }
 
-inline bool Options::Parse(int argc, char** argv) {
-    this->options.push_back({0, 0, 0, 0});
+inline bool Options::parse(int argc, char** argv) {
+    this->_options.push_back({0, 0, 0, 0});
     int ch;
-    while ((ch = getopt_long(argc, argv, this->optstr.c_str(), &this->options[0], NULL)) != -1) {
-        auto it = this->setters.find(ch);
-        if (it != this->setters.end()) {
-            this->was_set.insert(ch);
+    while ((ch = getopt_long(argc, argv, this->_optstr.c_str(), &this->_options[0], NULL)) != -1) {
+        auto it = this->_setters.find(ch);
+        if (it != this->_setters.end()) {
+            this->_was_set.insert(ch);
             it->second(optarg ? optarg : "");
         } else {
             return false;
@@ -106,20 +105,20 @@ inline bool Options::Parse(int argc, char** argv) {
     return true;
 }
 
-inline bool Options::WasSet(const std::string& long_flag) {
-    for (auto opt : this->options) {
+inline bool Options::was_set(const std::string& long_flag) {
+    for (auto opt : this->_options) {
       if (strcmp(opt.name, long_flag.c_str()) == 0) {
-        return (this->was_set.find(opt.val) != this->was_set.end());
+        return (this->_was_set.find(opt.val) != this->_was_set.end());
       }
     }
     return false;
 }
 
-inline std::string Options::Usage() {
+inline std::string Options::usage() {
     std::stringstream ss;
-    if (Header.size()) ss << Header;
+    if (header.size()) ss << header;
 
-    for (auto &it : this->usage) {
+    for (auto &it : this->_usage) {
         if (it.first.size() && it.first.compare(std::string("_"))) ss << it.first << ":\n";
         for (auto& description : it.second) ss << description << '\n';
         ss << '\n';
@@ -133,44 +132,44 @@ inline void Options::add_entry(struct option& opt, char flag, std::string long_f
     if (!flag && !long_flag.size()) return;
 
     if (flag) {
-        if (this->setters.find((int)(flag)) != this->setters.end()) {
+        if (this->_setters.find((int)(flag)) != this->_setters.end()) {
             std::stringstream ss;
             ss << "Duplicate flag '" << flag << "'";
             throw std::runtime_error(ss.str());
         }
-        this->optstr += flag;
-        if (req_arg) this->optstr += ":";
+        this->_optstr += flag;
+        if (req_arg) this->_optstr += ":";
 
         opt.val = flag;
     } else {
-        opt.val = this->optval++;
+        opt.val = this->_optval++;
     }
 
     if (long_flag.size()) {
-        if (this->long_flags.find(long_flag) != this->long_flags.end()) {
+        if (this->_long_flags.find(long_flag) != this->_long_flags.end()) {
             std::stringstream ss;
             ss << "Duplicate long flag \"" << long_flag << "\"";
             throw std::runtime_error(ss.str());
         }
-        opt.name = this->long_flags.insert(long_flag).first->c_str();
+        opt.name = this->_long_flags.insert(long_flag).first->c_str();
     }
     opt.flag = NULL;
 
     if (description.size()) {
         std::stringstream ss;
-        ss << std::string(IndentFlag, ' ');
+        ss << std::string(indent_flag, ' ');
 
         if (flag) ss << "-" << flag << " ";
         if (long_flag.size()) ss << "--" << long_flag << " ";
-        ss << std::string(ss.str().length() > IndentDescription ? 1 : IndentDescription - ss.str().length(), ' ');
+        ss << std::string(ss.str().length() > indent_description ? 1 : indent_description - ss.str().length(), ' ');
 
         std::string desc(description);
         if (std::is_same<T, bool&>::value) desc.append(std::string(" <switch>"));
 
         unsigned width = tty_width();
-        unsigned desc_pos = width - ss.str().length() > width * 0.3f ? (unsigned)ss.str().length() : IndentFlag + 2;
+        unsigned desc_pos = width - ss.str().length() > width * 0.3f ? (unsigned)ss.str().length() : indent_flag + 2;
         unsigned column_width = width - desc_pos;
-        if (desc_pos == IndentFlag + 2) ss << '\n';
+        if (desc_pos == indent_flag + 2) ss << '\n';
 
         for (unsigned i = 0; i < desc.size(); i += column_width) {
             while (desc.substr(i, 1) == std::string(" ")) ++i;
@@ -181,7 +180,7 @@ inline void Options::add_entry(struct option& opt, char flag, std::string long_f
             }
         }
 
-        this->usage[group].push_back(ss.str());
+        this->_usage[group].push_back(ss.str());
     }
 }
 

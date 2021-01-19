@@ -60,5 +60,9 @@ $(OBJ_DIR)/%.o : ./**/%.c $(HEADERS)
 $(BIN_DIR):
 	@mkdir -pv $@
 
+tests: $(OBJ_DIR)/tests.o $(COMMON_OBJ) $(LIBRARY_OBJ) | $(BIN_DIR)
+	$(CXX) $(LD_FLAGS) $^ -o $(BIN_DIR)/tests
+	@$(BIN_DIR)/tests
+
 clean:
 	@rm -rf $(OBJ_DIR) $(BIN_DIR)

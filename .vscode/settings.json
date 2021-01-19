@@ -85,6 +85,8 @@
       "random": "cpp",
       "regex": "cpp",
       "stack": "cpp",
-      "variant": "cpp"
+      "variant": "cpp",
+      "bit": "cpp",
+      "complex": "cpp"
     }
   }

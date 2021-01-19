@@ -5,10 +5,12 @@
 
 #include <Options.h>
 #include "Common.h"
+#include "Color.h"
+#include "Mode.h"
 #include "Image.h"
 #include "Palette.h"
 
-namespace SfcPalette {
+namespace sfcPalette {
 struct Settings {
   std::string in_image;
   std::string out_data;
@@ -22,50 +24,52 @@ struct Settings {
   unsigned tile_w;
   unsigned tile_h;
   bool no_remap;
+  bool lossy;
   bool sprite_mode;
   std::string color_zero;
 };
-}; // namespace SfcPalette
+}; // namespace sfcPalette
 
 int sfc_palette(int argc, char* argv[]) {
-  SfcPalette::Settings settings = {};
+  sfcPalette::Settings settings = {};
   bool verbose = false;
   bool col0_forced = false;
-  rgba_t col0 = 0;
+  sfc::rgba_u32 col0 = 0;
 
   try {
     bool help = false;
     std::string mode_str;
 
     Options options;
-    options.IndentDescription = sfc::Constants::options_indent;
-    options.Header = "Usage: superfamiconv palette [<options>]\n";
+    options.indent_description = sfc::Constants::options_indent;
+    options.header = "Usage: superfamiconv palette [<options>]\n";
 
     // clang-format off
-    options.Add(settings.in_image,           'i', "in-image",       "Input: image");
-    options.Add(settings.out_data,           'd', "out-data",       "Output: native data");
-    options.Add(settings.out_act,            'a', "out-act",        "Output: photoshop palette");
-    options.Add(settings.out_json,           'j', "out-json",       "Output: json");
-    options.Add(settings.out_image,          'o', "out-image",      "Output: image");
+    options.add(settings.in_image,           'i', "in-image",       "Input: image");
+    options.add(settings.out_data,           'd', "out-data",       "Output: native data");
+    options.add(settings.out_act,            'a', "out-act",        "Output: photoshop palette");
+    options.add(settings.out_json,           'j', "out-json",       "Output: json");
+    options.add(settings.out_image,          'o', "out-image",      "Output: image");
 
-    options.Add(mode_str,                    'M', "mode",           "Mode <default: snes>",             std::string("snes"), "Settings");
-    options.Add(settings.palettes,           'P', "palettes",       "Number of subpalettes",            unsigned(8),         "Settings");
-    options.Add(settings.colors,             'C', "colors",         "Colors per subpalette",            unsigned(16),        "Settings");
-    options.Add(settings.tile_w,             'W', "tile-width",     "Tile width",                       unsigned(8),         "Settings");
-    options.Add(settings.tile_h,             'H', "tile-height",    "Tile height",                      unsigned(8),         "Settings");
-    options.AddSwitch(settings.no_remap,     'R', "no-remap",       "Don't remap colors",               false,               "Settings");
-    options.AddSwitch(settings.sprite_mode,  'S', "sprite-mode",    "Apply sprite output settings",     false,               "Settings");
-    options.Add(settings.color_zero,         '0', "color-zero",     "Set color #0",                     std::string(),       "Settings");
+    options.add(mode_str,                    'M', "mode",           "Mode <default: snes>",             std::string("snes"), "Settings");
+    options.add(settings.palettes,           'P', "palettes",       "Number of subpalettes",            unsigned(8),         "Settings");
+    options.add(settings.colors,             'C', "colors",         "Colors per subpalette",            unsigned(16),        "Settings");
+    options.add(settings.tile_w,             'W', "tile-width",     "Tile width",                       unsigned(8),         "Settings");
+    options.add(settings.tile_h,             'H', "tile-height",    "Tile height",                      unsigned(8),         "Settings");
+    options.add_switch(settings.no_remap,    'R', "no-remap",       "Don't remap colors",               false,               "Settings");
+    options.add_switch(settings.lossy,       'L', "lossy",          "Allow lossy conversion",            false,              "Settings");
+    options.add_switch(settings.sprite_mode, 'S', "sprite-mode",    "Apply sprite output settings",     false,               "Settings");
+    options.add(settings.color_zero,         '0', "color-zero",     "Set color #0",                     std::string(),       "Settings");
 
-    options.AddSwitch(verbose,               'v', "verbose",        "Verbose logging", false, "_");
-    options.AddSwitch(help,                  'h', "help",           "Show this help",  false, "_");
+    options.add_switch(verbose,              'v', "verbose",        "Verbose logging", false, "_");
+    options.add_switch(help,                 'h', "help",           "Show this help",  false, "_");
     // clang-format on
 
-    if (!options.Parse(argc, argv))
+    if (!options.parse(argc, argv))
       return 1;
 
     if (argc <= 2 || help) {
-      fmt::print(options.Usage());
+      fmt::print(options.usage());
       return 0;
     }
 
@@ -78,13 +82,13 @@ int sfc_palette(int argc, char* argv[]) {
       settings.sprite_mode = true;
 
     // Mode-specific defaults
-    if (!options.WasSet("palettes"))
+    if (!options.was_set("palettes"))
       settings.palettes = sfc::default_palette_count_for_mode(settings.mode);
-    if (!options.WasSet("colors"))
+    if (!options.was_set("colors"))
       settings.colors = sfc::palette_size_at_bpp(sfc::default_bpp_for_mode(settings.mode));
-    if (!options.WasSet("tile-width"))
+    if (!options.was_set("tile-width"))
       settings.tile_w = sfc::default_tile_size_for_mode(settings.mode);
-    if (!options.WasSet("tile-height"))
+    if (!options.was_set("tile-height"))
       settings.tile_h = sfc::default_tile_size_for_mode(settings.mode);
 
     if (!settings.color_zero.empty()) {

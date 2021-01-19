@@ -5,12 +5,14 @@
 
 #include <Options.h>
 #include "Common.h"
+#include "Color.h"
+#include "Mode.h"
 #include "Image.h"
 #include "Map.h"
 #include "Palette.h"
 #include "Tiles.h"
 
-namespace SfcMap {
+namespace sfcMap {
 struct Settings {
   std::string in_image;
   std::string in_palette;
@@ -25,6 +27,7 @@ struct Settings {
   unsigned tile_w;
   unsigned tile_h;
   bool no_flip;
+  bool lossy;
   int tile_base_offset;
   unsigned map_w;
   unsigned map_h;
@@ -32,10 +35,10 @@ struct Settings {
   unsigned map_split_h;
   bool column_order;
 };
-}; // namespace SfcMap
+}; // namespace sfcMap
 
 int sfc_map(int argc, char* argv[]) {
-  SfcMap::Settings settings = {};
+  sfcMap::Settings settings = {};
   bool verbose = false;
 
   try {
@@ -43,39 +46,40 @@ int sfc_map(int argc, char* argv[]) {
     std::string mode_str;
 
     Options options;
-    options.IndentDescription = sfc::Constants::options_indent;
-    options.Header = "Usage: superfamiconv map [<options>]\n";
+    options.indent_description = sfc::Constants::options_indent;
+    options.header = "Usage: superfamiconv map [<options>]\n";
 
     // clang-format off
-    options.Add(settings.in_image,            'i', "in-image",          "Input: image");
-    options.Add(settings.in_palette,          'p', "in-palette",        "Input: palette (json/native)");
-    options.Add(settings.in_tileset,          't', "in-tiles",          "Input: tiles (native)");
-    options.Add(settings.out_data,            'd', "out-data",          "Output: native data");
-    options.Add(settings.out_json,            'j', "out-json",          "Output: json");
-    options.Add(settings.out_m7_data,         '7', "out-m7-data",       "Output: interleaved map/tile data (snes_mode7)");
-    options.Add(settings.out_gbc_bank,       '\0', "out-gbc-bank",      "Output: banked map data (gbc)");
+    options.add(settings.in_image,            'i', "in-image",          "Input: image");
+    options.add(settings.in_palette,          'p', "in-palette",        "Input: palette (json/native)");
+    options.add(settings.in_tileset,          't', "in-tiles",          "Input: tiles (native)");
+    options.add(settings.out_data,            'd', "out-data",          "Output: native data");
+    options.add(settings.out_json,            'j', "out-json",          "Output: json");
+    options.add(settings.out_m7_data,         '7', "out-m7-data",       "Output: interleaved map/tile data (snes_mode7)");
+    options.add(settings.out_gbc_bank,       '\0', "out-gbc-bank",      "Output: banked map data (gbc)");
 
-    options.Add(mode_str,                     'M', "mode",              "Mode <default: snes>",                       std::string("snes"),  "Settings");
-    options.Add(settings.bpp,                 'B', "bpp",               "Bits per pixel",                             unsigned(4),          "Settings");
-    options.Add(settings.tile_w,              'W', "tile-width",        "Tile width",                                 unsigned(8),          "Settings");
-    options.Add(settings.tile_h,              'H', "tile-height",       "Tile height",                                unsigned(8),          "Settings");
-    options.AddSwitch(settings.no_flip,       'F', "no-flip",           "Don't use flipped tiles",                    false,                "Settings");
-    options.Add(settings.tile_base_offset,    'T', "tile-base-offset",  "Tile base offset for map data",              int(0),               "Settings");
-    options.Add(settings.map_w,              '\0', "map-width",         "Map width (in tiles)",                       unsigned(0),          "Settings");
-    options.Add(settings.map_h,              '\0', "map-height",        "Map height (in tiles)",                      unsigned(0),          "Settings");
-    options.Add(settings.map_split_w,        '\0', "split-width",       "Split output into columns of <tiles> width", unsigned(0),          "Settings");
-    options.Add(settings.map_split_h,        '\0', "split-height",      "Split output into rows of <tiles> height",   unsigned(0),          "Settings");
-    options.AddSwitch(settings.column_order, '\0', "column-order",      "Output data in column-major order",          false,                "Settings");
+    options.add(mode_str,                     'M', "mode",              "Mode <default: snes>",                       std::string("snes"),  "Settings");
+    options.add(settings.bpp,                 'B', "bpp",               "Bits per pixel",                             unsigned(4),          "Settings");
+    options.add(settings.tile_w,              'W', "tile-width",        "Tile width",                                 unsigned(8),          "Settings");
+    options.add(settings.tile_h,              'H', "tile-height",       "Tile height",                                unsigned(8),          "Settings");
+    options.add_switch(settings.no_flip,      'F', "no-flip",           "Don't use flipped tiles",                    false,                "Settings");
+    options.add_switch(settings.lossy,        'L', "lossy",             "Allow lossy conversion",                     false,                "Settings");
+    options.add(settings.tile_base_offset,    'T', "tile-base-offset",  "Tile base offset for map data",              int(0),               "Settings");
+    options.add(settings.map_w,              '\0', "map-width",         "Map width (in tiles)",                       unsigned(0),          "Settings");
+    options.add(settings.map_h,              '\0', "map-height",        "Map height (in tiles)",                      unsigned(0),          "Settings");
+    options.add(settings.map_split_w,        '\0', "split-width",       "Split output into columns of <tiles> width", unsigned(0),          "Settings");
+    options.add(settings.map_split_h,        '\0', "split-height",      "Split output into rows of <tiles> height",   unsigned(0),          "Settings");
+    options.add_switch(settings.column_order,'\0', "column-order",      "Output data in column-major order",          false,                "Settings");
 
-    options.AddSwitch(verbose,                'v', "verbose",        "Verbose logging", false, "_");
-    options.AddSwitch(help,                   'h', "help",           "Show this help",  false, "_");
+    options.add_switch(verbose,               'v', "verbose",        "Verbose logging", false, "_");
+    options.add_switch(help,                  'h', "help",           "Show this help",  false, "_");
     // clang-format on
 
-    if (!options.Parse(argc, argv))
+    if (!options.parse(argc, argv))
       return 1;
 
     if (argc <= 2 || help) {
-      fmt::print(options.Usage());
+      fmt::print(options.usage());
       return 0;
     }
 
@@ -85,7 +89,7 @@ int sfc_map(int argc, char* argv[]) {
       throw std::runtime_error("map output not available in pce_sprite mode");
 
     // Mode-specific defaults
-    if (!options.WasSet("bpp"))
+    if (!options.was_set("bpp"))
       settings.bpp = sfc::default_bpp_for_mode(settings.mode);
 
     if (!sfc::bpp_allowed_for_mode(settings.bpp, settings.mode))

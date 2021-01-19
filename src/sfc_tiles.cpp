@@ -5,11 +5,13 @@
 
 #include <Options.h>
 #include "Common.h"
+#include "Color.h"
+#include "Mode.h"
 #include "Image.h"
 #include "Palette.h"
 #include "Tiles.h"
 
-namespace SfcTiles {
+namespace sfcTiles {
 struct Settings {
   std::string in_image;
   std::string in_data;
@@ -19,56 +21,60 @@ struct Settings {
 
   sfc::Mode mode;
   unsigned bpp;
-  bool no_discard;
-  bool no_flip;
   unsigned tile_w;
   unsigned tile_h;
+  bool no_discard;
+  bool no_flip;
+  unsigned max_tiles;
   bool no_remap;
   bool sprite_mode;
-  unsigned max_tiles;
+  //bool lossy;
   unsigned out_image_width;
 };
-}; // namespace SfcTiles
+}; // namespace sfcTiles
 
 int sfc_tiles(int argc, char* argv[]) {
-  SfcTiles::Settings settings = {};
+  sfcTiles::Settings settings = {};
   bool verbose = false;
 
   try {
     bool help = false;
     std::string mode_str;
+    std::string dither_str;
 
     Options options;
-    options.IndentDescription = sfc::Constants::options_indent;
-    options.Header = "Usage: superfamiconv tiles [<options>]\n";
+    options.indent_description = sfc::Constants::options_indent;
+    options.header = "Usage: superfamiconv tiles [<options>]\n";
 
     // clang-format off
-    options.Add(settings.in_image,           'i', "in-image",       "Input: image");
-    options.Add(settings.in_data,            'n', "in-data",        "Input: native data");
-    options.Add(settings.in_palette,         'p', "in-palette",     "Input: palette (native/json)");
-    options.Add(settings.out_data,           'd', "out-data",       "Output: native data");
-    options.Add(settings.out_image,          'o', "out-image",      "Output: image");
+    options.add(settings.in_image,           'i', "in-image",       "Input: image");
+    options.add(settings.in_data,            'n', "in-data",        "Input: native data");
+    options.add(settings.in_palette,         'p', "in-palette",     "Input: palette (native/json)");
+    options.add(settings.out_data,           'd', "out-data",       "Output: native data");
+    options.add(settings.out_image,          'o', "out-image",      "Output: image");
 
-    options.Add(mode_str,                    'M', "mode",           "Mode <default: snes>",              std::string("snes"), "Settings");
-    options.Add(settings.bpp,                'B', "bpp",            "Bits per pixel",                    unsigned(4),         "Settings");
-    options.Add(settings.tile_w,             'W', "tile-width",     "Tile width",                        unsigned(8),         "Settings");
-    options.Add(settings.tile_h,             'H', "tile-height",    "Tile height",                       unsigned(8),         "Settings");
-    options.AddSwitch(settings.no_remap,     'R', "no-remap",       "Don't remap colors",                false,               "Settings");
-    options.AddSwitch(settings.no_discard,   'D', "no-discard",     "Don't discard redundant tiles",     false,               "Settings");
-    options.AddSwitch(settings.no_flip,      'F', "no-flip",        "Don't discard using tile flipping", false,               "Settings");
-    options.AddSwitch(settings.sprite_mode,  'S', "sprite-mode",    "Apply sprite output settings",      false,               "Settings");
-    options.Add(settings.max_tiles,          'T', "max-tiles",      "Maximum number of tiles",           unsigned(),          "Settings");
-    options.Add(settings.out_image_width,   '\0', "out-image-width","Width of out-image",                unsigned(),          "Settings");
+    options.add(mode_str,                    'M', "mode",           "Mode <default: snes>",              std::string("snes"), "Settings");
+    options.add(settings.bpp,                'B', "bpp",            "Bits per pixel",                    unsigned(4),         "Settings");
+    options.add(settings.tile_w,             'W', "tile-width",     "Tile width",                        unsigned(8),         "Settings");
+    options.add(settings.tile_h,             'H', "tile-height",    "Tile height",                       unsigned(8),         "Settings");
+    options.add_switch(settings.no_remap,    'R', "no-remap",       "Don't remap colors",                false,               "Settings");
+    options.add_switch(settings.no_discard,  'D', "no-discard",     "Don't discard redundant tiles",     false,               "Settings");
+    options.add_switch(settings.no_flip,     'F', "no-flip",        "Don't discard using tile flipping", false,               "Settings");
+    options.add(settings.max_tiles,          'T', "max-tiles",      "Maximum number of tiles",           unsigned(),          "Settings");
+    options.add_switch(settings.sprite_mode, 'S', "sprite-mode",    "Apply sprite output settings",      false,               "Settings");
+ // options.add_switch(settings.lossy,       'L', "lossy",          "Allow lossy conversion",            false,               "Settings");
+ // options.add(dither_str,                 '\0', "dither",         "Dithering algorithm",               std::string("none"), "Settings");
+    options.add(settings.out_image_width,   '\0', "out-image-width","Width of out-image",                unsigned(),          "Settings");
 
-    options.AddSwitch(verbose,               'v', "verbose",        "Verbose logging", false, "_");
-    options.AddSwitch(help,                  'h', "help",           "Show this help",  false, "_");
+    options.add_switch(verbose,              'v', "verbose",        "Verbose logging", false, "_");
+    options.add_switch(help,                 'h', "help",           "Show this help",  false, "_");
     // clang-format on
 
-    if (!options.Parse(argc, argv))
+    if (!options.parse(argc, argv))
       return 1;
 
     if (argc <= 2 || help) {
-      fmt::print(options.Usage());
+      fmt::print(options.usage());
       return 0;
     }
 
@@ -81,15 +87,15 @@ int sfc_tiles(int argc, char* argv[]) {
       settings.sprite_mode = true;
 
     // Mode-specific defaults
-    if (!options.WasSet("bpp"))
+    if (!options.was_set("bpp"))
       settings.bpp = sfc::default_bpp_for_mode(settings.mode);
-    if (!options.WasSet("tile-width"))
+    if (!options.was_set("tile-width"))
       settings.tile_w = sfc::default_tile_size_for_mode(settings.mode);
-    if (!options.WasSet("tile-height"))
+    if (!options.was_set("tile-height"))
       settings.tile_h = sfc::default_tile_size_for_mode(settings.mode);
-    if (!options.WasSet("no-flip"))
+    if (!options.was_set("no-flip"))
       settings.no_flip = !sfc::tile_flipping_allowed_for_mode(settings.mode);
-    if (!options.WasSet("max-tiles"))
+    if (!options.was_set("max-tiles"))
       settings.max_tiles = sfc::max_tile_count_for_mode(settings.mode);
 
     if (!sfc::tile_width_allowed_for_mode(settings.tile_w, settings.mode)) {

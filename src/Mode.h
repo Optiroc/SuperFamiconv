@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Common.h"
+#include "Color.h"
 
 namespace sfc {
 
@@ -286,7 +286,7 @@ constexpr bool col0_is_shared_for_sprite_mode(Mode mode) {
 //
 
 // scale standard rgba color to mode-specific range
-inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
+inline rgba_u32 reduce_color(const rgba_u32 color, Mode to_mode) {
   switch (to_mode) {
   case Mode::snes:
   case Mode::snes_mode7:
@@ -300,7 +300,7 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
       c.r >>= 3;
       c.g >>= 3;
       c.b >>= 3;
-      rgba_t scaled = c;
+      rgba_u32 scaled = c;
       return (scaled & 0x00ffffff) + 0xff000000;
     }
     break;
@@ -313,7 +313,7 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
       else if (gray <= 0xc0) gray = 2;
       else gray = 3;
       c.r = c.g = c.b = gray;
-      rgba_t scaled = c;
+      rgba_u32 scaled = c;
       return (scaled & 0x00ffffff) + 0xff000000;
       break;
     }
@@ -327,7 +327,7 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
       c.r >>= 5;
       c.g >>= 5;
       c.b >>= 5;
-      rgba_t scaled = c;
+      rgba_u32 scaled = c;
       return (scaled & 0x00ffffff) + 0xff000000;
     }
     break;
@@ -337,22 +337,22 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
 }
 
 // scale standard rgba colors to mode-specific range
-inline rgba_vec_t reduce_colors(const rgba_vec_t& colors, Mode to_mode) {
+inline rgba_u32_vec reduce_colors(const rgba_u32_vec& colors, Mode to_mode) {
   auto vc = colors;
-  for (rgba_t& color : vc)
+  for (rgba_u32& color : vc)
     color = reduce_color(color, to_mode);
   return vc;
 }
 
-inline rgba_set_t reduce_colors(const rgba_set_t& colors, Mode to_mode) {
-  auto sc = rgba_set_t();
-  for (const rgba_t& color : colors)
+inline rgba_u32_set reduce_colors(const rgba_u32_set& colors, Mode to_mode) {
+  auto sc = rgba_u32_set();
+  for (const rgba_u32& color : colors)
     sc.insert(reduce_color(color, to_mode));
   return sc;
 }
 
 // scale color from mode-specific range to 8bpc RGBA range
-inline rgba_t normalize_color(const rgba_t color, Mode from_mode) {
+inline rgba_u32 normalize_color(const rgba_u32 color, Mode from_mode) {
   rgba_color c(color);
   switch (from_mode) {
   case Mode::snes:
@@ -385,9 +385,9 @@ inline rgba_t normalize_color(const rgba_t color, Mode from_mode) {
 }
 
 // scale colors from mode-specific range to 8bpc RGBA range
-inline rgba_vec_t normalize_colors(const rgba_vec_t& colors, Mode from_mode) {
+inline rgba_u32_vec normalize_colors(const rgba_u32_vec& colors, Mode from_mode) {
   auto vc = colors;
-  for (rgba_t& color : vc)
+  for (rgba_u32& color : vc)
     color = normalize_color(color, from_mode);
   return vc;
 }
@@ -397,8 +397,8 @@ inline rgba_vec_t normalize_colors(const rgba_vec_t& colors, Mode from_mode) {
 //
 
 // pack scaled rgba color to native format
-inline byte_vec_t pack_native_color(const rgba_t color, Mode mode) {
-  byte_vec_t v;
+inline byte_vec pack_native_color(const rgba_u32 color, Mode mode) {
+  byte_vec v;
   switch (mode) {
   case Mode::snes:
   case Mode::snes_mode7:
@@ -427,8 +427,8 @@ inline byte_vec_t pack_native_color(const rgba_t color, Mode mode) {
 }
 
 // pack scaled rgba colors to native format
-inline byte_vec_t pack_native_colors(const rgba_vec_t& colors, Mode mode) {
-  byte_vec_t data;
+inline byte_vec pack_native_colors(const rgba_u32_vec& colors, Mode mode) {
+  byte_vec data;
 
   if (mode == Mode::gb) {
     if (colors.size() != 4) {
@@ -450,8 +450,8 @@ inline byte_vec_t pack_native_colors(const rgba_vec_t& colors, Mode mode) {
 }
 
 // unpack native format color to (scaled) rgba color
-inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
-  rgba_vec_t v;
+inline rgba_u32_vec unpack_native_colors(const byte_vec& colors, Mode mode) {
+  rgba_u32_vec v;
   switch (mode) {
   case Mode::snes:
   case Mode::snes_mode7:
@@ -463,7 +463,7 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
     }
     for (unsigned i = 0; i < colors.size(); i += 2) {
       uint16_t cw = (colors[i + 1] << 8) + colors[i];
-      rgba_t nc = (cw & 0x001f) | ((cw & 0x03e0) << 3) | ((cw & 0x7c00) << 6) | 0xff000000;
+      rgba_u32 nc = (cw & 0x001f) | ((cw & 0x03e0) << 3) | ((cw & 0x7c00) << 6) | 0xff000000;
       v.push_back(nc);
     }
     break;
@@ -472,7 +472,7 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
       throw std::runtime_error("native palette size not one byte");
     }
     for (unsigned i = 0; i < 4; ++i) {
-      rgba_t rgba;
+      rgba_u32 rgba;
       switch ((colors[0] >> (i * 2)) & 0x3) {
         case 0: rgba = 0xff030303; break;
         case 1: rgba = 0xff020202; break;
@@ -490,7 +490,7 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
     }
     for (unsigned i = 0; i < colors.size(); i += 2) {
       uint16_t cw = (colors[i + 1] << 8) + colors[i];
-      rgba_t nc = ((cw & 0x00e) >> 1) | ((cw & 0x00e0) << 3) | ((cw & 0x0e00) << 7) | 0xff000000;
+      rgba_u32 nc = ((cw & 0x00e) >> 1) | ((cw & 0x00e0) << 3) | ((cw & 0x0e00) << 7) | 0xff000000;
       v.push_back(nc);
     }
     break;
@@ -501,7 +501,7 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
     }
     for (unsigned i = 0; i < colors.size(); i += 2) {
       uint16_t cw = (colors[i + 1] << 8) + colors[i];
-      rgba_t nc = ((cw & 0x0038) >> 3) | ((cw & 0x0007) << 8) | ((cw & 0x1c00) << 10) | 0xff000000;
+      rgba_u32 nc = ((cw & 0x0038) >> 3) | ((cw & 0x0007) << 8) | ((cw & 0x1c00) << 10) | 0xff000000;
       v.push_back(nc);
     }
     break;
@@ -515,11 +515,11 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
 // to/from native tile data
 //
 
-inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
+inline byte_vec pack_native_tile(const index_vec& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
 
   // snes/gameboy style bit planes
-  auto make_2bit_planes = [](const index_vec_t& in_data, unsigned plane_index) {
-    byte_vec_t p(16);
+  auto make_2bit_planes = [](const index_vec& in_data, unsigned plane_index) {
+    byte_vec p(16);
     if (in_data.empty())
       return p;
 
@@ -541,12 +541,12 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
   };
 
   // regular bit planes
-  auto make_1bit_planes = [](const index_vec_t& in_data, unsigned plane) {
+  auto make_1bit_planes = [](const index_vec& in_data, unsigned plane) {
     if (in_data.size() % 8)
       throw std::runtime_error("programmer error (in_data not multiple of 8 in make_1bit_planes)");
 
     size_t plane_size = in_data.size() >> 3;
-    byte_vec_t p(plane_size);
+    byte_vec p(plane_size);
 
     index_t mask = 1;
     for (unsigned i = 0; i < plane; ++i)
@@ -565,18 +565,18 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
   };
 
   // gba/md style 2 pixels per byte data
-  auto make_4bpp_bitpack = [](const index_vec_t& in_data) {
+  auto make_4bpp_bitpack = [](const index_vec& in_data) {
     if (in_data.size() % 2)
       throw std::runtime_error("programmer error (in_data not multiple of 2 in make_4bpp_bitpack)");
 
-    byte_vec_t bv(in_data.size() >> 1);
+    byte_vec bv(in_data.size() >> 1);
     for (unsigned i = 0; i < bv.size(); ++i)
       bv[i] = (0x0f & in_data[i << 1]) | (0xf0 & (in_data[(i << 1) + 1] << 4));
 
     return bv;
   };
 
-  byte_vec_t nd;
+  byte_vec nd;
 
   if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc || mode == Mode::pce) {
     if (width != 8 || height != 8)
@@ -609,9 +609,9 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
   return nd;
 }
 
-inline index_vec_t unpack_native_tile(const byte_vec_t& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
+inline index_vec unpack_native_tile(const byte_vec& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
 
-  auto add_1bit_plane = [](index_vec_t& out_data, const byte_vec_t& in_data, unsigned plane_index) {
+  auto add_1bit_plane = [](index_vec& out_data, const byte_vec& in_data, unsigned plane_index) {
     int plane_offset = ((plane_index >> 1) * 16) + (plane_index & 1);
     for (int y = 0; y < 8; ++y) {
       for (int x = 0; x < 8; ++x) {
@@ -620,7 +620,7 @@ inline index_vec_t unpack_native_tile(const byte_vec_t& data, Mode mode, unsigne
     }
   };
 
-  index_vec_t ud(width * height);
+  index_vec ud(width * height);
 
   if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc || mode == Mode::pce) {
     for (unsigned i = 0; i < bpp; ++i)

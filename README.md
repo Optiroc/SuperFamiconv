@@ -25,7 +25,7 @@ In short hand mode, the following options are available:
 	--out-palette-image   Output: palette image
 	--out-palette-act     Output: photoshop palette
 	--out-tiles-image     Output: tiles image
-	--out-scaled-image    Output: image scaled to destination colorspace
+	--out-quant-image     Output: image quantized to palette/colorspace
 
 	-M --mode             Mode <default: snes>
 	-B --bpp              Bits per pixel
@@ -36,6 +36,8 @@ In short hand mode, the following options are available:
 	-F --no-flip          Don't discard using tile flipping <switch>
 	-T --tile-base-offset Tile base offset for map data
 	-S --sprite-mode      Apply sprite output settings <switch>
+	-L --lossy            Allow lossy conversion <switch>
+	--dither              Dithering algorithm
 	--color-zero          Set color #0
 
 	-v --verbose          Verbose logging <switch>
@@ -55,6 +57,11 @@ The `mode` option, which is common for all commands, affects the color space han
 * `md` 
 * `pce` 
 * `pce_sprite` 
+
+If `lossy` conversion is enabled, a dithering mode can optionally be set:
+
+* `checkerboard`
+* `bayer`
 
 Sensible default options are applied, and differ depending on selected mode.
 

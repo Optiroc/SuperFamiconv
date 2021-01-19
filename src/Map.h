@@ -5,7 +5,8 @@
 #pragma once
 
 #include "Common.h"
-
+#include "Color.h"
+#include "Mode.h"
 #include "Image.h"
 #include "Palette.h"
 #include "Tiles.h"
@@ -41,9 +42,9 @@ struct Map final {
 
   void add_base_offset(int offset);
 
-  byte_vec_t native_data(bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
-  byte_vec_t snes_mode7_interleaved_data(const Tileset& tileset) const;
-  byte_vec_t gbc_banked_data() const;
+  byte_vec native_data(bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
+  byte_vec snes_mode7_interleaved_data(const Tileset& tileset) const;
+  byte_vec gbc_banked_data() const;
 
   void save(const std::string& path, bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
   const std::string to_json(bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
@@ -61,8 +62,8 @@ private:
 };
 
 
-inline byte_vec_t pack_native_mapentry(const Mapentry& entry, Mode mode) {
-  byte_vec_t v;
+inline byte_vec pack_native_mapentry(const Mapentry& entry, Mode mode) {
+  byte_vec v;
   switch (mode) {
   case Mode::snes:
     v.push_back(entry.tile_index & 0xff);

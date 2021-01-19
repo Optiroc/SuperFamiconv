@@ -65,8 +65,8 @@ void Map::add_base_offset(int offset) {
   }
 }
 
-byte_vec_t Map::native_data(bool column_order, unsigned split_w, unsigned split_h) const {
-  byte_vec_t data;
+byte_vec Map::native_data(bool column_order, unsigned split_w, unsigned split_h) const {
+  byte_vec data;
   for (const auto& vm : collect_entries(column_order, split_w, split_h)) {
     for (const auto& m : vm) {
       auto nd = sfc::pack_native_mapentry(m, _mode);
@@ -76,12 +76,12 @@ byte_vec_t Map::native_data(bool column_order, unsigned split_w, unsigned split_
   return data;
 }
 
-byte_vec_t Map::snes_mode7_interleaved_data(const Tileset& tileset) const {
+byte_vec Map::snes_mode7_interleaved_data(const Tileset& tileset) const {
   auto map_data = native_data();
   auto tile_data = tileset.native_data();
 
   size_t sz = (tile_data.size() > map_data.size()) ? tile_data.size() : map_data.size();
-  byte_vec_t data = byte_vec_t(sz * 2);
+  byte_vec data = byte_vec(sz * 2);
   for (unsigned i = 0; i < map_data.size(); ++i)
     data[(i << 1)] = map_data[i];
   for (unsigned i = 0; i < tile_data.size(); ++i)
@@ -90,12 +90,12 @@ byte_vec_t Map::snes_mode7_interleaved_data(const Tileset& tileset) const {
   return data;
 }
 
-byte_vec_t Map::gbc_banked_data() const {
+byte_vec Map::gbc_banked_data() const {
   if ((width() % 32) || (height() % 32))
     throw std::runtime_error("gbc/out-gbc-bank requires map dimensions to be multiples of 32");
 
   const auto linear_data = native_data();
-  auto banked_data = byte_vec_t(linear_data.size());
+  auto banked_data = byte_vec(linear_data.size());
   for (unsigned i = 0; i < linear_data.size() >> 1; ++i) banked_data[i] = linear_data[i << 1];
   for (unsigned i = 0; i < linear_data.size() >> 1; ++i) banked_data[i + (linear_data.size() >> 1)] = linear_data[(i << 1) + 1];
   return banked_data;

@@ -1,4 +1,4 @@
-// common types and utility functions
+// common imports and utility functions
 //
 // david lindecrantz <optiroc@gmail.com>
 
@@ -20,20 +20,11 @@
 #include <fmt/core.h>
 #include <nlohmann/json.hpp>
 
-typedef uint8_t index_t;   // color index (typedefd in case more than 8 bits are needed down the road)
-typedef uint8_t channel_t; // rgba color channel
-typedef uint32_t rgba_t;   // rgba color stored in little endian order
-
-typedef std::vector<uint8_t> byte_vec_t;
-typedef std::vector<index_t> index_vec_t;
-typedef std::vector<channel_t> channel_vec_t;
-typedef std::vector<rgba_t> rgba_vec_t;
-typedef std::set<rgba_t> rgba_set_t;
-typedef std::vector<rgba_set_t> rgba_set_vec_t;
+typedef std::vector<uint8_t> byte_vec;
 
 namespace sfc {
 
-constexpr const char* VERSION = "0.9.2";
+constexpr const char* VERSION = "0.9.3";
 
 constexpr const char* COPYRIGHT = "Copyright (c) 2017-2020 David Lindecrantz";
 
@@ -145,31 +136,6 @@ enum Constants {
   options_indent = 24,
 };
 
-constexpr unsigned palette_size_at_bpp(unsigned bpp) {
-  unsigned s = 1;
-  for (unsigned i = 0; i < bpp; ++i)
-    s = s << 1;
-  return s;
-}
-
-constexpr index_t bitmask_at_bpp(unsigned bpp) {
-  unsigned m = 1;
-  for (unsigned i = 1; i < bpp; ++i)
-    m |= m << 1;
-  return (index_t)m;
-}
-
-inline byte_vec_t to_bytes(const rgba_vec_t& data) {
-  byte_vec_t v(data.size() << 2);
-  for (unsigned i = 0; i < data.size(); ++i) {
-    v[(i << 2) + 0] = data[i] & 0x000000ff;
-    v[(i << 2) + 1] = (data[i] & 0x0000ff00) >> 8;
-    v[(i << 2) + 2] = (data[i] & 0x00ff0000) >> 16;
-    v[(i << 2) + 3] = (data[i] & 0xff000000) >> 24;
-  }
-  return v;
-}
-
 //
 // utility i/o functions
 //
@@ -195,12 +161,12 @@ inline std::string read_file(const std::string& path) {
 }
 
 // read binary file at path
-inline byte_vec_t read_binary(const std::string& path) {
+inline byte_vec read_binary(const std::string& path) {
   std::ifstream ifs(path, std::ios::binary);
   if (ifs.fail()) {
     throw std::runtime_error(fmt::format("File \"{}\" could not be opened", path));
   }
-  return byte_vec_t((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+  return byte_vec((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 }
 
 // write text file
@@ -275,6 +241,3 @@ bool has_superset(const std::set<T>& set, const std::vector<std::set<T>>& super)
 }
 
 } /* namespace sfc */
-
-#include "Color.h"
-#include "Mode.h"

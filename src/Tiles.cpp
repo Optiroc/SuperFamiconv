@@ -18,13 +18,13 @@ Tile::Tile(const Image& image, Mode mode, unsigned bpp, bool no_flip)
   }
 }
 
-Tile::Tile(const byte_vec_t& native_data, Mode mode, unsigned bpp, bool no_flip, unsigned width, unsigned height)
+Tile::Tile(const byte_vec& native_data, Mode mode, unsigned bpp, bool no_flip, unsigned width, unsigned height)
     : _mode(mode), _bpp(bpp), _width(width), _height(height), _data(unpack_native_tile(native_data, mode, bpp, width, height)) {
   _palette.resize(palette_size_at_bpp(bpp));
   channel_t add = 0x100 / _palette.size();
   for (unsigned i = 0; i < _palette.size(); ++i) {
     channel_t value = add * i;
-    _palette[i] = (rgba_t)(0xff000000 + value + (value << 8) + (value << 16));
+    _palette[i] = (rgba_u32)(0xff000000 + value + (value << 8) + (value << 16));
   }
 
   if (!no_flip) {
@@ -136,18 +136,18 @@ std::vector<Tile> Tile::crops(unsigned tile_width, unsigned tile_height) const {
   return tv;
 }
 
-byte_vec_t Tile::native_data() const {
+byte_vec Tile::native_data() const {
   return pack_native_tile(_data, _mode, _bpp, _width, _height);
 }
 
-rgba_vec_t Tile::rgba_data() const {
-  rgba_vec_t v(_data.size());
+rgba_u32_vec Tile::rgba_data() const {
+  rgba_u32_vec v(_data.size());
   for (unsigned i = 0; i < _data.size(); ++i)
     v[i] = _palette[_data[i]];
   return v;
 }
 
-Tileset::Tileset(const byte_vec_t& native_data, Mode mode, unsigned bpp, unsigned tile_width, unsigned tile_height, bool no_flip) {
+Tileset::Tileset(const byte_vec& native_data, Mode mode, unsigned bpp, unsigned tile_width, unsigned tile_height, bool no_flip) {
   _mode = mode;
   _bpp = bpp;
   _tile_width = tile_width;
@@ -165,7 +165,7 @@ Tileset::Tileset(const byte_vec_t& native_data, Mode mode, unsigned bpp, unsigne
     unsigned tiles = (unsigned)native_data.size() / bytes_per_tile;
     for (unsigned i = 0; i < tiles; ++i) {
       _tiles.push_back(
-        Tile(byte_vec_t(&native_data[i * bytes_per_tile], &native_data[(i + 1) * bytes_per_tile]), mode, bpp, no_flip, 8, 8));
+        Tile(byte_vec(&native_data[i * bytes_per_tile], &native_data[(i + 1) * bytes_per_tile]), mode, bpp, no_flip, 8, 8));
     }
 
     if (_tile_width != 8 || _tile_height != 8)
@@ -209,7 +209,7 @@ void Tileset::save(const std::string& path) const {
   write_file(path, native_data());
 }
 
-byte_vec_t Tileset::native_data() const {
+byte_vec Tileset::native_data() const {
   std::vector<Tile> tv;
   if (_mode != Mode::pce_sprite && (_tile_width != 8 || _tile_height != 8)) {
     tv = remap_tiles_for_output(_tiles, _mode);
@@ -217,7 +217,7 @@ byte_vec_t Tileset::native_data() const {
     tv = _tiles;
   }
 
-  byte_vec_t data;
+  byte_vec data;
   for (const auto& t : tv) {
     auto nt = t.native_data();
     data.insert(data.end(), nt.begin(), nt.end());

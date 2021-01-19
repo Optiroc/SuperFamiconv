@@ -3,7 +3,7 @@
 namespace sfc {
 
 Image::Image(const std::string& path) {
-  byte_vec_t buffer;
+  byte_vec buffer;
   unsigned w, h;
 
   unsigned error = lodepng::load_file(buffer, path);
@@ -23,7 +23,7 @@ Image::Image(const std::string& path) {
   if (state.info_raw.colortype == LCT_PALETTE) {
     if (state.info_raw.bitdepth && state.info_raw.bitdepth < 8) {
       // unpack 2/4 bit data
-      _indexed_data = index_vec_t(w * h);
+      _indexed_data = index_vec(w * h);
       unsigned depth = state.info_raw.bitdepth;
       unsigned ppb = 8 / state.info_raw.bitdepth;
       index_t mask = 0;
@@ -74,7 +74,7 @@ Image::Image(const std::string& path) {
   _src_coord_x = _src_coord_y = 0;
 
   auto rgba_v = rgba_data();
-  _colors = rgba_set_t(rgba_v.begin(), rgba_v.end());
+  _colors = rgba_u32_set(rgba_v.begin(), rgba_v.end());
 }
 
 Image::Image(const sfc::Palette& palette) {
@@ -96,7 +96,7 @@ Image::Image(const sfc::Palette& palette) {
   _src_coord_x = _src_coord_y = 0;
 
   auto rgba_v = rgba_data();
-  _colors = rgba_set_t(rgba_v.begin(), rgba_v.end());
+  _colors = rgba_u32_set(rgba_v.begin(), rgba_v.end());
 }
 
 Image::Image(const sfc::Tileset& tileset, unsigned image_width) {
@@ -130,7 +130,7 @@ Image::Image(const sfc::Tileset& tileset, unsigned image_width) {
   _src_coord_x = _src_coord_y = 0;
 
   auto rgba_v = rgba_data();
-  _colors = rgba_set_t(rgba_v.begin(), rgba_v.end());
+  _colors = rgba_u32_set(rgba_v.begin(), rgba_v.end());
 }
 
 // Make new normalized image with color indices mapped to palette
@@ -144,7 +144,7 @@ Image::Image(const Image& image, const sfc::Subpalette& subpalette)
   _data.resize(size * 4);
 
   for (unsigned i = 0; i < size; ++i) {
-    rgba_t color = sfc::normalize_color(sfc::reduce_color(image.rgba_color_at(i), subpalette.mode()), subpalette.mode());
+    rgba_u32 color = sfc::normalize_color(sfc::reduce_color(image.rgba_u32_at(i), subpalette.mode()), subpalette.mode());
     if (color == transparent_color) {
       _indexed_data[i] = 0;
       set_pixel(transparent_color, i);
@@ -162,11 +162,47 @@ Image::Image(const Image& image, const sfc::Subpalette& subpalette)
   _src_coord_x = _src_coord_y = 0;
 
   auto rgba_v = rgba_data();
-  _colors = rgba_set_t(rgba_v.begin(), rgba_v.end());
+  _colors = rgba_u32_set(rgba_v.begin(), rgba_v.end());
 }
 
-rgba_vec_t Image::rgba_data() const {
+rgba_u32_vec Image::rgba_data() const {
   return sfc::to_rgba(_data);
+}
+
+Image Image::quantize(unsigned num_colors, Mode mode, dither::Mode dither) const {
+  // quantize scaled+normalized colors
+  const rgba_u32_vec pv = mode == Mode::none ? rgba_data() : normalize_colors(reduce_colors(rgba_data(), mode), mode);
+  std::vector<rgba_color> palette = mediancut_palette(to_rgba_color_vec(pv), num_colors);
+
+  // remap and dither new image
+  unsigned size = _width * _height;
+  Image img;
+  img._width = _width;
+  img._height = _height;
+  img._data.resize(size * 4);
+  img._indexed_data.resize(size);
+
+  if (dither == dither::Mode::none) {
+
+  } else {
+    // TODO: NOP for now...
+  }
+
+  return img;
+  /*
+  const dither::Matrix& mtx = dither::matrix(dither);
+  double fudge = 2.5;
+  double step = palette_step(palette) * fudge;
+  fmt::print("Size: {}\n", step);
+
+  for (unsigned i = 0; i < size; ++i) {
+    unsigned x = i % _width;
+    unsigned y = i / _width;
+    rgba_color c = rgba_color(rgba_u32_at(i)).add(step * mtx.range * mtx.map[(x % mtx.width) + ((y % mtx.height) * mtx.width)] + (mtx.offset * fudge));
+    img.set_pixel(closest_de2000(c, palette), i);
+    img.set_pixel_indexed(0, i);
+  }
+  */
 }
 
 Image Image::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_height, Mode mode) const {
@@ -205,7 +241,7 @@ Image Image::crop(unsigned x, unsigned y, unsigned crop_width, unsigned crop_hei
   }
 
   auto rgba_v = img.rgba_data();
-  img._colors = rgba_set_t(rgba_v.begin(), rgba_v.end());
+  img._colors = rgba_u32_set(rgba_v.begin(), rgba_v.end());
   return img;
 }
 
@@ -244,25 +280,18 @@ void Image::save_indexed(const std::string& path) {
   state.info_png.color.bitdepth = state.info_raw.bitdepth = 8;
   state.encoder.auto_convert = 0;
 
-  byte_vec_t buffer;
+  byte_vec buffer;
   unsigned error = lodepng::encode(buffer, _indexed_data, _width, _height, state);
   if (error)
     throw std::runtime_error(lodepng_error_text(error));
   lodepng::save_file(buffer, path.c_str());
 }
 
-void Image::save_scaled(const std::string& path, Mode mode) {
-  auto scaled_data = to_bytes(normalize_colors(reduce_colors(rgba_data(), mode), mode));
-  unsigned error = lodepng::encode(path.c_str(), scaled_data, _width, _height, LCT_RGBA, 8);
-  if (error)
-    throw std::runtime_error(lodepng_error_text(error));
-}
-
 const std::string Image::description() const {
   return fmt::format("{}x{}px, {}", width(), height(), palette_size() ? "indexed color" : "RGB color");
 }
 
-inline void Image::set_pixel(const rgba_t color, const unsigned index) {
+inline void Image::set_pixel(const rgba_u32 color, const unsigned index) {
   const unsigned offset = index * 4;
   if ((offset + 3) > _data.size())
     return;
@@ -273,7 +302,7 @@ inline void Image::set_pixel(const rgba_t color, const unsigned index) {
   _colors.insert(color);
 }
 
-inline void Image::set_pixel(const rgba_t color, const unsigned x, const unsigned y) {
+inline void Image::set_pixel(const rgba_u32 color, const unsigned x, const unsigned y) {
   const unsigned offset = ((y * _width) + x) * 4;
   if ((offset + 3) > _data.size())
     return;
@@ -284,7 +313,7 @@ inline void Image::set_pixel(const rgba_t color, const unsigned x, const unsigne
   _colors.insert(color);
 }
 
-void Image::blit(const rgba_vec_t& rgba_data, const unsigned x, const unsigned y, const unsigned width) {
+void Image::blit(const rgba_u32_vec& rgba_data, const unsigned x, const unsigned y, const unsigned width) {
   for (unsigned i = 0; i < rgba_data.size(); ++i)
     set_pixel(rgba_data[i], (i % width) + x, (i / width) + y);
 }
@@ -302,7 +331,7 @@ inline void Image::set_pixel_indexed(const index_t color, const unsigned x, cons
   _indexed_data[offset] = color;
 }
 
-void Image::blit_indexed(const channel_vec_t& data, const unsigned x, const unsigned y, const unsigned width) {
+void Image::blit_indexed(const channel_vec& data, const unsigned x, const unsigned y, const unsigned width) {
   for (unsigned i = 0; i < data.size(); ++i)
     set_pixel_indexed(data[i], (i % width) + x, (i / width) + y);
 }
@@ -312,7 +341,7 @@ void Image::set_default_palette(const unsigned indices) {
   channel_t add = 0x100 / _palette.size();
   for (unsigned i = 0; i < _palette.size(); ++i) {
     channel_t value = add * i;
-    _palette[i] = (rgba_t)(0xff000000 + value + (value << 8) + (value << 16));
+    _palette[i] = (rgba_u32)(0xff000000 + value + (value << 8) + (value << 16));
   }
 }
 
