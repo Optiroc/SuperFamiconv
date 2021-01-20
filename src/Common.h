@@ -142,7 +142,7 @@ constexpr const char* LICENSE =
   "\n";
 
 enum Constants {
-  options_indent = 24,
+  options_indent = 28,
 };
 
 constexpr unsigned palette_size_at_bpp(unsigned bpp) {
