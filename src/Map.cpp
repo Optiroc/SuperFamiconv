@@ -65,6 +65,12 @@ void Map::add_base_offset(int offset) {
   }
 }
 
+void Map::add_palette_base_offset(int offset) {
+  for (auto& e : _entries) {
+    e.palette_index = (unsigned)std::max(0, (int)e.palette_index + offset);
+  }
+}
+
 byte_vec_t Map::native_data(bool column_order, unsigned split_w, unsigned split_h) const {
   byte_vec_t data;
   for (const auto& vm : collect_entries(column_order, split_w, split_h)) {
