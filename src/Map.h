@@ -40,6 +40,7 @@ struct Map final {
   Mapentry entry_at(unsigned x, unsigned y) const;
 
   void add_base_offset(int offset);
+  void add_palette_base_offset(int offset);
 
   byte_vec_t native_data(bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
   byte_vec_t snes_mode7_interleaved_data(const Tileset& tileset) const;
