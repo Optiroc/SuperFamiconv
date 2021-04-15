@@ -243,7 +243,7 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
       const auto ct = tiles[i].crops(8, 8);
       for (unsigned cy = 0; cy < cells_per_tile_v; ++cy) {
         for (unsigned cx = 0; cx < cells_per_tile_h; ++cx) {
-          tv[base_pos + (cy * cells_per_row) + cx] = ct[(cy * cells_per_tile_v) + cx];
+          tv[base_pos + (cy * cells_per_row) + cx] = ct[(cy * cells_per_tile_h) + cx];
         }
       }
     }
@@ -251,7 +251,6 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
   } else {
     throw std::runtime_error("programmer error (remap_tiles_for_output invoked erroneously invoked)");
   }
-
   return tv;
 }
 
