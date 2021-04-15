@@ -161,10 +161,10 @@ constexpr bool tile_width_allowed_for_mode(unsigned width, Mode mode) {
 constexpr bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
   switch (mode) {
   case Mode::snes:
-    return height == 8 || height == 16;
-  case Mode::snes_mode7:
   case Mode::gb:
   case Mode::gbc:
+    return height == 8 || height == 16;
+  case Mode::snes_mode7:
   case Mode::gba:
   case Mode::gba_affine:
   case Mode::md:
