@@ -97,7 +97,7 @@ constexpr bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
     return bpp == 8;
   case Mode::gb:
   case Mode::gbc:
-    return bpp == 2;
+    return bpp == 1 || bpp == 2;
   case Mode::gba:
     return bpp == 4 || bpp == 8;
   case Mode::gba_affine:
@@ -161,10 +161,10 @@ constexpr bool tile_width_allowed_for_mode(unsigned width, Mode mode) {
 constexpr bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
   switch (mode) {
   case Mode::snes:
-    return height == 8 || height == 16;
-  case Mode::snes_mode7:
   case Mode::gb:
   case Mode::gbc:
+    return height == 8 || height == 16;
+  case Mode::snes_mode7:
   case Mode::gba:
   case Mode::gba_affine:
   case Mode::md:
@@ -513,7 +513,7 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
   };
 
   // regular bit planes
-  auto make_1bit_planes = [](const index_vec_t& in_data, unsigned plane) {
+  auto make_1bit_planes = [](const index_vec_t& in_data, unsigned plane, bool reverse) {
     if (in_data.size() % 8)
       throw std::runtime_error("programmer error (in_data not multiple of 8 in make_1bit_planes)");
 
@@ -527,8 +527,12 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
     for (unsigned index_b = 0, index_i = 0; index_b < plane_size; ++index_b) {
       index_t byte = 0;
       for (unsigned b = 0; b < 8; ++b) {
-        if (in_data[index_i + b] & mask)
-          byte |= 1 << b;
+        if (in_data[index_i + b] & mask) {
+          if (reverse)
+            byte |= 1 << (7-b);
+          else
+            byte |= 1 << b;
+        }
       }
       p[index_b] = byte;
       index_i += 8;
@@ -560,6 +564,11 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
       auto plane = make_2bit_planes(data, i * 2);
       nd.insert(nd.end(), plane.begin(), plane.end());
     }
+    // 1bpp had 0 iterations
+    if(bpp == 1) {
+      auto plane = make_1bit_planes(data, 0, true);
+      nd.insert(nd.end(), plane.begin(), plane.end());
+    }
 
   } else if (mode == Mode::snes_mode7) {
     nd = data;
@@ -573,7 +582,7 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
 
   } else if (mode == Mode::pce_sprite) {
     for (unsigned p = 0; p < 4; ++p) {
-      auto plane = make_1bit_planes(data, p);
+      auto plane = make_1bit_planes(data, p, false);
       nd.insert(nd.end(), plane.begin(), plane.end());
     }
   }
