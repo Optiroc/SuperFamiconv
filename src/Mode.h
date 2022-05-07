@@ -467,7 +467,7 @@ inline byte_vec_t pack_native_color(const rgba_t color, Mode mode) {
   case Mode::ws:
     // TODO: WonderSwan technically supports 8 out of 16 grayscale colors.
     // Currently, we do not support this additional distinction.
-    v.push_back(color);
+    v.push_back(color ^ 0x07);
     break;
   case Mode::wsc:
   case Mode::wsc_packed:
@@ -579,7 +579,7 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
     for (unsigned i = 0; i < 4; ++i) {
       rgba_t rgba;
       uint32_t c = (colors[i >> 1] >> ((i & 0x01) * 4)) & 0x7;
-      rgba = 0xff000000 | (c * 0x10101);
+      rgba = 0xff000000 | ((c ^ 0x7) * 0x10101);
       v.push_back(rgba);
     }
     break;
