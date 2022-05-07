@@ -55,6 +55,9 @@ The `mode` option, which is common for all commands, affects the color space han
 * `md`
 * `pce`
 * `pce_sprite`
+* `ws`
+* `wsc`
+* `wsc_packed`
 
 Sensible default options are applied, and differ depending on selected mode.
 
