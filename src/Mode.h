@@ -18,7 +18,10 @@ enum class Mode {
   gba_affine,
   md,
   pce,
-  pce_sprite
+  pce_sprite,
+  ws,
+  wsc,
+  wsc_packed
 };
 
 inline Mode mode(const std::string& str) {
@@ -40,6 +43,12 @@ inline Mode mode(const std::string& str) {
     return Mode::pce;
   } else if (str == "pce_sprite") {
     return Mode::pce_sprite;
+  } else if (str == "ws") {
+    return Mode::ws;
+  } else if (str == "wsc") {
+    return Mode::wsc;
+  } else if (str == "wsc_packed") {
+    return Mode::wsc_packed;
   }
   return Mode::none;
 }
@@ -64,6 +73,12 @@ inline std::string mode(Mode mode) {
     return std::string("pce");
   case Mode::pce_sprite:
     return std::string("pce_sprite");
+  case Mode::ws:
+    return std::string("ws");
+  case Mode::wsc:
+    return std::string("wsc");
+  case Mode::wsc_packed:
+    return std::string("wsc_packed");
   default:
     return std::string("none");
   }
@@ -73,12 +88,15 @@ constexpr unsigned default_bpp_for_mode(Mode mode) {
   switch (mode) {
   case Mode::gb:
   case Mode::gbc:
+  case Mode::ws:
     return 2;
   case Mode::snes:
   case Mode::gba:
   case Mode::md:
   case Mode::pce:
   case Mode::pce_sprite:
+  case Mode::wsc:
+  case Mode::wsc_packed:
   case Mode::none:
     return 4;
   case Mode::snes_mode7:
@@ -97,7 +115,10 @@ constexpr bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
     return bpp == 8;
   case Mode::gb:
   case Mode::gbc:
+  case Mode::ws:
     return bpp == 1 || bpp == 2;
+  case Mode::wsc:
+    return bpp == 2 || bpp == 4;
   case Mode::gba:
     return bpp == 4 || bpp == 8;
   case Mode::gba_affine:
@@ -105,6 +126,7 @@ constexpr bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
   case Mode::md:
   case Mode::pce:
   case Mode::pce_sprite:
+  case Mode::wsc_packed:
     return bpp == 4;
   case Mode::none:
     return false;
@@ -127,9 +149,12 @@ constexpr unsigned max_tile_count_for_mode(Mode mode) {
   case Mode::gba_affine:
     return 256;
   case Mode::gbc:
+  case Mode::ws:
     return 512;
   case Mode::snes:
   case Mode::gba:
+  case Mode::wsc:
+  case Mode::wsc_packed:
     return 1024;
   case Mode::md:
   case Mode::pce:
@@ -150,6 +175,9 @@ constexpr bool tile_width_allowed_for_mode(unsigned width, Mode mode) {
   case Mode::gba_affine:
   case Mode::md:
   case Mode::pce:
+  case Mode::ws:
+  case Mode::wsc:
+  case Mode::wsc_packed:
     return width == 8;
   case Mode::pce_sprite:
     return width == 16;
@@ -169,6 +197,9 @@ constexpr bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
   case Mode::gba_affine:
   case Mode::md:
   case Mode::pce:
+  case Mode::ws:
+  case Mode::wsc:
+  case Mode::wsc_packed:
     return height == 8;
   case Mode::pce_sprite:
     return height == 16;
@@ -183,6 +214,9 @@ constexpr bool tile_flipping_allowed_for_mode(Mode mode) {
   case Mode::gbc:
   case Mode::gba:
   case Mode::md:
+  case Mode::ws:
+  case Mode::wsc:
+  case Mode::wsc_packed:
     return true;
   default:
     return false;
@@ -198,6 +232,9 @@ constexpr unsigned default_map_size_for_mode(Mode mode) {
   case Mode::gba_affine:
   case Mode::md:
   case Mode::pce:
+  case Mode::ws:
+  case Mode::wsc:
+  case Mode::wsc_packed:
     return 32;
   case Mode::snes_mode7:
     return 128;
@@ -220,6 +257,9 @@ constexpr unsigned default_palette_count_for_mode(Mode mode) {
   case Mode::gba:
   case Mode::pce:
   case Mode::pce_sprite:
+  case Mode::ws:
+  case Mode::wsc:
+  case Mode::wsc_packed:
     return 16;
   default:
     return 0;
@@ -289,6 +329,17 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
       return (scaled & 0x00ffffff) + 0xff000000;
       break;
     }
+  case Mode::ws:
+    {
+      // TODO: WonderSwan technically supports 8 out of 16 grayscale colors.
+      // Currently, we do not support this additional distinction.
+      rgba_color c(color);
+      channel_t gray = c.r * 0.299 + c.g * 0.587 + c.b * 0.114;
+      c.r = c.g = c.b = gray >> 5;
+      rgba_t scaled = c;
+      return (scaled & 0x00ffffff) + 0xff000000;
+      break;
+    }
   case Mode::md:
   case Mode::pce:
   case Mode::pce_sprite:
@@ -299,6 +350,19 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
       c.r >>= 5;
       c.g >>= 5;
       c.b >>= 5;
+      rgba_t scaled = c;
+      return (scaled & 0x00ffffff) + 0xff000000;
+    }
+    break;
+  case Mode::wsc:
+  case Mode::wsc_packed:
+    if (((color & 0xff000000) >> 24) < 0x80) {
+      return transparent_color;
+    } else {
+      rgba_color c(color);
+      c.r >>= 4;
+      c.g >>= 4;
+      c.b >>= 4;
       rgba_t scaled = c;
       return (scaled & 0x00ffffff) + 0xff000000;
     }
@@ -343,9 +407,17 @@ inline rgba_t normalize_color(const rgba_t color, Mode from_mode) {
     c.b = scale_up(c.b, 6);
     c.a = scale_up(c.a, 6);
     return c;
+  case Mode::wsc:
+  case Mode::wsc_packed:
+    c.r = scale_up(c.r, 4);
+    c.g = scale_up(c.g, 4);
+    c.b = scale_up(c.b, 4);
+    c.a = scale_up(c.a, 4);
+    return c;
   case Mode::md:
   case Mode::pce:
   case Mode::pce_sprite:
+  case Mode::ws:
     c.r = scale_up(c.r, 5);
     c.g = scale_up(c.g, 5);
     c.b = scale_up(c.b, 5);
@@ -392,6 +464,16 @@ inline byte_vec_t pack_native_color(const rgba_t color, Mode mode) {
     v.push_back(((color >> 16) & 0x07) | (color << 3 & 0x38) | ((color >> 2) & 0xc0));
     v.push_back((color >> 10) & 0x01);
     break;
+  case Mode::ws:
+    // TODO: WonderSwan technically supports 8 out of 16 grayscale colors.
+    // Currently, we do not support this additional distinction.
+    v.push_back(color ^ 0x07);
+    break;
+  case Mode::wsc:
+  case Mode::wsc_packed:
+    v.push_back(((color >> 16) & 0x0F) | ((color >> 4) & 0xF0));
+    v.push_back((color & 0x0F));
+    break;
   case Mode::none:
     break;
   }
@@ -411,7 +493,18 @@ inline byte_vec_t pack_native_colors(const rgba_vec_t& colors, Mode mode) {
     c |= pack_native_color(colors[2], mode)[0] << 4;
     c |= pack_native_color(colors[3], mode)[0] << 6;
     data.push_back(c);
-
+  } else if (mode == Mode::ws) {
+    // TODO: WonderSwan technically supports 8 out of 16 grayscale colors.
+    // Currently, we do not support this additional distinction.
+    if (colors.size() != 4) {
+      throw std::runtime_error("ws palette size not equal to 4");
+    }
+    uint16_t c = pack_native_color(colors[0], mode)[0];
+    c |= pack_native_color(colors[1], mode)[0] << 4;
+    c |= pack_native_color(colors[2], mode)[0] << 8;
+    c |= pack_native_color(colors[3], mode)[0] << 12;
+    data.push_back(c & 0xFF);
+    data.push_back(c >> 8);
   } else {
     for (const auto& c : colors) {
       auto nc = pack_native_color(c, mode);
@@ -477,6 +570,30 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
       v.push_back(nc);
     }
     break;
+  case Mode::ws:
+    // TODO: WonderSwan technically supports 8 out of 16 grayscale colors.
+    // Currently, we do not support this additional distinction.
+    if (colors.size() != 2) {
+      throw std::runtime_error("native palette size not two bytes");
+    }
+    for (unsigned i = 0; i < 4; ++i) {
+      rgba_t rgba;
+      uint32_t c = (colors[i >> 1] >> ((i & 0x01) * 4)) & 0x7;
+      rgba = 0xff000000 | ((c ^ 0x7) * 0x10101);
+      v.push_back(rgba);
+    }
+    break;
+  case Mode::wsc:
+  case Mode::wsc_packed:
+    if (colors.size() % 2 != 0) {
+      throw std::runtime_error("native palette size not a multiple of 2");
+    }
+    for (unsigned i = 0; i < colors.size(); i += 2) {
+      uint16_t cw = (colors[i + 1] << 8) + colors[i];
+      rgba_t nc = 0xff000000 | ((cw & 0xf00) >> 12) | ((cw & 0xf0) << 4) | ((cw & 0xf) << 16);
+      v.push_back(nc);
+    }
+    break;
   case Mode::none:
     break;
   }
@@ -488,6 +605,35 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
 //
 
 inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
+
+  // wsc planar style bit planes
+  auto make_4bit_planes = [](const index_vec_t& in_data, unsigned plane_index) {
+    byte_vec_t p(32);
+    if (in_data.empty())
+      return p;
+
+    index_t mask0 = 1;
+    for (unsigned i = 0; i < plane_index; ++i)
+      mask0 <<= 1;
+    index_t mask1 = mask0 << 1;
+    index_t mask2 = mask1 << 1;
+    index_t mask3 = mask2 << 1;
+
+    unsigned shift0 = plane_index;
+    unsigned shift1 = plane_index + 1;
+    unsigned shift2 = plane_index + 2;
+    unsigned shift3 = plane_index + 3;
+
+    for (unsigned y = 0; y < 8; ++y) {
+      for (unsigned x = 0; x < 8; ++x) {
+        p[y * 4 + 0] |= ((in_data[y * 8 + x] & mask0) >> shift0) << (7 - x);
+        p[y * 4 + 1] |= ((in_data[y * 8 + x] & mask1) >> shift1) << (7 - x);
+        p[y * 4 + 2] |= ((in_data[y * 8 + x] & mask2) >> shift2) << (7 - x);
+        p[y * 4 + 3] |= ((in_data[y * 8 + x] & mask3) >> shift3) << (7 - x);
+      }
+    }
+    return p;
+  };
 
   // snes/gameboy style bit planes
   auto make_2bit_planes = [](const index_vec_t& in_data, unsigned plane_index) {
@@ -541,14 +687,20 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
   };
 
   // gba/md style 2 pixels per byte data
-  auto make_4bpp_bitpack = [](const index_vec_t& in_data) {
+  auto make_4bpp_bitpack = [](const index_vec_t& in_data, bool endian_swap) {
     if (in_data.size() % 2)
       throw std::runtime_error("programmer error (in_data not multiple of 2 in make_4bpp_bitpack)");
 
     byte_vec_t bv(in_data.size() >> 1);
-    for (unsigned i = 0; i < bv.size(); ++i)
-      bv[i] = (0x0f & in_data[i << 1]) | (0xf0 & (in_data[(i << 1) + 1] << 4));
+    if (endian_swap) {
+      for (unsigned i = 0; i < bv.size(); ++i)
+        bv[i] = (0x0f & in_data[(i << 1) + 1]) | (0xf0 & (in_data[i << 1] << 4));
 
+    } else {
+      for (unsigned i = 0; i < bv.size(); ++i)
+        bv[i] = (0x0f & in_data[i << 1]) | (0xf0 & (in_data[(i << 1) + 1] << 4));
+
+    }
     return bv;
   };
 
@@ -570,14 +722,28 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
       nd.insert(nd.end(), plane.begin(), plane.end());
     }
 
+  } else if (mode == Mode::ws || mode == Mode::wsc) {
+    if (width != 8 || height != 8)
+      throw std::runtime_error(
+        fmt::format("programmer error (tile size not 8x8 in pack_native_tile() for mode \"{}\")", sfc::mode(mode)));
+
+    if (bpp == 4) {
+      nd = make_4bit_planes(data, 0);
+    } else if (bpp == 2) {
+      nd = make_2bit_planes(data, 0);
+    } else {
+      throw std::runtime_error(
+        fmt::format("programmer error (unsupported bpp for mode \"{}\")", sfc::mode(mode)));
+    }
+
   } else if (mode == Mode::snes_mode7) {
     nd = data;
 
-  } else if (mode == Mode::gba || mode == Mode::gba_affine || mode == Mode::md) {
+  } else if (mode == Mode::gba || mode == Mode::gba_affine || mode == Mode::md || mode == Mode::wsc_packed) {
     if (bpp == 8) {
       nd = data;
     } else if (bpp == 4) {
-      nd = make_4bpp_bitpack(data);
+      nd = make_4bpp_bitpack(data, mode == Mode::wsc_packed);
     }
 
   } else if (mode == Mode::pce_sprite) {
@@ -601,11 +767,32 @@ inline index_vec_t unpack_native_tile(const byte_vec_t& data, Mode mode, unsigne
     }
   };
 
+  auto add_1bit_plane_4bpp = [](index_vec_t& out_data, const byte_vec_t& in_data, unsigned plane_index) {
+    int plane_offset = ((plane_index >> 2) * 32) + (plane_index & 3);
+    for (int y = 0; y < 8; ++y) {
+      for (int x = 0; x < 8; ++x) {
+        out_data[y * 8 + x] += ((in_data[plane_offset + (y * 4)] >> (7 - x)) & 1) << plane_index;
+      }
+    }
+  };
+
   index_vec_t ud(width * height);
 
   if (mode == Mode::snes || mode == Mode::gb || mode == Mode::gbc || mode == Mode::pce) {
     for (unsigned i = 0; i < bpp; ++i)
       add_1bit_plane(ud, data, i);
+
+  } else if (mode == Mode::ws || mode == Mode::wsc) {
+    if (bpp == 4) {
+      for (unsigned i = 0; i < bpp; ++i)
+        add_1bit_plane_4bpp(ud, data, i);
+    } else if (bpp == 2) {
+      for (unsigned i = 0; i < bpp; ++i)
+        add_1bit_plane(ud, data, i);
+    } else {
+      throw std::runtime_error(
+        fmt::format("programmer error (unsupported bpp for mode \"{}\")", sfc::mode(mode)));
+    }
 
   } else if (mode == Mode::snes_mode7) {
     ud = data;
@@ -618,6 +805,12 @@ inline index_vec_t unpack_native_tile(const byte_vec_t& data, Mode mode, unsigne
       }
     } else {
       ud = data;
+    }
+
+  } else if (mode == Mode::wsc_packed) {
+    for (unsigned i = 0; i < data.size(); ++i) {
+      ud[(i << 1) + 0] = (data[i] & 0xf0) >> 4;
+      ud[(i << 1) + 1] = data[i] & 0x0f;
     }
 
   } else if (mode == Mode::pce_sprite) {
