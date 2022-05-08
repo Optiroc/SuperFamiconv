@@ -43,10 +43,12 @@ struct Map final {
   void add_palette_base_offset(int offset);
 
   byte_vec_t native_data(bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
+  byte_vec_t palette_map(bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
   byte_vec_t snes_mode7_interleaved_data(const Tileset& tileset) const;
   byte_vec_t gbc_banked_data() const;
 
   void save(const std::string& path, bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
+  void save_pal_map(const std::string& path, bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
   const std::string to_json(bool column_order = false, unsigned split_w = 0, unsigned split_h = 0) const;
 
 private:
