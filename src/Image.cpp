@@ -219,7 +219,7 @@ std::vector<Image> Image::crops(unsigned tile_width, unsigned tile_height, Mode 
       x += tile_width;
     }
     x = 0;
-    y += tile_width;
+    y += tile_height;
   }
   return v;
 }
