@@ -82,6 +82,17 @@ byte_vec_t Map::native_data(bool column_order, unsigned split_w, unsigned split_
   return data;
 }
 
+byte_vec_t Map::palette_map(bool column_order, unsigned split_w, unsigned split_h) const {
+  byte_vec_t data;
+  for (const auto& vm : collect_entries(column_order, split_w, split_h)) {
+    for (const auto& m : vm) {
+      data.push_back(m.palette_index & 0xFF);
+      data.push_back(m.palette_index >> 8);
+    }
+  }
+  return data;
+}
+
 byte_vec_t Map::snes_mode7_interleaved_data(const Tileset& tileset) const {
   auto map_data = native_data();
   auto tile_data = tileset.native_data();
@@ -109,6 +120,10 @@ byte_vec_t Map::gbc_banked_data() const {
 
 void Map::save(const std::string& path, bool column_order, unsigned split_w, unsigned split_h) const {
   sfc::write_file(path, native_data(column_order, split_w, split_h));
+}
+
+void Map::save_pal_map(const std::string& path, bool column_order, unsigned split_w, unsigned split_h) const {
+  sfc::write_file(path, palette_map(column_order, split_w, split_h));
 }
 
 const std::string Map::to_json(bool column_order, unsigned split_w, unsigned split_h) const {
