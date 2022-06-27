@@ -229,7 +229,7 @@ byte_vec_t Tileset::native_data() const {
 std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles, Mode mode) const {
   std::vector<Tile> tv;
 
-  if ((mode == Mode::snes && (_tile_width%16 == 0 || _tile_height%16 == 0) && (_tile_width <= 64 || _tile_height <= 64))
+  if ((mode == Mode::snes && (_tile_width%16 == 0 || _tile_height%16 == 0) && (_tile_width <= 64 || _tile_height <= 64)) 
       || ( (mode == Mode::gb || mode == Mode::gbc) && _tile_height == 16)) {
     const unsigned cells_per_tile_h = _tile_width / 8;
     const unsigned cells_per_tile_v = _tile_height / 8;
@@ -252,7 +252,6 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
   } else {
     throw std::runtime_error("programmer error (remap_tiles_for_output invoked erroneously invoked)");
   }
-
   return tv;
 }
 
