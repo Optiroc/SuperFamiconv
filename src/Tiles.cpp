@@ -229,10 +229,11 @@ byte_vec_t Tileset::native_data() const {
 std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles, Mode mode) const {
   std::vector<Tile> tv;
 
-  if (mode == Mode::snes && (_tile_width%16 == 0 || _tile_height%16 == 0) && (_tile_width <= 64 || _tile_height <= 64)) {
+  if ((mode == Mode::snes && (_tile_width%16 == 0 || _tile_height%16 == 0) && (_tile_width <= 64 || _tile_height <= 64)) 
+      || ( (mode == Mode::gb || mode == Mode::gbc) && _tile_height == 16)) {
     const unsigned cells_per_tile_h = _tile_width / 8;
     const unsigned cells_per_tile_v = _tile_height / 8;
-    const unsigned cells_per_row = 16;
+    const unsigned cells_per_row = (mode == Mode::snes ? 16:1);
     const unsigned tiles_per_row = cells_per_row / cells_per_tile_h;
     const unsigned cell_rows = div_ceil((int)tiles.size(), tiles_per_row) * cells_per_tile_v;
     tv.resize(cells_per_row * cell_rows);
@@ -243,7 +244,7 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
       const auto ct = tiles[i].crops(8, 8);
       for (unsigned cy = 0; cy < cells_per_tile_v; ++cy) {
         for (unsigned cx = 0; cx < cells_per_tile_h; ++cx) {
-          tv[base_pos + (cy * cells_per_row) + cx] = ct[(cy * cells_per_tile_v) + cx];
+          tv[base_pos + (cy * cells_per_row) + cx] = ct[(cy * cells_per_tile_h) + cx];
         }
       }
     }
