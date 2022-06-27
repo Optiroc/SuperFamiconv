@@ -229,7 +229,7 @@ byte_vec_t Tileset::native_data() const {
 std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles, Mode mode) const {
   std::vector<Tile> tv;
 
-  if ((mode == Mode::snes && (_tile_width%16 == 0 || _tile_height%16 == 0) && (_tile_width <= 64 || _tile_height <= 64)) 
+  if ((mode == Mode::snes && (_tile_width%16 == 0 || _tile_height%16 == 0) && (_tile_width <= 64 || _tile_height <= 64))
       || ( (mode == Mode::gb || mode == Mode::gbc) && _tile_height == 16)) {
     const unsigned cells_per_tile_h = _tile_width / 8;
     const unsigned cells_per_tile_v = _tile_height / 8;
@@ -259,7 +259,8 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
 std::vector<Tile> Tileset::remap_tiles_for_input(const std::vector<Tile>& tiles, Mode mode) const {
   std::vector<Tile> tv;
 
-  if (mode == Mode::snes && (_tile_width == 16 || _tile_height == 16)) {
+  if ((mode == Mode::snes && (_tile_width == 16 || _tile_height == 16))
+      || ( (mode == Mode::gb || mode == Mode::gbc) && _tile_height == 16)) {
     const unsigned cells_per_tile_h = _tile_width / 8;
     const unsigned cells_per_tile_v = _tile_height / 8;
 
@@ -267,8 +268,8 @@ std::vector<Tile> Tileset::remap_tiles_for_input(const std::vector<Tile>& tiles,
       std::vector<Tile> metatile;
       for (unsigned yo = 0; yo < cells_per_tile_v; ++yo) {
         for (unsigned xo = 0; xo < cells_per_tile_h; ++xo) {
-          if ((i + (yo * 16) + xo) < tiles.size())
-            metatile.push_back(tiles[i + (yo * 16) + xo]);
+          if ((i + (yo * (mode == Mode::snes ? 16:1)) + xo) < tiles.size())
+            metatile.push_back(tiles[i + (yo * (mode == Mode::snes ? 16:1)) + xo]);
         }
       }
       if (metatile.size() == cells_per_tile_h * cells_per_tile_v)
