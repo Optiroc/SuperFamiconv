@@ -19,6 +19,7 @@ struct Settings {
   std::string out_json;
   std::string out_m7_data;
   std::string out_gbc_bank;
+  std::string out_pal_map;
 
   sfc::Mode mode;
   unsigned bpp;
@@ -55,6 +56,7 @@ int sfc_map(int argc, char* argv[]) {
     options.Add(settings.out_json,            'j', "out-json",            "Output: json");
     options.Add(settings.out_m7_data,         '7', "out-m7-data",         "Output: interleaved map/tile data (snes_mode7)");
     options.Add(settings.out_gbc_bank,       '\0', "out-gbc-bank",        "Output: banked map data (gbc)");
+    options.Add(settings.out_pal_map,        '\0', "out-pal-map",         "Output: palette map (native 16-bit LE)");
 
     options.Add(mode_str,                     'M', "mode",                "Mode <default: snes>",                       std::string("snes"),  "Settings");
     options.Add(settings.bpp,                 'B', "bpp",                 "Bits per pixel",                             unsigned(4),          "Settings");
@@ -161,6 +163,12 @@ int sfc_map(int argc, char* argv[]) {
       map.save(settings.out_data, settings.column_order, settings.map_split_w, settings.map_split_h);
       if (verbose)
         fmt::print("Saved native map data to \"{}\"\n", settings.out_data);
+    }
+
+    if (!settings.out_pal_map.empty()) {
+      map.save_pal_map(settings.out_pal_map, settings.column_order, settings.map_split_w, settings.map_split_h);
+      if (verbose)
+        fmt::print("Saved palette map to \"{}\"\n", settings.out_pal_map);
     }
 
     if (!settings.out_json.empty()) {

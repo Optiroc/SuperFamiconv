@@ -237,25 +237,12 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
     const unsigned cell_rows = div_ceil((int)tiles.size(), tiles_per_row) * cells_per_tile_v;
     tv.resize(cells_per_row * cell_rows);
 
-    printf("_tile_width %d / _tile_height %d\n", _tile_width, _tile_height);
-    printf("cells_per_tile_h %d / cells_per_tile_v %d\n", cells_per_tile_h, cells_per_tile_v);
-    printf("cells_per_row %d / tiles_per_row %d\n", cells_per_row, tiles_per_row);
-    printf("cell_rows %d\n", cell_rows);
-    printf("tv size %d\n", cells_per_row * cell_rows);
-    printf("tiles size %ld\n", tiles.size());
-
     for (unsigned i = 0; i < tiles.size(); ++i) {
       unsigned base_pos =
         (((i / tiles_per_row) * cells_per_tile_v) * cells_per_row) + ((i % tiles_per_row) << (cells_per_tile_h - 2));
       const auto ct = tiles[i].crops(8, 8);
-
-      printf("--------------------------------\n");
-      printf("base_pos %d tiles size %ld i -> %d \n", base_pos, tiles.size(), i);
-      printf("base_pos calculation %d + (%d << %d)\n", (((i / tiles_per_row) * cells_per_tile_v) * cells_per_row), (i % tiles_per_row), (cells_per_tile_h - 1));
-
       for (unsigned cy = 0; cy < cells_per_tile_v; ++cy) {
         for (unsigned cx = 0; cx < cells_per_tile_h; ++cx) {
-          printf("Writing to %d / %ld\n", base_pos + (cy * cells_per_row) + cx, tv.size());
           tv[base_pos + (cy * cells_per_row) + cx] = ct[(cy * cells_per_tile_v) + cx];
         }
       }

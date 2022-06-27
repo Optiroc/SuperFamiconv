@@ -224,6 +224,10 @@ constexpr int div_ceil(int numerator, int denominator) {
   return (numerator / denominator) + (((numerator < 0) ^ (denominator > 0)) && (numerator % denominator));
 }
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 constexpr double rad2deg(const double rad) {
   return rad * (180.0 / M_PI);
 }
