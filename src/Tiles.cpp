@@ -229,7 +229,7 @@ byte_vec_t Tileset::native_data() const {
 std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles, Mode mode) const {
   std::vector<Tile> tv;
 
-  if ((mode == Mode::snes && (_tile_width == 16 || _tile_height == 16))
+  if ((mode == Mode::snes && (_tile_width%16 == 0 || _tile_height%16 == 0) && (_tile_width <= 64 || _tile_height <= 64)) 
       || ( (mode == Mode::gb || mode == Mode::gbc) && _tile_height == 16)) {
     const unsigned cells_per_tile_h = _tile_width / 8;
     const unsigned cells_per_tile_v = _tile_height / 8;
@@ -240,7 +240,7 @@ std::vector<Tile> Tileset::remap_tiles_for_output(const std::vector<Tile>& tiles
 
     for (unsigned i = 0; i < tiles.size(); ++i) {
       unsigned base_pos =
-        (((i / tiles_per_row) * cells_per_tile_v) * cells_per_row) + ((i % tiles_per_row) << (cells_per_tile_h - 1));
+        (((i / tiles_per_row) * cells_per_tile_v) * cells_per_row) + ((i % tiles_per_row) << (cells_per_tile_h - 2));
       const auto ct = tiles[i].crops(8, 8);
       for (unsigned cy = 0; cy < cells_per_tile_v; ++cy) {
         for (unsigned cx = 0; cx < cells_per_tile_h; ++cx) {
