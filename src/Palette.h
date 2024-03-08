@@ -1,11 +1,12 @@
 // palette representation
 //
-// david lindecrantz <optiroc@gmail.com>
+// david lindecrantz <optiroc@me.com>
 
 #pragma once
 
 #include "Common.h"
 #include "Image.h"
+#include "Mode.h"
 
 namespace sfc {
 

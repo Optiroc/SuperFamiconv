@@ -1,7 +1,7 @@
 // sfc_palette
 // part of superfamiconv
 //
-// david lindecrantz <optiroc@gmail.com>
+// david lindecrantz <optiroc@me.com>
 
 #include <Options.h>
 #include "Common.h"
@@ -65,7 +65,7 @@ int sfc_palette(int argc, char* argv[]) {
       return 1;
 
     if (argc <= 2 || help) {
-      fmt::print(options.Usage());
+      std::cout << options.Usage();
       return 0;
     }
 

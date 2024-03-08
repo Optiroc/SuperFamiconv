@@ -1,9 +1,10 @@
 // mode-specific defaults, constraints and functions
 //
-// david lindecrantz <optiroc@gmail.com>
+// david lindecrantz <optiroc@me.com>
 
 #pragma once
 
+#include "Color.h"
 #include "Common.h"
 
 namespace sfc {
