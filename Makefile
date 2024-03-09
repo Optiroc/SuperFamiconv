@@ -10,6 +10,7 @@ CXX := g++
 FLAGS     := -Wall -Wextra -I$(INC_DIR)
 CXX_FLAGS := -std=c++20
 LD_FLAGS  :=
+TARGET    :=
 
 ifeq ($(DEBUG), 1)
   CXX_FLAGS += -O0 -g
@@ -25,11 +26,11 @@ HEADERS     += $(INC_DIR)/Options.h $(INC_DIR)/nlohmann/json.hpp $(wildcard $(IN
 superfamiconv: $(BIN_DIR)/superfamiconv
 
 $(BIN_DIR)/superfamiconv : $(OBJ_DIR)/superfamiconv.o $(OBJ_DIR)/sfc_palette.o $(OBJ_DIR)/sfc_tiles.o $(OBJ_DIR)/sfc_map.o $(COMMON_OBJ) $(LIBRARY_OBJ) | $(BIN_DIR)
-	$(CXX) $(LD_FLAGS) $^ -o $@
+	$(CXX) $(LD_FLAGS) $(TARGET) $^ -o $@
 
 $(OBJ_DIR)/%.o : ./**/%.cpp $(HEADERS)
 	@mkdir -pv $(dir $@)
-	$(CXX) $(CXX_FLAGS) $(FLAGS) -c $< -o $@
+	$(CXX) $(CXX_FLAGS) $(FLAGS) $(TARGET) -c $< -o $@
 
 $(BIN_DIR):
 	@mkdir -pv $@
