@@ -1,35 +1,23 @@
-name: Build check
+name: Release
 
 on:
-  pull_request:
   push:
-    branches: main
+    tags:
+      - "v*.*.*"
 
 jobs:
-  build_ubuntu:
-    name: Linux
+  build_ubunto:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build
-        run: |
-          make
-  build_macos:
-    name: macOS
-    runs-on: macos-14
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Build
-        run: |
-          make
-  build_windows:
-    name: Windows
-    runs-on: windows-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Build
-        run: |
-          mkdir .build && cd .build && cmake .. && cmake --build . --config Release
+        run: make
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files:
+            - bin/superfamiconv
+            - README.md
+            - LICENSE
