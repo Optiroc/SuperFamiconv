@@ -1,9 +1,4 @@
-.build/
-bin
-docs
-tests
-CMakeCache.txt
-CMakeFiles/
-Makefile
-cmake_install.cmake
-superfamiconv
+.cache/
+build/
+/docs/
+/test-data/

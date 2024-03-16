@@ -174,7 +174,7 @@ int sfc_map(int argc, char* argv[]) {
     if (!settings.out_json.empty()) {
       sfc::write_file(settings.out_json, map.to_json(settings.column_order, settings.map_split_w, settings.map_split_h));
       if (verbose)
-        fmt::print("Saved json map data to \"{}\"\n", settings.out_json);
+        fmt::print("Saved JSON map data to \"{}\"\n", settings.out_json);
     }
 
     if (settings.mode == sfc::Mode::snes_mode7 && !settings.out_m7_data.empty()) {

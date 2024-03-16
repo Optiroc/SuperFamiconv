@@ -5,7 +5,7 @@
 #ifdef _MSC_VER // visual c++
   #include <io.h>
   #include <winsock.h>
-  #include "getoptw/getoptw.h"
+  #include "getopt-win/getopt.h"
 #else
   #include <unistd.h>
   #include <getopt.h>

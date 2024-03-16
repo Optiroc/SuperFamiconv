@@ -1,4 +1,4 @@
-name: Main merge and pre-merge
+name: Merge
 
 on:
   pull_request:
@@ -29,4 +29,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build
-        run: mkdir .build && cd .build && cmake .. && cmake --build . --config Release
+        run: |
+          cmake -Bbuild -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
