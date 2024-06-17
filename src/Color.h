@@ -1,6 +1,6 @@
 // color types and functions
 //
-// david lindecrantz <optiroc@gmail.com>
+// david lindecrantz <optiroc@me.com>
 
 #pragma once
 

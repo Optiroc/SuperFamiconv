@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  release_macos:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        run: |
+          make
+          zip -j superfamiconv_macos_${{ github.ref_name }}.zip build/release/superfamiconv README.md LICENSE
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: superfamiconv_macos_${{ github.ref_name }}.zip
+  release_win64:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        run: |
+          cmake -Bbuild -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
+          move build\Release\superfamiconv.exe superfamiconv.exe
+          Compress-Archive -LiteralPath superfamiconv.exe, README.md, LICENSE -DestinationPath superfamiconv_win64_${{ github.ref_name }}.zip
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: superfamiconv_win64_${{ github.ref_name }}.zip

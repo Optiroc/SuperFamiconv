@@ -1,7 +1,7 @@
 // sfc_palette
 // part of superfamiconv
 //
-// david lindecrantz <optiroc@gmail.com>
+// david lindecrantz <optiroc@me.com>
 
 #include <Options.h>
 #include "Common.h"
@@ -65,7 +65,7 @@ int sfc_palette(int argc, char* argv[]) {
       return 1;
 
     if (argc <= 2 || help) {
-      fmt::print(options.Usage());
+      std::cout << options.Usage();
       return 0;
     }
 
@@ -157,7 +157,7 @@ int sfc_palette(int argc, char* argv[]) {
     if (!settings.out_act.empty()) {
       palette.save_act(settings.out_act);
       if (verbose)
-        fmt::print("Saved photoshop palette to \"{}\"\n", settings.out_act);
+        fmt::print("Saved ACT palette to \"{}\"\n", settings.out_act);
     }
 
     if (!settings.out_image.empty()) {
@@ -170,7 +170,7 @@ int sfc_palette(int argc, char* argv[]) {
     if (!settings.out_json.empty()) {
       sfc::write_file(settings.out_json, palette.to_json());
       if (verbose)
-        fmt::print("Saved json data to \"{}\"\n", settings.out_json);
+        fmt::print("Saved JSON data to \"{}\"\n", settings.out_json);
     }
 
   } catch (const std::exception& e) {

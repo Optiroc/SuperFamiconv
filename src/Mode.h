@@ -1,9 +1,10 @@
 // mode-specific defaults, constraints and functions
 //
-// david lindecrantz <optiroc@gmail.com>
+// david lindecrantz <optiroc@me.com>
 
 #pragma once
 
+#include "Color.h"
 #include "Common.h"
 
 namespace sfc {
@@ -590,7 +591,7 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
     }
     for (unsigned i = 0; i < colors.size(); i += 2) {
       uint16_t cw = (colors[i + 1] << 8) + colors[i];
-      rgba_t nc = 0xff000000 | ((cw & 0xf00) >> 12) | ((cw & 0xf0) << 4) | ((cw & 0xf) << 16);
+      rgba_t nc = 0xff000000 | ((cw & 0xf00) >> 8) | ((cw & 0xf0) << 4) | ((cw & 0xf) << 16);
       v.push_back(nc);
     }
     break;

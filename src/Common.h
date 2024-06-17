@@ -1,24 +1,14 @@
 // common types and utility functions
 //
-// david lindecrantz <optiroc@gmail.com>
+// david lindecrantz <optiroc@me.com>
 
 #pragma once
 
-#include <algorithm>
-#include <climits>
-#include <cmath>
 #include <cstdint>
 #include <fstream>
-#include <functional>
-#include <iterator>
-#include <memory>
 #include <set>
-#include <stdexcept>
-#include <string>
-#include <vector>
-
-#include <fmt/core.h>
 #include <nlohmann/json.hpp>
+#include <fmt/core.h>
 
 typedef uint8_t index_t;   // color index (typedefd in case more than 8 bits are needed down the road)
 typedef uint8_t channel_t; // rgba color channel
@@ -32,114 +22,6 @@ typedef std::set<rgba_t> rgba_set_t;
 typedef std::vector<rgba_set_t> rgba_set_vec_t;
 
 namespace sfc {
-
-constexpr const char* VERSION = "0.9.2";
-
-constexpr const char* COPYRIGHT = "Copyright (c) 2017-2020 David Lindecrantz";
-
-constexpr const char* LICENSE =
-  "Permission is hereby granted, free of charge, to any person obtaining a copy "
-  "of this software and associated documentation files (the \"Software\"), to deal "
-  "in the Software without restriction, including without limitation the rights "
-  "to use, copy, modify, merge, publish, distribute, sublicense, and/or sell "
-  "copies of the Software, and to permit persons to whom the Software is "
-  "furnished to do so, subject to the following conditions:"
-  "\n\n"
-  "The above copyright notice and this permission notice shall be included in "
-  "all copies or substantial portions of the Software."
-  "\n\n"
-  "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR "
-  "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, "
-  "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE "
-  "AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER "
-  "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, "
-  "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN "
-  "THE SOFTWARE."
-
-  "\n\n\n"
-
-  "LodePNG version 20200306"
-  "\n"
-  "Copyright (c) 2005-2020 Lode Vandevennen"
-  "\n\n"
-  "This software is provided 'as-is', without any express or implied "
-  "warranty. In no event will the authors be held liable for any damages "
-  "arising from the use of this software. "
-  "\n\n"
-  "Permission is granted to anyone to use this software for any purpose, "
-  "including commercial applications, and to alter it and redistribute it "
-  "freely, subject to the following restrictions:"
-  "\n\n"
-  "1. The origin of this software must not be misrepresented; you must not "
-  "claim that you wrote the original software. If you use this software "
-  "in a product, an acknowledgment in the product documentation would be "
-  "appreciated but is not required."
-  "\n\n"
-  "2. Altered source versions must be plainly marked as such, and must not be "
-  "misrepresented as being the original software."
-  "\n\n"
-  "3. This notice may not be removed or altered from any source distribution."
-
-  "\n\n\n"
-
-  "    __ _____ _____ _____ \n"
-  " __|  |   __|     |   | |  JSON for Modern C++\n"
-  "|  |  |__   |  |  | | | |  version 3.7.3\n"
-  "|_____|_____|_____|_|___|  https://github.com/nlohmann/json\n"
-  "\n"
-  "Licensed under the MIT License <http://opensource.org/licenses/MIT>.\n"
-  "SPDX-License-Identifier: MIT\n"
-  "Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.\n"
-  "\n"
-  "Permission is hereby  granted, free of charge, to any  person obtaining a copy "
-  "of this software and associated  documentation files (the \"Software\"), to deal "
-  "in the Software  without restriction, including without  limitation the rights "
-  "to  use, copy,  modify, merge,  publish, distribute,  sublicense, and/or  sell "
-  "copies  of  the Software,  and  to  permit persons  to  whom  the Software  is "
-  "furnished to do so, subject to the following conditions:"
-  "\n\n"
-  "The above copyright notice and this permission notice shall be included in all "
-  "copies or substantial portions of the Software."
-  "\n\n"
-  "THE SOFTWARE  IS PROVIDED \"AS  IS\", WITHOUT WARRANTY  OF ANY KIND,  EXPRESS OR "
-  "IMPLIED,  INCLUDING BUT  NOT  LIMITED TO  THE  WARRANTIES OF  MERCHANTABILITY, "
-  "FITNESS FOR  A PARTICULAR PURPOSE AND  NONINFRINGEMENT. IN NO EVENT  SHALL THE "
-  "AUTHORS  OR COPYRIGHT  HOLDERS  BE  LIABLE FOR  ANY  CLAIM,  DAMAGES OR  OTHER "
-  "LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM, "
-  "OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE "
-  "SOFTWARE."
-
-  "\n\n\n"
-
-  "{fmt} version 6.1.2\n"
-  "Copyright (c) 2012 - present, Victor Zverovich"
-  "\n\n"
-  "Permission is hereby granted, free of charge, to any person obtaining "
-  "a copy of this software and associated documentation files (the "
-  "\"Software\"), to deal in the Software without restriction, including "
-  "without limitation the rights to use, copy, modify, merge, publish, "
-  "distribute, sublicense, and/or sell copies of the Software, and to "
-  "permit persons to whom the Software is furnished to do so, subject to "
-  "the following conditions:"
-  "\n\n"
-  "The above copyright notice and this permission notice shall be "
-  "included in all copies or substantial portions of the Software."
-  "\n\n"
-  "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, "
-  "EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF "
-  "MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND "
-  "NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE "
-  "LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION "
-  "OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION "
-  "WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
-  "\n\n"
-  "--- Optional exception to the license ---"
-  "\n\n"
-  "As an exception, if, as a result of your compiling your source code, portions "
-  "of this Software are embedded into a machine-executable object form of such "
-  "source code, you may redistribute such embedded portions in such object form "
-  "without including the above copyright and permission notices."
-  "\n";
 
 enum Constants {
   options_indent = 28,
@@ -279,6 +161,3 @@ bool has_superset(const std::set<T>& set, const std::vector<std::set<T>>& super)
 }
 
 } /* namespace sfc */
-
-#include "Color.h"
-#include "Mode.h"

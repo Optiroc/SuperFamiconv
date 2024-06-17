@@ -1,12 +1,13 @@
 // image representation
 //
-// david lindecrantz <optiroc@gmail.com>
+// david lindecrantz <optiroc@me.com>
 
 #pragma once
 
 #include <LodePNG/lodepng.h>
 
 #include "Common.h"
+#include "Mode.h"
 #include "Palette.h"
 #include "Tiles.h"
 
