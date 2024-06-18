@@ -310,9 +310,24 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
       return transparent_color;
     } else {
       rgba_color c(color);
-      c.r >>= 3;
-      c.g >>= 3;
-      c.b >>= 3;
+      if ((c.r & 0x0007 > 0x0003)) {
+        c.r >>= 3;
+        c.r += 1;
+      } else {
+        c.r >>= 3;
+      }
+      if ((c.g & 0x0007 > 0x0003)) {
+        c.g >>= 3;
+        c.g += 1;
+      } else {
+        c.g >>= 3;
+      }
+      if ((c.b & 0x0007 > 0x0003)) {
+        c.b >>= 3;
+        c.b += 1;
+      } else {
+        c.b >>= 3;
+      }
       rgba_t scaled = c;
       return (scaled & 0x00ffffff) + 0xff000000;
     }
