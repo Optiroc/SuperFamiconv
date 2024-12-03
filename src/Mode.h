@@ -22,7 +22,9 @@ enum class Mode {
   pce_sprite,
   ws,
   wsc,
-  wsc_packed
+  wsc_packed,
+  sms,
+  gg
 };
 
 inline Mode mode(const std::string& str) {
@@ -50,6 +52,10 @@ inline Mode mode(const std::string& str) {
     return Mode::wsc;
   } else if (str == "wsc_packed") {
     return Mode::wsc_packed;
+  } else if (str == "sms") {
+    return Mode::sms;
+  } else if (str == "gg") {
+    return Mode::gg;
   }
   return Mode::none;
 }
@@ -80,6 +86,10 @@ inline std::string mode(Mode mode) {
     return std::string("wsc");
   case Mode::wsc_packed:
     return std::string("wsc_packed");
+  case Mode::sms:
+    return std::string("sms");
+  case Mode::gg:
+    return std::string("gg");
   default:
     return std::string("none");
   }
@@ -98,6 +108,8 @@ constexpr unsigned default_bpp_for_mode(Mode mode) {
   case Mode::pce_sprite:
   case Mode::wsc:
   case Mode::wsc_packed:
+  case Mode::sms:
+  case Mode::gg:
   case Mode::none:
     return 4;
   case Mode::snes_mode7:
@@ -128,6 +140,8 @@ constexpr bool bpp_allowed_for_mode(unsigned bpp, Mode mode) {
   case Mode::pce:
   case Mode::pce_sprite:
   case Mode::wsc_packed:
+  case Mode::sms:
+  case Mode::gg:
     return bpp == 4;
   case Mode::none:
     return false;
@@ -151,6 +165,8 @@ constexpr unsigned max_tile_count_for_mode(Mode mode) {
     return 256;
   case Mode::gbc:
   case Mode::ws:
+  case Mode::sms:
+  case Mode::gg:
     return 512;
   case Mode::snes:
   case Mode::gba:
@@ -201,6 +217,8 @@ constexpr bool tile_height_allowed_for_mode(unsigned height, Mode mode) {
   case Mode::ws:
   case Mode::wsc:
   case Mode::wsc_packed:
+  case Mode::sms:
+  case Mode::gg:
     return height == 8;
   case Mode::pce_sprite:
     return height == 16;
@@ -250,6 +268,8 @@ constexpr unsigned default_palette_count_for_mode(Mode mode) {
   case Mode::gb:
   case Mode::gba_affine:
     return 1;
+  case Mode::sms:
+    return 2;
   case Mode::md:
     return 4;
   case Mode::snes:
@@ -271,6 +291,8 @@ constexpr bool col0_is_shared_for_mode(Mode mode) {
   switch (mode) {
   case Mode::gb:
   case Mode::gbc:
+  case Mode::sms:
+  case Mode::gg:
     return false;
   default:
     return true;
@@ -288,6 +310,8 @@ constexpr bool col0_is_shared_for_sprite_mode(Mode mode) {
   case Mode::md:
   case Mode::pce:
   case Mode::pce_sprite:
+  case Mode::sms:
+  case Mode::gg:
     return true;
   default:
     return false;
@@ -355,8 +379,18 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
       return (scaled & 0x00ffffff) + 0xff000000;
     }
     break;
+  case Mode::sms: {
+    rgba_color c(color);
+    c.r >>= 6;
+    c.g >>= 6;
+    c.b >>= 6;
+    rgba_t scaled = c;
+    return (scaled & 0x00ffffff) + 0xff000000;
+  }
+    break;
   case Mode::wsc:
   case Mode::wsc_packed:
+  case Mode::gg:
     if (((color & 0xff000000) >> 24) < 0x80) {
       return transparent_color;
     } else {
@@ -403,6 +437,7 @@ inline rgba_t normalize_color(const rgba_t color, Mode from_mode) {
     c.a = scale_up(c.a, 3);
     return c;
   case Mode::gb:
+  case Mode::sms:
     c.r = scale_up(c.r, 6);
     c.g = scale_up(c.g, 6);
     c.b = scale_up(c.b, 6);
@@ -410,6 +445,7 @@ inline rgba_t normalize_color(const rgba_t color, Mode from_mode) {
     return c;
   case Mode::wsc:
   case Mode::wsc_packed:
+  case Mode::gg:
     c.r = scale_up(c.r, 4);
     c.g = scale_up(c.g, 4);
     c.b = scale_up(c.b, 4);
@@ -471,9 +507,13 @@ inline byte_vec_t pack_native_color(const rgba_t color, Mode mode) {
     v.push_back(color ^ 0x07);
     break;
   case Mode::wsc:
+  case Mode::gg:
   case Mode::wsc_packed:
     v.push_back(((color >> 16) & 0x0F) | ((color >> 4) & 0xF0));
     v.push_back((color & 0x0F));
+    break;
+  case Mode::sms:
+    v.push_back(((color >> 12) & 0x30) | ((color >> 6) & 0x0C) | (color & 3));
     break;
   case Mode::none:
     break;
@@ -533,6 +573,12 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
       v.push_back(nc);
     }
     break;
+  case Mode::sms:
+    for (unsigned i = 0; i < colors.size(); i++) {
+      rgba_t nc = (colors[i] & 3) | ((colors[i] & 0xC) << 6) | ((colors[i] & 0x30) << 12) | 0xff000000;
+      v.push_back(nc);
+    }
+    break;
   case Mode::gb:
     if (colors.size() != 1) {
       throw std::runtime_error("native palette size not one byte");
@@ -548,6 +594,16 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
           rgba = 0;
       }
       v.push_back(rgba);
+    }
+    break;
+  case Mode::gg:
+    if (colors.size() % 2 != 0) {
+      throw std::runtime_error("native palette size not a multiple of 2");
+    }
+    for (unsigned i = 0; i < colors.size(); i += 2) {
+      uint16_t cw = (colors[i + 1] << 8) + colors[i];
+      rgba_t nc = (cw & 0x00f) | ((cw & 0x00f0) << 4) | ((cw & 0x0f00) << 8) | 0xff000000;
+      v.push_back(nc);
     }
     break;
   case Mode::md:
@@ -607,7 +663,7 @@ inline rgba_vec_t unpack_native_colors(const byte_vec_t& colors, Mode mode) {
 
 inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned bpp, unsigned width, unsigned height) {
 
-  // wsc planar style bit planes
+  // wsc/sms/gg planar style bit planes
   auto make_4bit_planes = [](const index_vec_t& in_data, unsigned plane_index) {
     byte_vec_t p(32);
     if (in_data.empty())
@@ -723,7 +779,7 @@ inline byte_vec_t pack_native_tile(const index_vec_t& data, Mode mode, unsigned 
       nd.insert(nd.end(), plane.begin(), plane.end());
     }
 
-  } else if (mode == Mode::ws || mode == Mode::wsc) {
+  } else if (mode == Mode::ws || mode == Mode::wsc || mode == Mode::gg || mode == Mode::sms) {
     if (width != 8 || height != 8)
       throw std::runtime_error(
         fmt::format("programmer error (tile size not 8x8 in pack_native_tile() for mode \"{}\")", sfc::mode(mode)));
@@ -783,7 +839,7 @@ inline index_vec_t unpack_native_tile(const byte_vec_t& data, Mode mode, unsigne
     for (unsigned i = 0; i < bpp; ++i)
       add_1bit_plane(ud, data, i);
 
-  } else if (mode == Mode::ws || mode == Mode::wsc) {
+  } else if (mode == Mode::ws || mode == Mode::wsc || mode == Mode::gg || mode == Mode::sms) {
     if (bpp == 4) {
       for (unsigned i = 0; i < bpp; ++i)
         add_1bit_plane_4bpp(ud, data, i);
