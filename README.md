@@ -46,18 +46,20 @@ This command mode accepts one image (either indexed, RGB or RGBA mode PNG – wh
 
 The `mode` option, which is common for all commands, affects the color space handling and binary output format. It takes one of the following arguments:
 
-* `snes`
-* `snes_mode7`
-* `gb`
-* `gbc`
-* `gba`
-* `gba_affine`
-* `md`
-* `pce`
-* `pce_sprite`
-* `ws`
-* `wsc`
-* `wsc_packed`
+* `gb` - Game Boy
+* `gba` - Game Boy Advance
+* `gba_affine` - Game Boy Advance (affine background data)
+* `gbc` - Game Boy Color
+* `gg` - Game Gear
+* `md` - Mega Drive
+* `pce` - PC Engine
+* `pce_sprite` - PC Engine (sprite data)
+* `sms` - Master System
+* `snes` - Super Nintendo
+* `snes_mode7` - Super Nintendo (mode 7 background data)
+* `ws` - WonderSwan
+* `wsc` - WonderSwan Color (planar)
+* `wsc_packed` - WonderSwan Color (packed)
 
 Sensible default options are applied, and differ depending on selected mode.
 

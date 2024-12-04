@@ -9,7 +9,7 @@ namespace sfc::about {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-const-variable"
 
-constexpr const char* VERSION = "0.10.0";
+constexpr const char* VERSION = "0.11.0";
 
 constexpr const char* COPYRIGHT = "Copyright (c) 2017-2024 David Lindecrantz";
 
