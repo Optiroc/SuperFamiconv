@@ -80,6 +80,13 @@ inline byte_vec_t pack_native_mapentry(const Mapentry& entry, Mode mode) {
     v.push_back(entry.tile_index & 0xff);
     break;
 
+  case Mode::sms:
+  case Mode::gg:
+    v.push_back(entry.tile_index & 0xff);
+    v.push_back(((entry.tile_index >> 8) & 0x01) | (entry.flip_h << 1) | (entry.flip_v << 2) | ((entry.palette_index << 3) & 0x8));
+    // SMS and GG support depth information per tile in tilemap, instead of per sprite. But superfamiconv doesn't provide that rope?
+    break;
+
   case Mode::gbc:
     v.push_back(entry.tile_index & 0xff);
     v.push_back(((entry.palette_index) & 0x07) | ((entry.tile_index >> 5) & 0x08) | (entry.flip_h << 5) | (entry.flip_v << 6));
