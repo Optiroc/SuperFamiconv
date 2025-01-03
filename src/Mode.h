@@ -418,9 +418,6 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
       c.r = scale_down(c.r, 6);
       c.g = scale_down(c.g, 6);
       c.b = scale_down(c.b, 6);
-      c.r >>= 6;
-      c.g >>= 6;
-      c.b >>= 6;
       rgba_t scaled = c;
       return (scaled & 0x00ffffff) + 0xff000000;
     }
