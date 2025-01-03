@@ -52,6 +52,8 @@ The `mode` option, which is common for all commands, affects the color space han
 * `gbc` - Game Boy Color
 * `gg` - Game Gear
 * `md` - Mega Drive
+* `ngp` - Neo Geo Pocket
+* `ngpc` - Neo Geo Pocket Color
 * `pce` - PC Engine
 * `pce_sprite` - PC Engine (sprite data)
 * `sms` - Master System
