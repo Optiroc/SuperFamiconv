@@ -365,9 +365,9 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
       return transparent_color;
     } else {
       rgba_color c(color);
-      c.r = scale_down(c.r, 3);
-      c.g = scale_down(c.g, 3);
-      c.b = scale_down(c.b, 3);
+      c.r >>= 3;
+      c.g >>= 3;
+      c.b >>= 3;
       rgba_t scaled = c;
       return (scaled & 0x00ffffff) + 0xff000000;
     }
@@ -405,22 +405,21 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
       return transparent_color;
     } else {
       rgba_color c(color);
-      c.r = scale_down(c.r, 5);
-      c.g = scale_down(c.g, 5);
-      c.b = scale_down(c.b, 5);
+      c.r >>= 5;
+      c.g >>= 5;
+      c.b >>= 5;
       rgba_t scaled = c;
       return (scaled & 0x00ffffff) + 0xff000000;
     }
     break;
-  case Mode::sms:
-    {
-      rgba_color c(color);
-      c.r = scale_down(c.r, 6);
-      c.g = scale_down(c.g, 6);
-      c.b = scale_down(c.b, 6);
-      rgba_t scaled = c;
-      return (scaled & 0x00ffffff) + 0xff000000;
-    }
+  case Mode::sms: {
+    rgba_color c(color);
+    c.r >>= 6;
+    c.g >>= 6;
+    c.b >>= 6;
+    rgba_t scaled = c;
+    return (scaled & 0x00ffffff) + 0xff000000;
+  }
     break;
   case Mode::wsc:
   case Mode::wsc_packed:
@@ -430,9 +429,9 @@ inline rgba_t reduce_color(const rgba_t color, Mode to_mode) {
       return transparent_color;
     } else {
       rgba_color c(color);
-      c.r = scale_down(c.r, 4);
-      c.g = scale_down(c.g, 4);
-      c.b = scale_down(c.b, 4);
+      c.r >>= 4;
+      c.g >>= 4;
+      c.b >>= 4;
       rgba_t scaled = c;
       return (scaled & 0x00ffffff) + 0xff000000;
     }
