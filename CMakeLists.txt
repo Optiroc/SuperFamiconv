@@ -20,9 +20,19 @@ if(MSVC)
 endif()
 
 if(MSVC)
-  set(SOURCES include/fmt/format.cpp include/LodePNG/lodepng.cpp include/getopt-win/getopt.c src/superfamiconv.cpp src/sfc_palette.cpp src/sfc_tiles.cpp src/sfc_map.cpp src/Image.cpp src/Map.cpp src/Palette.cpp src/Tiles.cpp)
+  set(SOURCES include/LodePNG/lodepng.cpp include/getopt-win/getopt.c src/superfamiconv.cpp src/sfc_palette.cpp src/sfc_tiles.cpp src/sfc_map.cpp src/Image.cpp src/Map.cpp src/Palette.cpp src/Tiles.cpp)
 else()
-  set(SOURCES include/fmt/format.cpp include/LodePNG/lodepng.cpp src/superfamiconv.cpp src/sfc_palette.cpp src/sfc_tiles.cpp src/sfc_map.cpp src/Image.cpp src/Map.cpp src/Palette.cpp src/Tiles.cpp)
+  set(SOURCES include/LodePNG/lodepng.cpp src/superfamiconv.cpp src/sfc_palette.cpp src/sfc_tiles.cpp src/sfc_map.cpp src/Image.cpp src/Map.cpp src/Palette.cpp src/Tiles.cpp)
 endif()
 
 add_executable(superfamiconv ${SOURCES})
+
+include(FetchContent)
+
+FetchContent_Declare(
+  fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt
+  GIT_TAG        407c905e45ad75fc29bf0f9bb7c5c2fd3475976f) # 12.1.0
+FetchContent_MakeAvailable(fmt)
+
+target_link_libraries(superfamiconv fmt::fmt)
