@@ -1,4 +1,7 @@
-.cache/
-build/
-/docs/
-/test-data/
+/target
+.venv/
+__pycache__/
+ *.pyc
+docs/
+out/
+test_data/tmp/

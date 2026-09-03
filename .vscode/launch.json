@@ -1,14 +1,46 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Debug",
-      "type": "lldb",
-      "request": "launch",
-      "program": "${workspaceFolder}/build/superfamiconv",
-      "args": [
-      ],
-      "preLaunchTask": "${defaultBuildTask}",
-    }
-  ]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug ALL tests",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--",
+                    "--exact",
+                    "--nocapture",
+                    "--include-ignored",
+                ],
+                "filter": {
+                    "name": "superfamiconv",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug single test",
+            "cargo": {
+                "args": [
+                    "test",
+                    "image::tests::load_png_basic_indexed",
+                    "--",
+                    "--exact",
+                    "--nocapture",
+                    "--include-ignored",
+                ],
+                "filter": {
+                    "name": "superfamiconv",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
 }
