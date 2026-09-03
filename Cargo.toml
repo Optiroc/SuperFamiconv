@@ -1,0 +1,35 @@
+[package]
+name = "superfamiconv"
+version = "0.12.0"
+edition = "2024"
+description = "A tile graphics converter with flexible and composable command line interface."
+license = "MIT"
+authors = ["David Lindecrantz"]
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+png = "0.18"
+quantette = { version = "0.6", default-features = false, features = ["std", "kmeans"] }
+serde_json = "1"
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
+
+[lints.clippy]
+correctness = "deny"
+suspicious = "deny"
+complexity = "warn"
+perf = "warn"
+style = "warn"
+pedantic = "allow"
+bool_assert_comparison = { level = "allow", priority = 1 }
+chunks_exact_to_as_chunks = { level = "allow", priority = 1 }
+unusual_byte_groupings = { level = "allow", priority = 1 }
+
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+lto = "fat"
+panic = "abort"
+strip = "symbols"
