@@ -1,0 +1,3 @@
+allowed-wildcard-imports = ["Mode"]
+too-many-arguments-threshold = 11
+too-many-lines-threshold = 150
