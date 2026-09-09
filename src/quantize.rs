@@ -10,13 +10,15 @@ use super::dither::{Dither, Ditherer};
 use crate::color::{CandidateColor, NormalizedColor, ReducedColor, eq_rgb, oklab_sqdist};
 use crate::dither::dither_to_mode;
 use crate::image::{self, Image};
-use crate::mode::{Mode, color::ModeColor};
+use crate::mode::{
+    Mode,
+    color::{ColorRounding, ModeColor},
+};
 use crate::palette::Palette;
 
 const MAX_ITERATIONS: usize = 32;
 
 /// Creates a palette and a matching quantized image for `image` using tile-aware k-means clustering.
-#[allow(clippy::too_many_arguments)]
 pub fn quantize_palette(
     image: &Image,
     mode: Mode,
@@ -26,16 +28,17 @@ pub fn quantize_palette(
     tile_width: u32,
     tile_height: u32,
     dither: Dither,
+    rounding: ColorRounding,
 ) -> Result<(Palette, Image), String> {
     let max_subpalettes = max_subpalettes.max(1);
     let capacity = capacity.max(1);
-    let color_zero_reduced = color_zero.map(|c| mode.reduce_color(c));
+    let color_zero_reduced = color_zero.map(|c| mode.reduce_color(c, rounding));
 
     // Create pre-dithered image for initial palette
     let predithered_image = if dither == Dither::Off {
         image.clone()
     } else {
-        dither_to_mode(image, mode, dither, color_zero_reduced)
+        dither_to_mode(image, mode, dither, rounding, color_zero_reduced)
     };
 
     // Try lossless binpacking on dithered tile palettes first
@@ -47,6 +50,7 @@ pub fn quantize_palette(
         color_zero,
         tile_width,
         tile_height,
+        rounding,
     ) {
         return Ok(result);
     }
@@ -56,7 +60,7 @@ pub fn quantize_palette(
 
     let tiles_colors: Vec<Vec<Oklab>> = slices
         .iter()
-        .map(|slice| get_oklab_colors(slice, mode, color_zero_reduced))
+        .map(|slice| get_oklab_colors(slice, mode, rounding, color_zero_reduced))
         .collect();
 
     // Initialize k centroids:
@@ -144,7 +148,7 @@ pub fn quantize_palette(
 
     // Finalize palette
     let raw_max_colors = capacity + usize::from(color_zero_reduced.is_some());
-    let mut palette = Palette::new(mode, max_subpalettes, raw_max_colors);
+    let mut palette = Palette::new(mode, max_subpalettes, raw_max_colors, rounding);
     if let Some(color_zero) = color_zero {
         palette.set_color_zero(color_zero);
     }
@@ -154,7 +158,7 @@ pub fn quantize_palette(
         let mut reduced: Vec<ReducedColor> = Vec::new();
         for srgb in oklab_to_srgb8(group_palette) {
             let normalized = NormalizedColor::new(srgb.red, srgb.green, srgb.blue, 0xff);
-            let r = mode.reduce_color(normalized);
+            let r = mode.reduce_color(normalized, rounding);
             if !r.is_transparent() && !reduced.contains(&r) {
                 reduced.push(r);
             }
@@ -181,6 +185,7 @@ pub fn quantize_palette(
         &group_candidates,
         mode,
         dither,
+        rounding,
         color_zero_reduced,
     );
 
@@ -196,9 +201,10 @@ fn try_lossless(
     color_zero: Option<NormalizedColor>,
     tile_width: u32,
     tile_height: u32,
+    rounding: ColorRounding,
 ) -> Option<(Palette, Image)> {
     let max_colors_per_subpalette = capacity + usize::from(color_zero.is_some());
-    let mut palette = Palette::new(mode, max_subpalettes, max_colors_per_subpalette);
+    let mut palette = Palette::new(mode, max_subpalettes, max_colors_per_subpalette, rounding);
     if let Some(color_zero) = color_zero {
         palette.set_color_zero(color_zero);
     }
@@ -215,6 +221,7 @@ fn try_lossless(
 fn get_oklab_colors(
     image: &Image,
     mode: Mode,
+    rounding: ColorRounding,
     color_zero: Option<ReducedColor>,
 ) -> Vec<Oklab> {
     let srgb: Vec<Srgb<u8>> = image
@@ -222,7 +229,7 @@ fn get_oklab_colors(
         .iter()
         .copied()
         .filter(|&c| {
-            let r = mode.reduce_color(c);
+            let r = mode.reduce_color(c, rounding);
             !r.is_transparent() && !color_zero.is_some_and(|cz| eq_rgb(r, cz))
         })
         .map(|c| Srgb::new(c.r, c.g, c.b))
@@ -325,6 +332,7 @@ fn make_output_image(
     group_colors: &[Vec<CandidateColor>],
     mode: Mode,
     dither: Dither,
+    rounding: ColorRounding,
     color_zero: Option<ReducedColor>,
 ) -> Image {
     let mut data = vec![NormalizedColor::TRANSPARENT; (image.width * image.height) as usize];
@@ -340,7 +348,7 @@ fn make_output_image(
         for row in 0..h {
             for col in 0..w {
                 let nc = slice.color_at((row * slice.width + col) as usize);
-                let rc = mode.reduce_color(nc);
+                let rc = mode.reduce_color(nc, rounding);
                 if rc.is_transparent() {
                     continue;
                 }

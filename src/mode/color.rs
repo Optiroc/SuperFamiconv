@@ -1,15 +1,27 @@
 //! Mode-specific color transformations and palette conversion.
 
+use clap::ValueEnum;
+
 use super::{Mode, Mode::*};
 use crate::color::{NormalizedColor, ReducedColor};
+
+/// How a full precision color is mapped to mode-native range.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+#[value(rename_all = "snake_case")]
+pub enum ColorRounding {
+    /// Truncate keeping only the top bits.
+    Truncate,
+    /// Round to nearest value.
+    Nearest,
+}
 
 pub trait ModeColor {
     /// Scales a normalized color down to `mode`'s native range.
     /// - Colors with alpha below 0x80 become fully transparent for modes that support it.
-    /// - TODO: Add option (or default to?) nearest color rather than truncation?
     fn reduce_color(
         &self,
         color: NormalizedColor,
+        rounding: ColorRounding,
     ) -> ReducedColor;
 
     /// Scales a `mode`-native color to normalized range.
@@ -23,6 +35,7 @@ pub trait ModeColor {
     fn quantize_color(
         &self,
         color: NormalizedColor,
+        rounding: ColorRounding,
     ) -> NormalizedColor;
 
     /// Packs `color` into mode-native representation.
@@ -48,46 +61,61 @@ impl ModeColor for Mode {
     fn reduce_color(
         &self,
         color: NormalizedColor,
+        rounding: ColorRounding,
     ) -> ReducedColor {
         match self {
             Snes | SnesMode7 | Gbc | Gba | GbaAffine => match color.a {
                 0x00..0x80 => ReducedColor::TRANSPARENT,
-                _ => ReducedColor::new(color.r >> 3, color.g >> 3, color.b >> 3, 0xff),
+                _ => ReducedColor::new(
+                    reduce_channel(color.r, 3, rounding),
+                    reduce_channel(color.g, 3, rounding),
+                    reduce_channel(color.b, 3, rounding),
+                    0xff,
+                ),
             },
             Gb => {
                 let c = opaque_threshold(color);
-                let l = c.luma_u8();
-                let gray = match l {
-                    0x00..0x40 => 0,
-                    0x40..0x80 => 1,
-                    0x80..0xc0 => 2,
-                    _ => 3,
-                };
+                let gray = reduce_channel(c.luma_u8(), 6, rounding);
                 ReducedColor::new(gray, gray, gray, 0xff)
             }
             Ngp | Ws => {
                 // WonderSwan technically supports 8 out of 16 gray shades with
                 // it's palette indirection, but we just treat it as NGP.
                 let c = opaque_threshold(color);
-                let gray = c.luma_u8() >> 5;
+                let gray = reduce_channel(c.luma_u8(), 5, rounding);
                 ReducedColor::new(gray, gray, gray, 0xff)
             }
             Md | Pce | PceSprite => {
                 if color.a < 0x80 {
                     ReducedColor::TRANSPARENT
                 } else {
-                    ReducedColor::new(color.r >> 5, color.g >> 5, color.b >> 5, 0xff)
+                    ReducedColor::new(
+                        reduce_channel(color.r, 5, rounding),
+                        reduce_channel(color.g, 5, rounding),
+                        reduce_channel(color.b, 5, rounding),
+                        0xff,
+                    )
                 }
             }
             Sms => {
                 let c = opaque_threshold(color);
-                ReducedColor::new(c.r >> 6, c.g >> 6, c.b >> 6, 0xff)
+                ReducedColor::new(
+                    reduce_channel(c.r, 6, rounding),
+                    reduce_channel(c.g, 6, rounding),
+                    reduce_channel(c.b, 6, rounding),
+                    0xff,
+                )
             }
             Ngpc | Gg | Wsc | WscPacked => {
                 if color.a < 0x80 {
                     ReducedColor::TRANSPARENT
                 } else {
-                    ReducedColor::new(color.r >> 4, color.g >> 4, color.b >> 4, 0xff)
+                    ReducedColor::new(
+                        reduce_channel(color.r, 4, rounding),
+                        reduce_channel(color.g, 4, rounding),
+                        reduce_channel(color.b, 4, rounding),
+                        0xff,
+                    )
                 }
             }
         }
@@ -114,8 +142,9 @@ impl ModeColor for Mode {
     fn quantize_color(
         &self,
         color: NormalizedColor,
+        rounding: ColorRounding,
     ) -> NormalizedColor {
-        self.normalize_color(self.reduce_color(color))
+        self.normalize_color(self.reduce_color(color, rounding))
     }
 
     fn pack_color(
@@ -289,7 +318,22 @@ fn opaque_threshold(color: NormalizedColor) -> NormalizedColor {
     }
 }
 
-/// Scales up a value using left-bit replication.
+/// Reduces a value to `shift` bits narrower range.
+fn reduce_channel(
+    value: u8,
+    shift: u32,
+    rounding: ColorRounding,
+) -> u8 {
+    match rounding {
+        ColorRounding::Truncate => value >> shift,
+        ColorRounding::Nearest => {
+            let max = u32::from(0xffu8 >> shift);
+            ((u32::from(value) * max + 127) / 255) as u8
+        }
+    }
+}
+
+/// Scales up a value by `shift` bits using left-bit replication.
 const fn scale_up(
     value: u8,
     shift: u32,
@@ -309,6 +353,7 @@ mod tests {
     use clap::ValueEnum;
 
     use super::*;
+    use ColorRounding::*;
 
     fn n(
         r: u8,
@@ -346,7 +391,7 @@ mod tests {
     #[test]
     fn reduce_snes_white_roundtrip() {
         let white = n(255, 255, 255, 255);
-        let reduced = Mode::Snes.reduce_color(white);
+        let reduced = Mode::Snes.reduce_color(white, Truncate);
         assert_eq!(reduced, r(31, 31, 31, 0xff));
         assert_eq!(Mode::Snes.normalize_color(reduced), white);
     }
@@ -354,39 +399,59 @@ mod tests {
     #[test]
     fn reduce_white_black_roundtrip() {
         for mode in Mode::value_variants() {
-            let white = n(255, 255, 255, 255);
-            let black = n(0, 0, 0, 255);
-            assert_eq!(
-                mode.normalize_color(mode.reduce_color(white)),
-                white,
-                "reduce_white_black_roundtrip white failed for mode '{mode}'"
-            );
-            assert_eq!(
-                mode.normalize_color(mode.reduce_color(black)),
-                black,
-                "reduce_white_black_roundtrip black failed for mode '{mode}'"
-            );
+            for rounding in ColorRounding::value_variants() {
+                let white = n(255, 255, 255, 255);
+                let black = n(0, 0, 0, 255);
+                assert_eq!(
+                    mode.normalize_color(mode.reduce_color(white, *rounding)),
+                    white,
+                    "reduce_white_black_roundtrip white failed for mode '{mode}', rounding {rounding:?}"
+                );
+                assert_eq!(
+                    mode.normalize_color(mode.reduce_color(black, *rounding)),
+                    black,
+                    "reduce_white_black_roundtrip black failed for mode '{mode}', rounding {rounding:?}"
+                );
+            }
         }
     }
 
     #[test]
     fn reduce_transparent() {
-        assert!(Mode::Snes.reduce_color(n(255, 255, 255, 0x7f)).is_transparent());
-        assert!(Mode::Md.reduce_color(n(255, 255, 255, 0x7f)).is_transparent());
-        assert!(Mode::Wsc.reduce_color(n(255, 255, 255, 0x7f)).is_transparent());
+        assert!(
+            Mode::Snes
+                .reduce_color(n(255, 255, 255, 0x7f), Truncate)
+                .is_transparent()
+        );
+        assert!(Mode::Md.reduce_color(n(255, 255, 255, 0x7f), Truncate).is_transparent());
+        assert!(
+            Mode::Wsc
+                .reduce_color(n(255, 255, 255, 0x7f), Truncate)
+                .is_transparent()
+        );
         // gb has no shared transparent index; low-alpha pixels become opaque black
-        assert_eq!(Mode::Gb.reduce_color(n(255, 255, 255, 0x7f)), r(0, 0, 0, 0xff));
+        assert_eq!(
+            Mode::Gb.reduce_color(n(255, 255, 255, 0x7f), Truncate),
+            r(0, 0, 0, 0xff)
+        );
     }
 
     #[test]
     fn reduce_gb_levels() {
-        assert_eq!(Mode::Gb.reduce_color(n(0, 0, 0, 255)), r(0, 0, 0, 0xff));
-        assert_eq!(Mode::Gb.reduce_color(n(255, 255, 255, 255)), r(3, 3, 3, 0xff));
+        assert_eq!(Mode::Gb.reduce_color(n(0, 0, 0, 255), Truncate), r(0, 0, 0, 0xff));
+        assert_eq!(Mode::Gb.reduce_color(n(255, 255, 255, 255), Truncate), r(3, 3, 3, 0xff));
+    }
+
+    #[test]
+    fn truncate_vs_nearest() {
+        let color = n(250, 250, 250, 255);
+        assert_eq!(Mode::Snes.reduce_color(color, Truncate), r(31, 31, 31, 0xff));
+        assert_eq!(Mode::Snes.reduce_color(color, Nearest), r(30, 30, 30, 0xff));
     }
 
     #[test]
     fn pack_color_snes_white() {
-        let packed = Mode::Snes.pack_color(Mode::Snes.reduce_color(n(255, 255, 255, 255)));
+        let packed = Mode::Snes.pack_color(Mode::Snes.reduce_color(n(255, 255, 255, 255), Truncate));
         assert_eq!(packed.len(), 2);
         assert_eq!(u16::from_le_bytes([packed[0], packed[1]]), 0x7fff);
     }

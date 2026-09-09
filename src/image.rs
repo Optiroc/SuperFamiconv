@@ -9,7 +9,10 @@ use png::{BitDepth, ColorType, Transformations};
 
 use crate::color::{NormalizedColor, Rgba8888};
 use crate::dither;
-use crate::mode::{Mode, color::ModeColor};
+use crate::mode::{
+    Mode,
+    color::{ColorRounding, ModeColor},
+};
 use crate::palette::Subpalette;
 
 #[derive(Debug, Clone)]
@@ -186,6 +189,7 @@ impl Image {
     pub fn infer_color_zero(
         &self,
         mode: Mode,
+        rounding: ColorRounding,
     ) -> NormalizedColor {
         let mut best_color = NormalizedColor::new(0, 0, 0, 0xff);
         let mut best_len = 0usize;
@@ -193,7 +197,7 @@ impl Image {
         let mut run_len = best_len;
 
         for &c in &self.data {
-            let qc = mode.normalize_color(mode.reduce_color(c));
+            let qc = mode.normalize_color(mode.reduce_color(c, rounding));
             if qc == run_color {
                 run_len += 1;
             } else {
@@ -301,6 +305,7 @@ impl Image {
     pub fn remapped(
         &self,
         subpalette: &Subpalette,
+        rounding: ColorRounding,
     ) -> Result<Image, String> {
         let mode = subpalette.mode;
         let palette: Vec<NormalizedColor> = subpalette.normalized_colors();
@@ -313,7 +318,7 @@ impl Image {
         let mut data = vec![NormalizedColor::TRANSPARENT; size];
 
         for i in 0..size {
-            let quantized = mode.quantize_color(self.color_at(i));
+            let quantized = mode.quantize_color(self.color_at(i), rounding);
             if quantized.is_transparent() {
                 continue; // indexed_data/data already zeroed/transparent
             }
@@ -343,6 +348,7 @@ impl Image {
         &self,
         subpalette: &Subpalette,
         dither: dither::Dither,
+        rounding: ColorRounding,
     ) -> Result<Image, String> {
         if subpalette.colors.is_empty() {
             return Err("No colors".into());
@@ -354,6 +360,7 @@ impl Image {
             self.width,
             self.height,
             dither,
+            rounding,
             |i| self.color_at(i),
         );
 
@@ -497,6 +504,7 @@ mod tests {
     use super::*;
 
     use crate::color::ReducedColor;
+    use crate::mode::color::ColorRounding::*;
 
     fn nc(
         r: u8,
@@ -584,7 +592,7 @@ mod tests {
         sp.add(ReducedColor::new(31, 0, 0, 0xff), false).unwrap();
         sp.add(ReducedColor::new(0, 31, 0, 0xff), false).unwrap();
 
-        let remapped = img.remapped(&sp).unwrap();
+        let remapped = img.remapped(&sp, Truncate).unwrap();
         assert_eq!(remapped.palette_size(), 4);
         assert_eq!(remapped.indexed_data.len(), 2);
         assert_eq!(remapped.color_at(0), nc(255, 0, 0, 255));
@@ -599,7 +607,7 @@ mod tests {
         let img = Image::load(path).unwrap();
         let mut sp = Subpalette::new(Mode::Snes, 4);
         sp.add(ReducedColor::new(31, 0, 0, 0xff), false).unwrap();
-        assert!(img.remapped(&sp).is_err());
+        assert!(img.remapped(&sp, Truncate).is_err());
     }
 }
 

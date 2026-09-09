@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use crate::dither::Dither;
 use crate::logger::Logger;
 use crate::mode::Mode;
+use crate::mode::color::ColorRounding;
 use crate::palette::{Palette, palette_size_at_bpp};
 use crate::tileset::Tileset;
 
@@ -27,6 +28,7 @@ pub struct TilesSettings {
     pub sprite_mode: bool,
     pub quantize: bool,
     pub dither: Dither,
+    pub rounding: ColorRounding,
     pub out_image_width: Option<u32>,
 
     pub logger: Logger,
@@ -79,6 +81,7 @@ pub fn execute(settings: TilesSettings) -> Result<(), String> {
             settings.no_remap,
             settings.quantize,
             settings.dither,
+            settings.rounding,
             settings.max_tiles,
         );
 
@@ -94,7 +97,7 @@ pub fn execute(settings: TilesSettings) -> Result<(), String> {
                 .as_ref()
                 .ok_or("Input palette required (except in --no-remap mode)")?;
             let colors_per_subpalette = palette_size_at_bpp(settings.bpp) as usize;
-            let pal = Palette::load(in_palette, colors_per_subpalette, settings.mode)?;
+            let pal = Palette::load(in_palette, colors_per_subpalette, settings.mode, settings.rounding)?;
             if pal.size() < 1 {
                 return Err("Input palette size is zero".into());
             }

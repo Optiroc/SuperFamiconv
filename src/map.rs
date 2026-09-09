@@ -3,7 +3,7 @@
 use crate::color::NormalizedColor;
 use crate::dither::Dither;
 use crate::image::Image;
-use crate::mode::{Mode, map::ModeMap};
+use crate::mode::{Mode, color::ColorRounding, map::ModeMap};
 use crate::palette::Palette;
 use crate::tile::Tile;
 use crate::tileset::{self, Tileset};
@@ -17,6 +17,7 @@ pub struct Map {
     tile_height: u32,
     quantize: bool,
     dither: Dither,
+    rounding: ColorRounding,
     entries: Vec<Mapentry>,
 }
 
@@ -53,6 +54,7 @@ impl Map {
         tile_height: u32,
         quantize: bool,
         dither: Dither,
+        rounding: ColorRounding,
     ) -> Self {
         Map {
             mode,
@@ -62,6 +64,7 @@ impl Map {
             tile_height,
             quantize,
             dither,
+            rounding,
             entries: vec![Mapentry::default(); (width * height) as usize],
         }
     }
@@ -93,9 +96,9 @@ impl Map {
         };
         for candidate in candidates {
             let remapped_image = if self.quantize {
-                image.remapped_quantized(candidate, self.dither)?
+                image.remapped_quantized(candidate, self.dither, self.rounding)?
             } else {
-                image.remapped(candidate)?
+                image.remapped(candidate, self.rounding)?
             };
             let remapped_tile = Tile::from_image(&remapped_image, self.mode, bpp, true)?;
             if let Some(tileset_index) = tileset.index_of(&remapped_tile) {
@@ -349,6 +352,7 @@ impl Map {
             tile_height,
             quantize: false,
             dither: Dither::Off,
+            rounding: ColorRounding::Truncate,
             entries,
         })
     }
@@ -528,7 +532,8 @@ impl Map {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mode::color::ModeColor;
+    use crate::dither::Dither::*;
+    use crate::mode::color::{ColorRounding::*, ModeColor};
 
     /// A Map with increasing tile indices.
     fn mock_map(
@@ -536,7 +541,7 @@ mod tests {
         width: u32,
         height: u32,
     ) -> Map {
-        let mut map = Map::new(mode, width, height, 8, 8, false, Dither::Off);
+        let mut map = Map::new(mode, width, height, 8, 8, false, Dither::Off, Truncate);
         for (i, e) in map.entries.iter_mut().enumerate() {
             e.tile_index = i as u32;
         }
@@ -557,8 +562,8 @@ mod tests {
         mode: Mode,
         colors: &[NormalizedColor],
     ) -> Palette {
-        let mut pal = Palette::new(mode, 8, 8);
-        let reduced: Vec<_> = colors.iter().map(|&c| mode.reduce_color(c)).collect();
+        let mut pal = Palette::new(mode, 8, 8, Truncate);
+        let reduced: Vec<_> = colors.iter().map(|&c| mode.reduce_color(c, Truncate)).collect();
         pal.add_colors(&reduced).unwrap();
         pal
     }
@@ -569,10 +574,10 @@ mod tests {
         let pal = palette_for(Mode::Snes, &colors);
         let image = mock_image(&colors);
 
-        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, false, false, Dither::Off, 0);
+        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, false, false, Off, Truncate, 0);
         ts.add(&image, Some(&pal)).unwrap();
 
-        let mut map = Map::new(Mode::Snes, 1, 1, 8, 8, false, Dither::Off);
+        let mut map = Map::new(Mode::Snes, 1, 1, 8, 8, false, Off, Truncate);
         assert!(map.add(&image, &ts, &pal, 4, 0, 0).unwrap());
         assert_eq!(map.entries[0], Mapentry::new(0, 0, false, false));
     }
@@ -587,10 +592,10 @@ mod tests {
         flipped_colors.reverse();
         let flipped_image = mock_image(&flipped_colors);
 
-        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, false, false, Dither::Off, 0);
+        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, false, false, Off, Truncate, 0);
         ts.add(&image, Some(&pal)).unwrap();
 
-        let mut map = Map::new(Mode::Snes, 1, 1, 8, 8, false, Dither::Off);
+        let mut map = Map::new(Mode::Snes, 1, 1, 8, 8, false, Off, Truncate);
         assert!(map.add(&flipped_image, &ts, &pal, 4, 0, 0).unwrap());
         assert_eq!(map.entries[0], Mapentry::new(0, 0, true, false));
     }
@@ -601,8 +606,8 @@ mod tests {
         let pal = palette_for(Mode::Snes, &colors);
         let image = mock_image(&colors);
 
-        let ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, true, false, Dither::Off, 0);
-        let mut map = Map::new(Mode::Snes, 1, 1, 8, 8, false, Dither::Off);
+        let ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, true, false, Off, Truncate, 0);
+        let mut map = Map::new(Mode::Snes, 1, 1, 8, 8, false, Off, Truncate);
         assert!(!map.add(&image, &ts, &pal, 4, 0, 0).unwrap());
         assert_eq!(map.entries[0], Mapentry::default());
     }
@@ -613,14 +618,14 @@ mod tests {
         let pal = palette_for(Mode::Snes, &colors);
         let image = mock_image(&colors);
 
-        let ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, true, false, Dither::Off, 0);
-        let mut map = Map::new(Mode::Snes, 1, 1, 8, 8, false, Dither::Off);
+        let ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, true, false, Off, Truncate, 0);
+        let mut map = Map::new(Mode::Snes, 1, 1, 8, 8, false, Off, Truncate);
         assert!(map.add(&image, &ts, &pal, 4, 5, 5).is_err());
     }
 
     #[test]
     fn native_tile_index_16x16() {
-        let mut map = Map::new(Mode::Snes, 2, 1, 16, 16, false, Dither::Off);
+        let mut map = Map::new(Mode::Snes, 2, 1, 16, 16, false, Off, Truncate);
         map.entries[0].tile_index = 0;
         map.entries[1].tile_index = 1;
         let groups = map.collect_entries(0, 0, false);
@@ -682,7 +687,7 @@ mod tests {
 
     #[test]
     fn to_native_data() {
-        let mut map = Map::new(Mode::Gb, 2, 1, 8, 8, false, Dither::Off);
+        let mut map = Map::new(Mode::Gb, 2, 1, 8, 8, false, Off, Truncate);
         map.entries[0].tile_index = 1;
         map.entries[1].tile_index = 2;
         assert_eq!(map.to_native_data(0, 0, false), vec![1, 2]);
@@ -714,7 +719,7 @@ mod tests {
 
     #[test]
     fn from_native_data_16x16() {
-        let mut map = Map::new(Mode::Snes, 2, 1, 16, 16, false, Dither::Off);
+        let mut map = Map::new(Mode::Snes, 2, 1, 16, 16, false, Off, Truncate);
         map.entries[0].tile_index = 0;
         map.entries[1].tile_index = 1;
         let data = map.to_native_data(0, 0, false);
@@ -724,18 +729,18 @@ mod tests {
 
     #[test]
     fn get_palette_map_16bit_le_entries() {
-        let mut map = Map::new(Mode::Snes, 1, 1, 8, 8, false, Dither::Off);
+        let mut map = Map::new(Mode::Snes, 1, 1, 8, 8, false, Off, Truncate);
         map.entries[0].palette_index = 0x0102;
         assert_eq!(map.get_palette_map(0, 0, false), vec![0x02, 0x01]);
     }
 
     #[test]
     fn get_snes_mode7_interleaved_data() {
-        let mut map = Map::new(Mode::SnesMode7, 2, 1, 8, 8, false, Dither::Off);
+        let mut map = Map::new(Mode::SnesMode7, 2, 1, 8, 8, false, Off, Truncate);
         map.entries[0].tile_index = 0xaa;
         map.entries[1].tile_index = 0xbb;
 
-        let ts = Tileset::new(Mode::SnesMode7, 8, 8, 8, true, true, true, false, Dither::Off, 0);
+        let ts = Tileset::new(Mode::SnesMode7, 8, 8, 8, true, true, true, false, Off, Truncate, 0);
         let data = map.get_snes_mode7_interleaved_data(&ts).unwrap();
         assert_eq!(data[0], 0xaa);
         assert_eq!(data[1], 0x00);
@@ -746,7 +751,7 @@ mod tests {
 
     #[test]
     fn get_gbc_banked_data() {
-        let mut map = Map::new(Mode::Gbc, 32, 32, 8, 8, false, Dither::Off);
+        let mut map = Map::new(Mode::Gbc, 32, 32, 8, 8, false, Off, Truncate);
         map.entries[0] = Mapentry::new(0x0100, 3, false, false); // 2nd byte non-zero
         let banked = map.get_gbc_banked_data().unwrap();
         let linear = map.to_native_data(0, 0, false);

@@ -57,6 +57,7 @@ pub fn resolve_convert(args: ConvertArgs) -> Result<ConvertSettings, String> {
         color_zero: args.color_zero,
         quantize: args.quantize,
         dither: args.dither,
+        rounding: args.rounding,
         tile_base_offset: args.tile_base_offset,
         palette_base_offset: args.palette_base_offset,
         logger: Logger::new(Verbosity::from(args.verbose)),
@@ -94,6 +95,7 @@ pub fn resolve_palette(args: PaletteArgs) -> Result<PaletteSettings, String> {
         sprite_mode,
         color_zero: args.color_zero,
         quantize: args.quantize,
+        rounding: args.rounding,
         logger: Logger::new(Verbosity::from(args.verbose)),
     })
 }
@@ -143,6 +145,7 @@ pub fn resolve_tiles(args: TilesArgs) -> Result<TilesSettings, String> {
         sprite_mode,
         quantize: args.quantize,
         dither: args.dither,
+        rounding: args.rounding,
         max_tiles,
         out_image_width: args.out_image_width,
         logger: Logger::new(Verbosity::from(args.verbose)),
@@ -202,6 +205,7 @@ pub fn resolve_map(args: MapArgs) -> Result<MapSettings, String> {
         no_flip: operation::resolve_no_flip(args.no_flip, mode),
         quantize: args.quantize,
         dither: args.dither,
+        rounding: args.rounding,
         map_width: args.map_width,
         map_height: args.map_height,
         split_width,

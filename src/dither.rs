@@ -5,7 +5,7 @@ use clap::ValueEnum;
 use crate::color::{CandidateColor, NormalizedColor, ReducedColor, eq_rgb, oklab_sqdist_hue_weighted};
 use crate::image::{self, Image};
 use crate::mode::Mode;
-use crate::mode::color::ModeColor;
+use crate::mode::color::{ColorRounding, ModeColor};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, ValueEnum)]
 #[value(rename_all = "snake_case")]
@@ -106,6 +106,7 @@ pub fn quantize_pixels(
     width: u32,
     height: u32,
     dither: Dither,
+    rounding: ColorRounding,
     color_at: impl Fn(usize) -> NormalizedColor,
 ) -> (Vec<u8>, Vec<NormalizedColor>) {
     let candidates: Vec<CandidateColor> = palette
@@ -120,7 +121,7 @@ pub fn quantize_pixels(
 
     for i in 0..size {
         let nc = color_at(i);
-        if mode.reduce_color(nc).is_transparent() {
+        if mode.reduce_color(nc, rounding).is_transparent() {
             continue;
         }
         let x = (i as u32) % width;
@@ -139,12 +140,13 @@ pub fn dither_to_mode(
     image: &Image,
     mode: Mode,
     dither: Dither,
+    rounding: ColorRounding,
     color_zero: Option<ReducedColor>,
 ) -> Image {
     let mut reduced: Vec<ReducedColor> = image
         .data
         .iter()
-        .map(|&c| mode.reduce_color(c))
+        .map(|&c| mode.reduce_color(c, rounding))
         .filter(|c| !c.is_transparent())
         .collect();
     reduced.sort();
@@ -161,7 +163,7 @@ pub fn dither_to_mode(
 
     for (i, out) in data.iter_mut().enumerate() {
         let nc = image.color_at(i);
-        let rc = mode.reduce_color(nc);
+        let rc = mode.reduce_color(nc, rounding);
         if rc.is_transparent() {
             continue;
         }
