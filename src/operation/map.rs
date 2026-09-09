@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use crate::dither::Dither;
 use crate::logger::Logger;
 use crate::map::Map;
-use crate::mode::Mode;
+use crate::mode::{Mode, color::ColorRounding};
 use crate::palette::{Palette, palette_size_at_bpp};
 use crate::tileset::Tileset;
 
@@ -29,7 +29,7 @@ pub struct MapSettings {
     pub no_flip: bool,
     pub quantize: bool,
     pub dither: Dither,
-    /// `None` means "derive from image dimensions" once the image is loaded.
+    pub rounding: ColorRounding,
     pub map_width: Option<u32>,
     pub map_height: Option<u32>,
     pub split_width: u32,
@@ -46,7 +46,12 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
     logger.verbose(format!("Performing map operation (mode: {})", settings.mode));
 
     let colors_per_subpalette = palette_size_at_bpp(settings.bpp) as usize;
-    let palette = Palette::load(&settings.in_palette, colors_per_subpalette, settings.mode)?;
+    let palette = Palette::load(
+        &settings.in_palette,
+        colors_per_subpalette,
+        settings.mode,
+        settings.rounding,
+    )?;
     if palette.size() < 1 {
         return Err("Input palette size is zero".into());
     }
@@ -133,6 +138,7 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
             settings.tile_height,
             settings.quantize,
             settings.dither,
+            settings.rounding,
         );
 
         let slices = image.sliced(settings.tile_width, settings.tile_height, settings.mode);

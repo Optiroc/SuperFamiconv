@@ -6,6 +6,7 @@ use crate::color::NormalizedColor;
 use crate::dither::Dither;
 use crate::logger::Logger;
 use crate::mode::Mode;
+use crate::mode::color::ColorRounding;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct PaletteSettings {
@@ -24,6 +25,7 @@ pub struct PaletteSettings {
     pub sprite_mode: bool,
     pub color_zero: Option<NormalizedColor>,
     pub quantize: bool,
+    pub rounding: ColorRounding,
 
     pub logger: Logger,
 }
@@ -33,7 +35,13 @@ pub fn execute(settings: PaletteSettings) -> Result<(), String> {
     logger.verbose(format!("Performing palette operation (mode: {})", settings.mode));
 
     let image = super::load_image(&settings.in_image, settings.logger)?;
-    let color_zero = super::resolve_color_zero(settings.mode, settings.color_zero, &image, settings.sprite_mode);
+    let color_zero = super::resolve_color_zero(
+        settings.mode,
+        settings.color_zero,
+        &image,
+        settings.sprite_mode,
+        settings.rounding,
+    );
 
     let (palette, _image) = super::make_palette(
         &image,
@@ -46,6 +54,7 @@ pub fn execute(settings: PaletteSettings) -> Result<(), String> {
         color_zero,
         settings.quantize,
         Dither::Off,
+        settings.rounding,
         settings.logger,
     )?;
 

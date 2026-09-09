@@ -10,7 +10,10 @@ use crate::color::{NormalizedColor, ReducedColor};
 use crate::dither::Dither;
 use crate::image::Image;
 use crate::logger::Logger;
-use crate::mode::{Mode, color::ModeColor};
+use crate::mode::{
+    Mode,
+    color::{ColorRounding, ModeColor},
+};
 use crate::palette::Palette;
 use crate::quantize::quantize_palette;
 
@@ -39,11 +42,12 @@ fn resolve_color_zero(
     color_zero: Option<NormalizedColor>,
     image: &Image,
     sprite_mode: bool,
+    rounding: ColorRounding,
 ) -> Option<NormalizedColor> {
     if sprite_mode {
         Some(NormalizedColor::TRANSPARENT)
     } else if color_zero.is_some() || mode.color_zero_is_shared() {
-        Some(color_zero.unwrap_or_else(|| image.infer_color_zero(mode)))
+        Some(color_zero.unwrap_or_else(|| image.infer_color_zero(mode, rounding)))
     } else {
         None
     }
@@ -58,7 +62,6 @@ fn load_image(
     Ok(image)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn make_palette(
     image: &Image,
     mode: Mode,
@@ -70,6 +73,7 @@ fn make_palette(
     color_zero: Option<NormalizedColor>,
     quantize: bool,
     dither: Dither,
+    rounding: ColorRounding,
     logger: Logger,
 ) -> Result<(Palette, Image), String> {
     let mut palette;
@@ -81,8 +85,13 @@ fn make_palette(
             return Err("no-remap requires indexed color image".into());
         }
         logger.verbose("Mapping palette straight from indexed color image");
-        palette = Palette::new(mode, max_subpalettes as usize, max_colors_per_subpalette as usize);
-        let colors: Vec<ReducedColor> = image.palette.iter().map(|&c| mode.reduce_color(c)).collect();
+        palette = Palette::new(
+            mode,
+            max_subpalettes as usize,
+            max_colors_per_subpalette as usize,
+            rounding,
+        );
+        let colors: Vec<ReducedColor> = image.palette.iter().map(|&c| mode.reduce_color(c, rounding)).collect();
         palette.add_colors(&colors)?;
         out_image = image.clone();
     } else if quantize {
@@ -112,13 +121,19 @@ fn make_palette(
             tile_width,
             tile_height,
             dither,
+            rounding,
         )?;
     } else {
         // Default: lossless palette packing
         logger.verbose(format!(
             "Mapping palette with at most {max_subpalettes}x{max_colors_per_subpalette} entries"
         ));
-        palette = Palette::new(mode, max_subpalettes as usize, max_colors_per_subpalette as usize);
+        palette = Palette::new(
+            mode,
+            max_subpalettes as usize,
+            max_colors_per_subpalette as usize,
+            rounding,
+        );
 
         if let Some(color_zero) = color_zero {
             if color_zero.is_transparent() {

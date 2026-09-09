@@ -7,6 +7,7 @@ use crate::dither::Dither;
 use crate::logger::Logger;
 use crate::map::Map;
 use crate::mode::Mode;
+use crate::mode::color::ColorRounding;
 use crate::tileset::Tileset;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -34,6 +35,7 @@ pub struct ConvertSettings {
     pub color_zero: Option<NormalizedColor>,
     pub quantize: bool,
     pub dither: Dither,
+    pub rounding: ColorRounding,
     pub tile_base_offset: i32,
     pub palette_base_offset: i32,
 
@@ -45,7 +47,13 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
     logger.verbose(format!("Performing convert operation (mode: {})", settings.mode));
 
     let image = super::load_image(&settings.in_image, settings.logger)?;
-    let color_zero = super::resolve_color_zero(settings.mode, settings.color_zero, &image, settings.sprite_mode);
+    let color_zero = super::resolve_color_zero(
+        settings.mode,
+        settings.color_zero,
+        &image,
+        settings.sprite_mode,
+        settings.rounding,
+    );
 
     if settings.mode == Mode::PceSprite && (image.width % 16 != 0 || image.height % 16 != 0) {
         return Err("pce_sprite mode requires image dimensions to be a multiple of 16".into());
@@ -62,6 +70,7 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
         color_zero,
         settings.quantize,
         settings.dither,
+        settings.rounding,
         settings.logger,
     )?;
 
@@ -93,6 +102,7 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
         false, // In convert mode no-remap only applies to palette
         false,
         Dither::Off,
+        settings.rounding,
         settings.max_tiles,
     );
     for slice in image.sliced(settings.tile_width, settings.tile_height, settings.mode) {
@@ -146,6 +156,7 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
                 settings.tile_height,
                 false,
                 Dither::Off,
+                settings.rounding,
             );
             for (i, slice) in slices.enumerate() {
                 let i = i as u32;

@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use clap::{Args, Parser, Subcommand};
 use superfamiconv::color::{self, NormalizedColor};
 use superfamiconv::dither::Dither;
-use superfamiconv::mode::Mode;
+use superfamiconv::mode::{Mode, color::ColorRounding};
 
 #[derive(Parser, Debug)]
 #[command(name = "superfamiconv", version, about, long_about = None, args_override_self = true)]
@@ -97,6 +97,9 @@ pub struct ConvertArgs {
     /// Dithering to apply if quantizing
     #[arg(long, value_enum, default_value_t = Dither::Bayer4x4, help_heading = "Settings")]
     pub dither: Dither,
+    /// Rounding to apply when reducing colors to native precision
+    #[arg(long, value_enum, default_value_t = ColorRounding::Truncate, help_heading = "Settings")]
+    pub rounding: ColorRounding,
     /// Tile base offset for map data
     #[arg(long, default_value_t = 0, help_heading = "Settings")]
     pub tile_base_offset: i32,
@@ -157,6 +160,9 @@ pub struct PaletteArgs {
     /// Quantize colors to fit target palette settings
     #[arg(short = 'Q', long, help_heading = "Settings")]
     pub quantize: bool,
+    /// Rounding to apply when reducing colors to native precision
+    #[arg(long, value_enum, default_value_t = ColorRounding::Truncate, help_heading = "Settings")]
+    pub rounding: ColorRounding,
 
     /// Verbose logging (-vv for extra verbosity)
     #[arg(short = 'v', long, action = clap::ArgAction::Count)]
@@ -217,6 +223,9 @@ pub struct TilesArgs {
     /// Dithering to apply if quantizing
     #[arg(long, value_enum, default_value_t = Dither::Bayer4x4, help_heading = "Settings")]
     pub dither: Dither,
+    /// Rounding to apply when reducing colors to native precision
+    #[arg(long, value_enum, default_value_t = ColorRounding::Truncate, help_heading = "Settings")]
+    pub rounding: ColorRounding,
     /// Width of output tileset image
     #[arg(long, help_heading = "Settings")]
     pub out_image_width: Option<u32>,
@@ -283,6 +292,9 @@ pub struct MapArgs {
     /// Dithering to apply if quantizing
     #[arg(long, value_enum, default_value_t = Dither::Bayer4x4, help_heading = "Settings")]
     pub dither: Dither,
+    /// Rounding to apply when reducing colors to native precision
+    #[arg(long, value_enum, default_value_t = ColorRounding::Truncate, help_heading = "Settings")]
+    pub rounding: ColorRounding,
     /// Map width (in tiles) [default: image width]
     #[arg(long, value_parser = clap::value_parser!(u32).range(1..), help_heading = "Settings")]
     pub map_width: Option<u32>,

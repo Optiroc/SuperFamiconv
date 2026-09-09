@@ -7,7 +7,10 @@ use std::string::ToString;
 use crate::binpack::pack;
 use crate::color::{self, CandidateColor, NormalizedColor, ReducedColor, summed_distance};
 use crate::image::Image;
-use crate::mode::{Mode, color::ModeColor};
+use crate::mode::{
+    Mode,
+    color::{ColorRounding, ModeColor},
+};
 
 pub const fn palette_size_at_bpp(bpp: u32) -> u32 {
     1 << bpp
@@ -18,6 +21,7 @@ pub struct Palette {
     pub mode: Mode,
     pub max_subpalettes: usize,
     pub max_colors_per_subpalette: usize,
+    rounding: ColorRounding,
     subpalettes: Vec<Subpalette>,
     color_zero: ReducedColor,
     color_zero_is_shared: bool,
@@ -204,11 +208,13 @@ impl Palette {
         mode: Mode,
         max_subpalettes: usize,
         max_colors_per_subpalette: usize,
+        rounding: ColorRounding,
     ) -> Self {
         Palette {
             mode,
             max_subpalettes,
             max_colors_per_subpalette,
+            rounding,
             subpalettes: Vec::new(),
             color_zero: ReducedColor::TRANSPARENT,
             color_zero_is_shared: false,
@@ -258,7 +264,7 @@ impl Palette {
         &mut self,
         color: NormalizedColor,
     ) {
-        let reduced = self.mode.reduce_color(color);
+        let reduced = self.mode.reduce_color(color, self.rounding);
         self.color_zero = if reduced.is_transparent() {
             ReducedColor::TRANSPARENT
         } else {
@@ -274,7 +280,11 @@ impl Palette {
         &self,
         image: &Image,
     ) -> Result<&Subpalette, String> {
-        let mut required: BTreeSet<ReducedColor> = image.data.iter().map(|&c| self.mode.reduce_color(c)).collect();
+        let mut required: BTreeSet<ReducedColor> = image
+            .data
+            .iter()
+            .map(|&c| self.mode.reduce_color(c, self.rounding))
+            .collect();
         required.remove(&ReducedColor::TRANSPARENT);
 
         if required.len() > self.max_colors_per_subpalette {
@@ -303,7 +313,11 @@ impl Palette {
         &self,
         image: &Image,
     ) -> Result<Vec<&Subpalette>, String> {
-        let mut required: BTreeSet<ReducedColor> = image.data.iter().map(|&c| self.mode.reduce_color(c)).collect();
+        let mut required: BTreeSet<ReducedColor> = image
+            .data
+            .iter()
+            .map(|&c| self.mode.reduce_color(c, self.rounding))
+            .collect();
         required.remove(&ReducedColor::TRANSPARENT);
 
         if required.len() > self.max_colors_per_subpalette {
@@ -328,7 +342,7 @@ impl Palette {
             .data
             .iter()
             .copied()
-            .filter(|&c| !self.mode.reduce_color(c).is_transparent())
+            .filter(|&c| !self.mode.reduce_color(c, self.rounding).is_transparent())
             .collect();
 
         let mut scored: Vec<(&Subpalette, f32)> = self
@@ -399,8 +413,11 @@ impl Palette {
         // Collect required colors
         let mut required_colors: Vec<BTreeSet<ReducedColor>> = Vec::with_capacity(tiles.len());
         for tile in tiles {
-            let mut colors: BTreeSet<ReducedColor> =
-                tile.colors.iter().map(|&rgba| self.mode.reduce_color(rgba)).collect();
+            let mut colors: BTreeSet<ReducedColor> = tile
+                .colors
+                .iter()
+                .map(|&rgba| self.mode.reduce_color(rgba, self.rounding))
+                .collect();
             if self.color_zero_is_shared {
                 // Discard shared color_zero from required_colors
                 colors.remove(&self.color_zero);
@@ -541,10 +558,11 @@ impl Palette {
         path: &Path,
         colors_per_subpalette: usize,
         mode: Mode,
+        rounding: ColorRounding,
     ) -> Result<Palette, String> {
         let bytes = std::fs::read(path).map_err(|e| format!("File '{}' could not be opened: {e}", path.display()))?;
 
-        let mut palette = Palette::new(mode, 64, colors_per_subpalette);
+        let mut palette = Palette::new(mode, 64, colors_per_subpalette, rounding);
 
         let subpalettes_json = serde_json::from_slice::<serde_json::Value>(&bytes)
             .ok()
@@ -557,7 +575,7 @@ impl Palette {
                     for entry in entries {
                         if let Some(hex) = entry.as_str() {
                             let normalized = color::from_hexstring(hex)?;
-                            colors.push(mode.reduce_color(normalized));
+                            colors.push(mode.reduce_color(normalized, rounding));
                         }
                     }
                 }
@@ -602,6 +620,7 @@ impl std::fmt::Display for Palette {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::mode::color::ColorRounding::*;
 
     fn c(
         r: u8,
@@ -618,7 +637,7 @@ mod tests {
         max_colors: usize,
         tiles: &[&[NormalizedColor]],
     ) -> Result<Palette, String> {
-        let mut palette = Palette::new(mode, max_subpalettes, max_colors);
+        let mut palette = Palette::new(mode, max_subpalettes, max_colors, Truncate);
         let images: Vec<Image> = tiles.iter().map(|colors| image_from_colors(colors)).collect();
         palette.add_colors_from_tiles(&images)?;
         Ok(palette)
@@ -681,7 +700,7 @@ mod tests {
 
     #[test]
     fn add_colors_no_optimization() {
-        let mut palette = Palette::new(Mode::Snes, 8, 2);
+        let mut palette = Palette::new(Mode::Snes, 8, 2, Truncate);
         let colors = [c(1, 1, 1, 0xff), c(1, 1, 1, 0xff), c(2, 2, 2, 0xff)];
         palette.add_colors(&colors).unwrap();
         assert_eq!(palette.colors().len(), 2);
@@ -693,28 +712,34 @@ mod tests {
     fn subpalette_matching_finds_subpalette() {
         let red = NormalizedColor::new(255, 0, 0, 0xff);
         let green = NormalizedColor::new(0, 255, 0, 0xff);
-        let mut palette = Palette::new(Mode::Snes, 8, 16);
+        let mut palette = Palette::new(Mode::Snes, 8, 16, Truncate);
         palette
             .add_colors_from_tiles(&[image_from_colors(&[red]), image_from_colors(&[green])])
             .unwrap();
 
         let image = image_from_colors(&[red]);
         let found = palette.subpalette_matching(&image).unwrap();
-        assert_eq!(found.diff(&[Mode::Snes.reduce_color(red)].into_iter().collect()), 0);
+        assert_eq!(
+            found.diff(&[Mode::Snes.reduce_color(red, Truncate)].into_iter().collect()),
+            0
+        );
     }
 
     #[test]
     fn subpalettes_matching_finds_subpalettes() {
         let red = NormalizedColor::new(255, 0, 0, 0xff);
         let green = NormalizedColor::new(0, 255, 0, 0xff);
-        let mut palette = Palette::new(Mode::Snes, 8, 16);
+        let mut palette = Palette::new(Mode::Snes, 8, 16, Truncate);
         palette
-            .add_colors(&[Mode::Snes.reduce_color(red), Mode::Snes.reduce_color(green)])
+            .add_colors(&[
+                Mode::Snes.reduce_color(red, Truncate),
+                Mode::Snes.reduce_color(green, Truncate),
+            ])
             .unwrap();
         palette
             .add_colors(&[
-                Mode::Snes.reduce_color(red),
-                Mode::Snes.reduce_color(NormalizedColor::new(0, 0, 255, 0xff)),
+                Mode::Snes.reduce_color(red, Truncate),
+                Mode::Snes.reduce_color(NormalizedColor::new(0, 0, 255, 0xff), Truncate),
             ])
             .unwrap();
 
@@ -727,7 +752,7 @@ mod tests {
     fn subpalette_matching_no_match() {
         let red = NormalizedColor::new(255, 0, 0, 0xff);
         let blue = NormalizedColor::new(0, 0, 255, 0xff);
-        let mut palette = Palette::new(Mode::Snes, 8, 16);
+        let mut palette = Palette::new(Mode::Snes, 8, 16, Truncate);
         palette.add_colors_from_tiles(&[image_from_colors(&[red])]).unwrap();
 
         let image = image_from_colors(&[blue]);
@@ -737,7 +762,7 @@ mod tests {
     #[test]
     fn subpalettes_matching_too_many_colors() {
         let colors: Vec<NormalizedColor> = (0..3).map(|i| NormalizedColor::new(i * 40, 0, 0, 0xff)).collect();
-        let palette = Palette::new(Mode::Snes, 8, 2);
+        let palette = Palette::new(Mode::Snes, 8, 2, Truncate);
         let image = image_from_colors(&colors);
         assert!(palette.subpalettes_matching(&image).is_err());
     }
@@ -746,8 +771,8 @@ mod tests {
     fn subpalettes_matching_ignores_transparency() {
         let red = NormalizedColor::new(255, 0, 0, 0xff);
         let transparent = NormalizedColor::TRANSPARENT;
-        let mut palette = Palette::new(Mode::Snes, 8, 16);
-        palette.add_colors(&[Mode::Snes.reduce_color(red)]).unwrap();
+        let mut palette = Palette::new(Mode::Snes, 8, 16, Truncate);
+        palette.add_colors(&[Mode::Snes.reduce_color(red, Truncate)]).unwrap();
 
         let image = image_from_colors(&[red, transparent]);
         let found = palette.subpalettes_matching(&image).unwrap();
@@ -756,7 +781,7 @@ mod tests {
 
     #[test]
     fn color_zero_snes_transparent_and_shared() {
-        let mut palette = Palette::new(Mode::Snes, 8, 16);
+        let mut palette = Palette::new(Mode::Snes, 8, 16, Truncate);
         palette.set_color_zero(NormalizedColor::TRANSPARENT);
         assert!(palette.color_zero.is_transparent());
         assert!(palette.color_zero_is_shared);
@@ -764,7 +789,7 @@ mod tests {
 
     #[test]
     fn fix_color_zero_duplicates_non_shared_modes() {
-        let mut palette = Palette::new(Mode::Gb, 8, 4);
+        let mut palette = Palette::new(Mode::Gb, 8, 4, Truncate);
         palette
             .add_colors(&[c(1, 1, 1, 255), c(2, 2, 2, 255), c(1, 1, 1, 255)])
             .unwrap();
@@ -773,9 +798,9 @@ mod tests {
 
     #[test]
     fn native_data_padding() {
-        let mut palette = Palette::new(Mode::Snes, 8, 4);
+        let mut palette = Palette::new(Mode::Snes, 8, 4, Truncate);
         palette
-            .add_colors(&[Mode::Snes.reduce_color(NormalizedColor::new(255, 0, 0, 0xff))])
+            .add_colors(&[Mode::Snes.reduce_color(NormalizedColor::new(255, 0, 0, 0xff), Truncate)])
             .unwrap();
         let bytes = palette.native_data().unwrap();
         assert_eq!(bytes.len(), 4 * 2);
@@ -783,32 +808,32 @@ mod tests {
 
     #[test]
     fn to_json_and_load() {
-        let mut palette = Palette::new(Mode::Snes, 8, 16);
+        let mut palette = Palette::new(Mode::Snes, 8, 16, Truncate);
         let colors = [
-            Mode::Snes.reduce_color(NormalizedColor::new(255, 0, 0, 0xff)),
-            Mode::Snes.reduce_color(NormalizedColor::new(0, 255, 0, 0xff)),
+            Mode::Snes.reduce_color(NormalizedColor::new(255, 0, 0, 0xff), Truncate),
+            Mode::Snes.reduce_color(NormalizedColor::new(0, 255, 0, 0xff), Truncate),
         ];
         palette.add_colors(&colors).unwrap();
 
         let path = std::env::temp_dir().join("to_json_and_load.json");
         std::fs::write(&path, palette.to_json()).unwrap();
-        let loaded = Palette::load(&path, 16, Mode::Snes).unwrap();
+        let loaded = Palette::load(&path, 16, Mode::Snes, Truncate).unwrap();
         assert_eq!(loaded.colors(), palette.colors());
     }
 
     #[test]
     fn load_native_binary_if_not_json() {
-        let mut palette = Palette::new(Mode::Snes, 8, 4);
+        let mut palette = Palette::new(Mode::Snes, 8, 4, Truncate);
         let colors = [
-            Mode::Snes.reduce_color(NormalizedColor::new(255, 0, 0, 0xff)),
-            Mode::Snes.reduce_color(NormalizedColor::new(0, 255, 0, 0xff)),
+            Mode::Snes.reduce_color(NormalizedColor::new(255, 0, 0, 0xff), Truncate),
+            Mode::Snes.reduce_color(NormalizedColor::new(0, 255, 0, 0xff), Truncate),
         ];
         palette.add_colors(&colors).unwrap();
 
         let path = std::env::temp_dir().join("load_native_binary_if_not_json.bin");
         std::fs::write(&path, palette.native_data().unwrap()).unwrap();
 
-        let loaded = Palette::load(&path, 4, Mode::Snes).unwrap();
+        let loaded = Palette::load(&path, 4, Mode::Snes, Truncate).unwrap();
         let black = ReducedColor::new(0, 0, 0, 0xff);
         assert_eq!(
             loaded.colors(),
@@ -826,9 +851,9 @@ mod tests {
             (Mode::Snes, 7, 16, "test_data/tricky_palette_packing/snes2_max_7x16.png"),
         ] {
             let image = Image::load(Path::new(path)).unwrap();
-            let mut palette = Palette::new(mode, n_sp, n_colors);
+            let mut palette = Palette::new(mode, n_sp, n_colors, Truncate);
             if mode.color_zero_is_shared() {
-                palette.set_color_zero(image.infer_color_zero(mode));
+                palette.set_color_zero(image.infer_color_zero(mode, Truncate));
             }
             let slices: Vec<Image> = image.sliced(8, 8, mode).collect();
             palette

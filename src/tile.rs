@@ -258,7 +258,7 @@ fn flipped_v(
 #[cfg(test)]
 pub mod tests {
     use crate::color::ReducedColor;
-    use crate::mode::color::ModeColor;
+    use crate::mode::color::{ColorRounding::*, ModeColor};
     use crate::palette::Subpalette;
     use std::path::Path;
 
@@ -293,7 +293,7 @@ pub mod tests {
         sp.add(color, false).unwrap();
         let fill = mode.normalize_color(color);
         let img = Image::from_color_data(8, 8, vec![fill; 64]);
-        img.remapped(&sp).unwrap()
+        img.remapped(&sp, Truncate).unwrap()
     }
 
     /// Creates an 8x8 indexed image with pixel indices == column number.
