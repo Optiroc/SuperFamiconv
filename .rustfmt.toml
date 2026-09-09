@@ -1,0 +1,4 @@
+edition = "2024"
+max_width = 120
+fn_params_layout = "Vertical"
+newline_style = "Unix"

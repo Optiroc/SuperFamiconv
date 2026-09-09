@@ -1,0 +1,19 @@
+name: Pre-merge
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Lint
+        run: cargo fmt --check && cargo clippy
+      - name: Test
+        run: cargo test
+      - name: Check
+        run: cargo check
