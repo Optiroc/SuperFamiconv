@@ -48,13 +48,7 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
     logger.verbose(format!("Performing convert operation (mode: {})", settings.mode));
 
     let image = super::load_image(&settings.in_image, settings.logger)?;
-    let color_zero = super::resolve_color_zero(
-        settings.mode,
-        settings.color_zero,
-        &image,
-        settings.sprite_mode,
-        settings.rounding,
-    );
+    let color_zero = super::resolve_color_zero(settings.mode, settings.color_zero, &image, settings.rounding);
 
     if settings.mode == Mode::PceSprite && (image.width % 16 != 0 || image.height % 16 != 0) {
         return Err("pce_sprite mode requires image dimensions to be a multiple of 16".into());
