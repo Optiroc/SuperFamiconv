@@ -3,7 +3,7 @@
 use std::collections::BTreeSet;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use png::{BitDepth, ColorType, Transformations};
 
@@ -129,6 +129,34 @@ impl Image {
         })
     }
 
+    /// Creates an Image from PNG files at `paths`, stitched horizontally.
+    pub fn load_many(paths: Vec<PathBuf>) -> Result<Image, String> {
+        if paths.is_empty() {
+            return Err("Image paths empty".to_string());
+        }
+        let images = paths
+            .iter()
+            .map(|p| Image::load(p))
+            .collect::<Result<Vec<Image>, String>>()?;
+
+        let width: u32 = images.iter().map(|img| img.width).sum();
+        let height = images.iter().map(|img| img.height).max().unwrap();
+        let fill = NormalizedColor::TRANSPARENT;
+        let mut data = vec![fill; (width * height) as usize];
+
+        let mut x = 0u32;
+        for img in &images {
+            for y in 0..img.height {
+                let src = (y * img.width) as usize;
+                let dst = (y * width + x) as usize;
+                data[dst..dst + img.width as usize].copy_from_slice(&img.data[src..src + img.width as usize]);
+            }
+            x += img.width;
+        }
+
+        Ok(Image::from_color_data(width, height, data))
+    }
+
     /// Creates an Image from indexed pixel data and palette.
     pub fn from_indexed_data(
         width: u32,
@@ -197,7 +225,7 @@ impl Image {
         let mut run_len = best_len;
 
         for &c in &self.data {
-            let qc = mode.normalize_color(mode.reduce_color(c, rounding));
+            let qc = mode.quantize_color(c, rounding);
             if qc == run_color {
                 run_len += 1;
             } else {

@@ -12,8 +12,6 @@ use superfamiconv::palette::palette_size_at_bpp;
 use crate::cli::{ConvertArgs, MapArgs, PaletteArgs, TilesArgs};
 
 pub fn resolve_convert(args: ConvertArgs) -> Result<ConvertSettings, String> {
-    let in_image = args.in_image.ok_or("Input image required")?;
-
     let (mode, sprite_mode) = operation::resolve_sprite_mode(args.mode, args.sprite_mode);
     let bpp = args.bpp.unwrap_or_else(|| mode.default_bpp());
     let palettes = args.palettes.unwrap_or_else(|| mode.default_palette_count());
@@ -36,7 +34,7 @@ pub fn resolve_convert(args: ConvertArgs) -> Result<ConvertSettings, String> {
     }
 
     Ok(ConvertSettings {
-        in_image,
+        in_image: args.in_image,
         in_attribute_map: args.in_attribute_map,
         out_palette: args.out_palette,
         out_tiles: args.out_tiles,
@@ -67,8 +65,6 @@ pub fn resolve_convert(args: ConvertArgs) -> Result<ConvertSettings, String> {
 }
 
 pub fn resolve_palette(args: PaletteArgs) -> Result<PaletteSettings, String> {
-    let in_image = args.in_image.ok_or("Input image required")?;
-
     let (mode, sprite_mode) = operation::resolve_sprite_mode(args.mode, args.sprite_mode);
     let palettes = args.palettes.unwrap_or_else(|| mode.default_palette_count());
     let colors = args.colors.unwrap_or_else(|| palette_size_at_bpp(mode.default_bpp()));
@@ -83,7 +79,7 @@ pub fn resolve_palette(args: PaletteArgs) -> Result<PaletteSettings, String> {
     }
 
     Ok(PaletteSettings {
-        in_image,
+        in_image: args.in_image,
         out_data: args.out_data,
         out_act: args.out_act,
         out_json: args.out_json,

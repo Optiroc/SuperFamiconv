@@ -29,9 +29,9 @@ pub enum Command {
 /// Arguments for `superfamiconv convert`.
 #[derive(Args, Debug)]
 pub struct ConvertArgs {
-    /// Input: image
+    /// Input: image(s)
     #[arg(short = 'i', long)]
-    pub in_image: Option<PathBuf>,
+    pub in_image: Vec<PathBuf>,
     /// Input: priority attribute map image
     #[arg(short = 'a', long)]
     pub in_attribute_map: Option<PathBuf>,
@@ -119,9 +119,9 @@ pub struct ConvertArgs {
 #[derive(Args, Debug)]
 #[command(args_override_self = true)]
 pub struct PaletteArgs {
-    /// Input: image
+    /// Input: image(s)
     #[arg(short = 'i', long)]
-    pub in_image: Option<PathBuf>,
+    pub in_image: Vec<PathBuf>,
 
     /// Output: native data
     #[arg(short = 'd', long)]
@@ -176,9 +176,9 @@ pub struct PaletteArgs {
 #[derive(Args, Debug)]
 #[command(args_override_self = true)]
 pub struct TilesArgs {
-    /// Input: image
+    /// Input: image(s)
     #[arg(short = 'i', long)]
-    pub in_image: Option<PathBuf>,
+    pub in_image: Option<Vec<PathBuf>>,
     /// Input: native data
     #[arg(short = 'n', long)]
     pub in_data: Option<PathBuf>,
