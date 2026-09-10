@@ -37,6 +37,7 @@ pub fn resolve_convert(args: ConvertArgs) -> Result<ConvertSettings, String> {
 
     Ok(ConvertSettings {
         in_image,
+        in_attribute_map: args.in_attribute_map,
         out_palette: args.out_palette,
         out_tiles: args.out_tiles,
         out_map: args.out_map,
@@ -193,6 +194,7 @@ pub fn resolve_map(args: MapArgs) -> Result<MapSettings, String> {
         in_data: args.in_data,
         in_palette,
         in_tiles,
+        in_attribute_map: args.in_attribute_map,
         out_data: args.out_data,
         out_json: args.out_json,
         out_image: args.out_image,

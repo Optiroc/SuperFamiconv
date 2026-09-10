@@ -15,6 +15,7 @@ pub struct MapSettings {
     pub in_data: Option<PathBuf>,
     pub in_palette: PathBuf,
     pub in_tiles: PathBuf,
+    pub in_attribute_map: Option<PathBuf>,
     pub out_data: Option<PathBuf>,
     pub out_json: Option<PathBuf>,
     pub out_image: Option<PathBuf>,
@@ -161,6 +162,24 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
         }
         map
     };
+
+    if let Some(path) = &settings.in_attribute_map {
+        if settings.mode.priority_map_is_supported() {
+            let priorities = super::load_priority_map(
+                path,
+                settings.mode,
+                map.width(),
+                map.height(),
+                settings.tile_width,
+                settings.tile_height,
+                logger,
+            )?;
+            map.set_priorities(&priorities);
+            logger.verbose(format!("Loaded attribute map from '{}'", path.display()));
+        } else {
+            Logger::error(format!("Attribute map not supported for mode '{}'", settings.mode));
+        }
+    }
 
     if settings.tile_base_offset != 0 {
         map.add_base_offset(settings.tile_base_offset);

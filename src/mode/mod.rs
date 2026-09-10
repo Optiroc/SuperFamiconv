@@ -163,7 +163,7 @@ impl Mode {
         }
     }
 
-    pub const fn tile_flipping_is_allowed(self) -> bool {
+    pub const fn tile_flipping_is_supported(self) -> bool {
         use Mode::*;
         match self {
             Snes | Gbc | Gba | Md | Ngp | Ngpc | Ws | Wsc | WscPacked => true,
@@ -174,6 +174,11 @@ impl Mode {
     pub const fn map_generation_is_supported(self) -> bool {
         use Mode::*;
         !matches!(self, PceSprite)
+    }
+
+    pub const fn priority_map_is_supported(self) -> bool {
+        use Mode::*;
+        matches!(self, Snes | Gbc | Md | Sms | Gg)
     }
 
     pub const fn default_map_size(self) -> Option<u32> {
@@ -211,7 +216,7 @@ mod tests {
         assert_eq!(Mode::PceSprite.default_tile_size(), 16);
         assert!(Mode::PceSprite.tile_width_is_allowed(16));
         assert!(!Mode::PceSprite.tile_width_is_allowed(8));
-        assert!(!Mode::PceSprite.tile_flipping_is_allowed());
+        assert!(!Mode::PceSprite.tile_flipping_is_supported());
     }
 
     #[test]

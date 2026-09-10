@@ -32,6 +32,9 @@ pub struct ConvertArgs {
     /// Input: image
     #[arg(short = 'i', long)]
     pub in_image: Option<PathBuf>,
+    /// Input: priority attribute map image
+    #[arg(short = 'a', long)]
+    pub in_attribute_map: Option<PathBuf>,
 
     /// Output: palette data
     #[arg(short = 'p', long)]
@@ -251,6 +254,9 @@ pub struct MapArgs {
     /// Input: tiles (native)
     #[arg(short = 't', long)]
     pub in_tiles: Option<PathBuf>,
+    /// Input: priority attribute map image
+    #[arg(short = 'a', long)]
+    pub in_attribute_map: Option<PathBuf>,
 
     /// Output: native data
     #[arg(short = 'd', long)]
