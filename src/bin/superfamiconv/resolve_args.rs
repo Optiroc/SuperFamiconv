@@ -1,6 +1,7 @@
 //! Resolve CLI arguments into library settings.
 
 use superfamiconv::logger::{Logger, Verbosity};
+use superfamiconv::mode::color::ColorRounding;
 use superfamiconv::operation;
 use superfamiconv::operation::convert::ConvertSettings;
 use superfamiconv::operation::map::MapSettings;
@@ -57,7 +58,7 @@ pub fn resolve_convert(args: ConvertArgs) -> Result<ConvertSettings, String> {
         color_zero: args.color_zero,
         quantize: args.quantize,
         dither: args.dither,
-        rounding: args.rounding,
+        rounding: ColorRounding::from(args.round),
         tile_base_offset: args.tile_base_offset,
         palette_base_offset: args.palette_base_offset,
         logger: Logger::new(Verbosity::from(args.verbose)),
@@ -95,7 +96,7 @@ pub fn resolve_palette(args: PaletteArgs) -> Result<PaletteSettings, String> {
         sprite_mode,
         color_zero: args.color_zero,
         quantize: args.quantize,
-        rounding: args.rounding,
+        rounding: ColorRounding::from(args.round),
         logger: Logger::new(Verbosity::from(args.verbose)),
     })
 }
@@ -145,7 +146,7 @@ pub fn resolve_tiles(args: TilesArgs) -> Result<TilesSettings, String> {
         sprite_mode,
         quantize: args.quantize,
         dither: args.dither,
-        rounding: args.rounding,
+        rounding: ColorRounding::from(args.round),
         max_tiles,
         out_image_width: args.out_image_width,
         logger: Logger::new(Verbosity::from(args.verbose)),
@@ -205,7 +206,7 @@ pub fn resolve_map(args: MapArgs) -> Result<MapSettings, String> {
         no_flip: operation::resolve_no_flip(args.no_flip, mode),
         quantize: args.quantize,
         dither: args.dither,
-        rounding: args.rounding,
+        rounding: ColorRounding::from(args.round),
         map_width: args.map_width,
         map_height: args.map_height,
         split_width,

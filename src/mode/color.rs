@@ -15,6 +15,16 @@ pub enum ColorRounding {
     Nearest,
 }
 
+impl ColorRounding {
+    pub fn from(cli_arg: bool) -> ColorRounding {
+        if cli_arg {
+            ColorRounding::Nearest
+        } else {
+            ColorRounding::Truncate
+        }
+    }
+}
+
 pub trait ModeColor {
     /// Scales a normalized color down to `mode`'s native range.
     /// - Colors with alpha below 0x80 become fully transparent for modes that support it.

@@ -154,6 +154,8 @@ Settings:
           Quantize colors and tiles to fit target palette settings
       --dither <DITHER>
           Dithering to apply if quantizing [default: bayer4] [possible values: off, bayer2, bayer4, bayer8, checker, stipple_h, stipple_v, atkinson, fs]
+      --round
+          Round instead of truncate when reducing colors to mode-native precision
       --tile-base-offset <TILE_BASE_OFFSET>
           Tile base offset for map data [default: 0]
       --palette-base-offset <PALETTE_BASE_OFFSET>
@@ -186,6 +188,7 @@ Settings:
   -S, --sprite-mode                Apply sprite output settings
   -Z, --color-zero <COLOR_ZERO>    Set color #0 (6 or 8 character hex string)
   -Q, --quantize                   Quantize colors to fit target palette settings
+      --round                      Round instead of truncate when reducing colors to mode-native precision
 ```
 
 
@@ -228,12 +231,14 @@ Settings:
           Quantize (match tiles to the closest subpalette and color)
       --dither <DITHER>
           Dithering to apply if quantizing [default: bayer4] [possible values: off, bayer2, bayer4, bayer8, checker, stipple_h, stipple_v, atkinson, fs]
+      --round
+          Round instead of truncate when reducing colors to mode-native precision
       --out-image-width <OUT_IMAGE_WIDTH>
           Width of output tileset image
 ```
 
 ### map
-TODO: Convert an image, palette and tileset to map data.
+TODO: Convert an image, palette and tileset to map data. Note that you need to pass the same `quantize`, `dither` and `round` settings as when creating palette and tileset, for the tool to be able to match tiles to the map image. 
 
 Full usage:
 ```
