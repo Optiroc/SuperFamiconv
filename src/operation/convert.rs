@@ -13,6 +13,7 @@ use crate::tileset::Tileset;
 #[derive(Debug, PartialEq, Eq)]
 pub struct ConvertSettings {
     pub in_image: PathBuf,
+    pub in_attribute_map: Option<PathBuf>,
     pub out_palette: Option<PathBuf>,
     pub out_tiles: Option<PathBuf>,
     pub out_map: Option<PathBuf>,
@@ -161,6 +162,24 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
             for (i, slice) in slices.enumerate() {
                 let i = i as u32;
                 map.add(&slice, &tileset, &palette, settings.bpp, i % map_width, i / map_width)?;
+            }
+
+            if let Some(path) = &settings.in_attribute_map {
+                if settings.mode.priority_map_is_supported() {
+                    let priorities = super::load_priority_map(
+                        path,
+                        settings.mode,
+                        map.width(),
+                        map.height(),
+                        settings.tile_width,
+                        settings.tile_height,
+                        logger,
+                    )?;
+                    map.set_priorities(&priorities);
+                    logger.verbose(format!("Loaded attribute map from '{}'", path.display()));
+                } else {
+                    Logger::error(format!("Attribute map not supported for mode '{}'", settings.mode));
+                }
             }
 
             if settings.tile_base_offset != 0 {

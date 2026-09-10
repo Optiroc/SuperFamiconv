@@ -37,20 +37,21 @@ impl ModeMap for Mode {
         let p = entry.palette_index;
         let h = u32::from(entry.flip_h);
         let v = u32::from(entry.flip_v);
+        let pr = u32::from(entry.priority);
 
         match self {
             Snes => vec![
                 (t & 0xff) as u8,
-                (((t >> 8) & 0x03) | ((p << 2) & 0x1c) | (h << 6) | (v << 7)) as u8,
+                (((t >> 8) & 0x03) | ((p << 2) & 0x1c) | (pr << 5) | (h << 6) | (v << 7)) as u8,
             ],
             SnesMode7 | Gb | GbaAffine => vec![(t & 0xff) as u8],
             Sms | Gg => vec![
                 (t & 0xff) as u8,
-                (((t >> 8) & 0x01) | (h << 1) | (v << 2) | ((p << 3) & 0x8)) as u8,
+                (((t >> 8) & 0x01) | (h << 1) | (v << 2) | ((p << 3) & 0x8) | (pr << 4)) as u8,
             ],
             Gbc => vec![
                 (t & 0xff) as u8,
-                ((p & 0x07) | ((t >> 5) & 0x08) | (h << 5) | (v << 6)) as u8,
+                ((p & 0x07) | ((t >> 5) & 0x08) | (h << 5) | (v << 6) | (pr << 7)) as u8,
             ],
             Gba => vec![
                 (t & 0xff) as u8,
@@ -58,7 +59,7 @@ impl ModeMap for Mode {
             ],
             Md => vec![
                 (t & 0xff) as u8,
-                (((t >> 8) & 0x07) | (h << 3) | (v << 4) | ((p << 5) & 0x60)) as u8,
+                (((t >> 8) & 0x07) | (h << 3) | (v << 4) | ((p << 5) & 0x60) | (pr << 7)) as u8,
             ],
             Pce => vec![(t & 0xff) as u8, (((t >> 8) & 0x0f) | ((p << 4) & 0xf0)) as u8],
             Ws | Wsc | WscPacked => vec![
@@ -85,37 +86,41 @@ impl ModeMap for Mode {
         let b1 = bytes.get(1).copied().map_or(0, u32::from);
 
         match self {
-            Snes => Mapentry::new(
-                b0 | ((b1 & 0x03) << 8),
-                (b1 >> 2) & 0x07,
-                (b1 >> 6) & 1 == 1,
-                (b1 >> 7) & 1 == 1,
-            ),
+            Snes => Mapentry {
+                tile_index: b0 | ((b1 & 0x03) << 8),
+                palette_index: (b1 >> 2) & 0x07,
+                flip_h: (b1 >> 6) & 1 == 1,
+                flip_v: (b1 >> 7) & 1 == 1,
+                priority: (b1 >> 5) & 1 == 1,
+            },
             SnesMode7 | Gb | GbaAffine => Mapentry::new(b0, 0, false, false),
-            Sms | Gg => Mapentry::new(
-                b0 | ((b1 & 0x01) << 8),
-                (b1 >> 3) & 0x01,
-                (b1 >> 1) & 1 == 1,
-                (b1 >> 2) & 1 == 1,
-            ),
-            Gbc => Mapentry::new(
-                b0 | ((b1 & 0x08) << 5),
-                b1 & 0x07,
-                (b1 >> 5) & 1 == 1,
-                (b1 >> 6) & 1 == 1,
-            ),
+            Sms | Gg => Mapentry {
+                tile_index: b0 | ((b1 & 0x01) << 8),
+                palette_index: (b1 >> 3) & 0x01,
+                flip_h: (b1 >> 1) & 1 == 1,
+                flip_v: (b1 >> 2) & 1 == 1,
+                priority: (b1 >> 4) & 1 == 1,
+            },
+            Gbc => Mapentry {
+                tile_index: b0 | ((b1 & 0x08) << 5),
+                palette_index: b1 & 0x07,
+                flip_h: (b1 >> 5) & 1 == 1,
+                flip_v: (b1 >> 6) & 1 == 1,
+                priority: (b1 >> 7) & 1 == 1,
+            },
             Gba => Mapentry::new(
                 b0 | ((b1 & 0x03) << 8),
                 (b1 >> 4) & 0x0f,
                 (b1 >> 2) & 1 == 1,
                 (b1 >> 3) & 1 == 1,
             ),
-            Md => Mapentry::new(
-                b0 | ((b1 & 0x07) << 8),
-                (b1 >> 5) & 0x03,
-                (b1 >> 3) & 1 == 1,
-                (b1 >> 4) & 1 == 1,
-            ),
+            Md => Mapentry {
+                tile_index: b0 | ((b1 & 0x07) << 8),
+                palette_index: (b1 >> 5) & 0x03,
+                flip_h: (b1 >> 3) & 1 == 1,
+                flip_v: (b1 >> 4) & 1 == 1,
+                priority: (b1 >> 7) & 1 == 1,
+            },
             Pce => Mapentry::new(b0 | ((b1 & 0x0f) << 8), (b1 >> 4) & 0x0f, false, false),
             Ws | Wsc | WscPacked => Mapentry::new(
                 b0 | ((b1 & 0x01) << 8) | ((b1 & 0x20) << 4),
@@ -226,16 +231,25 @@ mod tests {
                 &[(false, false)]
             };
 
+            let priorities: &[bool] = if mode.priority_map_is_supported() {
+                &[false, true]
+            } else {
+                &[false]
+            };
+
             for tile_index in [0, tile_max] {
                 for palette_index in [0, palette_max] {
                     for &(flip_h, flip_v) in flips {
-                        let entry = Mapentry::new(tile_index, palette_index, flip_h, flip_v);
-                        let packed = mode.pack_mapentry(entry);
-                        assert_eq!(
-                            mode.unpack_mapentry(&packed),
-                            entry,
-                            "{mode} tile={tile_index:#x} palette={palette_index} h={flip_h} v={flip_v}"
-                        );
+                        for &prio in priorities {
+                            let mut entry = Mapentry::new(tile_index, palette_index, flip_h, flip_v);
+                            entry.priority = prio;
+                            let packed = mode.pack_mapentry(entry);
+                            assert_eq!(
+                                mode.unpack_mapentry(&packed),
+                                entry,
+                                "{mode} tile={tile_index:#x} palette={palette_index} h={flip_h} v={flip_v} priority={prio}"
+                            );
+                        }
                     }
                 }
             }

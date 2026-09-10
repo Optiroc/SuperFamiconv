@@ -34,7 +34,7 @@ pub fn resolve_no_flip(
     explicit: bool,
     mode: Mode,
 ) -> bool {
-    explicit || !mode.tile_flipping_is_allowed()
+    explicit || !mode.tile_flipping_is_supported()
 }
 
 fn resolve_color_zero(
@@ -60,6 +60,37 @@ fn load_image(
     let image = Image::load(path)?;
     logger.verbose(format!("Loaded image from '{}' ({image})", path.display()));
     Ok(image)
+}
+
+fn load_priority_map(
+    path: &std::path::Path,
+    mode: Mode,
+    map_width: u32,
+    map_height: u32,
+    tile_width: u32,
+    tile_height: u32,
+    logger: Logger,
+) -> Result<Vec<bool>, String> {
+    let image = load_image(path, logger)?;
+    let expected_width = map_width * tile_width;
+    let expected_height = map_height * tile_height;
+    if image.width != expected_width || image.height != expected_height {
+        return Err(format!(
+            "Attribute map '{}' ({}x{}) doesn't match image size ({expected_width}x{expected_height})",
+            path.display(),
+            image.width,
+            image.height,
+        ));
+    }
+
+    Ok(image
+        .sliced(tile_width, tile_height, mode)
+        .map(|tile| {
+            tile.data
+                .iter()
+                .any(|c| !c.is_transparent() && (c.r, c.g, c.b) != (0, 0, 0))
+        })
+        .collect())
 }
 
 fn make_palette(

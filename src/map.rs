@@ -27,6 +27,7 @@ pub struct Mapentry {
     pub palette_index: u32,
     pub flip_h: bool,
     pub flip_v: bool,
+    pub priority: bool,
 }
 
 impl Mapentry {
@@ -41,6 +42,7 @@ impl Mapentry {
             palette_index,
             flip_h,
             flip_v,
+            priority: false,
         }
     }
 }
@@ -164,6 +166,16 @@ impl Map {
     ) {
         for e in &mut self.entries {
             e.palette_index = e.palette_index.saturating_add_signed(offset);
+        }
+    }
+
+    /// Sets tile priority attributes, in row-major order.
+    pub fn set_priorities(
+        &mut self,
+        priorities: &[bool],
+    ) {
+        for (entry, &priority) in self.entries.iter_mut().zip(priorities) {
+            entry.priority = priority;
         }
     }
 
@@ -461,34 +473,30 @@ impl Map {
         split_h: u32,
         column_order: bool,
     ) -> String {
-        let flip_allowed = self.mode.tile_flipping_is_allowed();
-        let multi_palette = self.mode.default_palette_count() > 1;
+        let has_palette = self.mode.default_palette_count() > 1;
+        let has_flip = self.mode.tile_flipping_is_supported();
+        let has_priority = self.mode.priority_map_is_supported();
 
-        let entry_json = |m: &Mapentry| -> serde_json::Value {
-            match (flip_allowed, multi_palette) {
-                (true, true) => serde_json::json!({
-                    "tile": m.tile_index,
-                    "palette": m.palette_index,
-                    "flip_h": u8::from(m.flip_h),
-                    "flip_v": u8::from(m.flip_v),
-                }),
-                (true, false) => serde_json::json!({
-                    "tile": m.tile_index,
-                    "flip_h": u8::from(m.flip_h),
-                    "flip_v": u8::from(m.flip_v),
-                }),
-                (false, true) => serde_json::json!({
-                    "tile": m.tile_index,
-                    "palette": m.palette_index,
-                }),
-                (false, false) => serde_json::json!({ "tile": m.tile_index }),
+        let entry_to_json_value = |m: &Mapentry| -> serde_json::Value {
+            let mut fields = serde_json::Map::new();
+            fields.insert("tile".into(), m.tile_index.into());
+            if has_palette {
+                fields.insert("palette".into(), m.palette_index.into());
             }
+            if has_flip {
+                fields.insert("flip_h".into(), u8::from(m.flip_h).into());
+                fields.insert("flip_v".into(), u8::from(m.flip_v).into());
+            }
+            if has_priority {
+                fields.insert("priority".into(), u8::from(m.priority).into());
+            }
+            serde_json::Value::Object(fields)
         };
 
         let groups: Vec<Vec<serde_json::Value>> = self
             .collect_entries(split_w, split_h, column_order)
             .iter()
-            .map(|g| g.iter().map(entry_json).collect())
+            .map(|g| g.iter().map(entry_to_json_value).collect())
             .collect();
 
         let json = if groups.len() > 1 {
