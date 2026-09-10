@@ -41,12 +41,9 @@ fn resolve_color_zero(
     mode: Mode,
     color_zero: Option<NormalizedColor>,
     image: &Image,
-    sprite_mode: bool,
     rounding: ColorRounding,
 ) -> Option<NormalizedColor> {
-    if sprite_mode {
-        Some(NormalizedColor::TRANSPARENT)
-    } else if color_zero.is_some() || mode.color_zero_is_shared() {
+    if color_zero.is_some() || mode.color_zero_is_shared() {
         Some(color_zero.unwrap_or_else(|| image.infer_color_zero(mode, rounding)))
     } else {
         None
