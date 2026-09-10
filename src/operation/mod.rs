@@ -6,6 +6,8 @@ pub mod map;
 pub mod palette;
 pub mod tiles;
 
+use std::path::PathBuf;
+
 use crate::color::{NormalizedColor, ReducedColor};
 use crate::dither::Dither;
 use crate::image::Image;
@@ -57,6 +59,21 @@ fn load_image(
     let image = Image::load(path)?;
     logger.verbose(format!("Loaded image from '{}' ({image})", path.display()));
     Ok(image)
+}
+
+fn load_images(
+    paths: Vec<PathBuf>,
+    logger: Logger,
+) -> Result<Image, String> {
+    match paths.len() {
+        0 => Err("Input image required".into()),
+        1 => load_image(paths.first().unwrap(), logger),
+        _ => {
+            let image = Image::load_many(paths)?;
+            logger.verbose(format!("Loaded multiple images into {image}"));
+            Ok(image)
+        }
+    }
 }
 
 fn load_priority_map(

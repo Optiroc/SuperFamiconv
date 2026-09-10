@@ -11,7 +11,7 @@ use crate::tileset::Tileset;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct TilesSettings {
-    pub in_image: Option<PathBuf>,
+    pub in_image: Option<Vec<PathBuf>>,
     pub in_data: Option<PathBuf>,
     pub in_palette: Option<PathBuf>,
     pub out_data: Option<PathBuf>,
@@ -56,8 +56,8 @@ pub fn execute(settings: TilesSettings) -> Result<(), String> {
         ));
         ts
     } else {
-        let in_image = settings.in_image.as_ref().expect("in_image or in_data required");
-        let image = super::load_image(in_image, settings.logger)?;
+        let in_image = settings.in_image.expect("in_image or in_data required");
+        let image = super::load_images(in_image, settings.logger)?;
 
         if settings.mode == Mode::PceSprite && (image.width % 16 != 0 || image.height % 16 != 0) {
             return Err("Mode 'pce_sprite' requires image dimensions to be a multiple of 16".into());

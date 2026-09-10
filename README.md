@@ -32,19 +32,19 @@ Palette size, tile size, bit depth and other default settings are applied depend
 
 Supported modes and default settings:
 
-| mode | target | bpp | tile size | max tile count | max subpalette count | flip |
+| mode | target | bpp | tile size | tile count | palette count | flip |
 |--|--|-:|-:|-:|-:|-:|
 | `snes` | Super Nintendo (modes 0-6) | 4 | 8x8 | 1024 | 8 | yes |
 | `snes_mode7` | Super Nintendo (mode 7) | 8 | 8x8 | 256 | 1 | no |
 | `gb` | Game Boy | 2 | 8x8 | 256 | 1 | no |
 | `gbc` | Game Boy Color | 2 | 8x8 | 512 | 8 | yes |
 | `gba` | Game Boy Advance | 4 | 8x8 | 1024 | 16 | yes |
-| `gba_affine` | Game Boy Advance (affine background) | 8 | 8x8 | 256 | 1 | no |
+| `gba_affine` | Game Boy Advance (affine) | 8 | 8x8 | 256 | 1 | no |
 | `md` | Mega Drive | 4 | 8x8 | 2048 | 4 | yes |
 | `sms` | Master System | 4 | 8x8 | 512 | 2 | no |
 | `gg` | Game Gear | 4 | 8x8 | 512 | 2 | no |
 | `pce` | PC Engine | 4 | 8x8 | 2048 | 16 | no |
-| `pce_sprite` | PC Engine (sprite data) | 4 | 16x16 | 2048 | 16 | no |
+| `pce_sprite` | PC Engine (sprite) | 4 | 16x16 | 2048 | 16 | no |
 | `ngp` | Neo Geo Pocket | 2 | 8x8 | 512 | 2 | yes |
 | `ngpc` | Neo Geo Pocket Color | 2 | 8x8 | 512 | 16 | yes |
 | `ws` | WonderSwan | 2 | 8x8 | 512 | 16 | yes |
@@ -114,7 +114,8 @@ Full usage:
 Usage: superfamiconv convert [OPTIONS]
 
 Options:
-  -i, --in-image <IN_IMAGE>                    Input: image
+  -i, --in-image <IN_IMAGE>                    Input: image(s)
+  -a, --in-attribute-map <IN_ATTRIBUTE_MAP>    Input: priority attribute map image
   -p, --out-palette <OUT_PALETTE>              Output: palette data
   -t, --out-tiles <OUT_TILES>                  Output: tile data
   -m, --out-map <OUT_MAP>                      Output: map data
@@ -170,7 +171,7 @@ Full usage:
 Usage: superfamiconv palette [OPTIONS]
 
 Options:
-  -i, --in-image <IN_IMAGE>    Input: image
+  -i, --in-image <IN_IMAGE>    Input: image(s)
   -d, --out-data <OUT_DATA>    Output: native data
   -a, --out-act <OUT_ACT>      Output: adobe color table
   -j, --out-json <OUT_JSON>    Output: json
@@ -200,7 +201,7 @@ Full usage:
 Usage: superfamiconv tiles [OPTIONS]
 
 Options:
-  -i, --in-image <IN_IMAGE>      Input: image
+  -i, --in-image <IN_IMAGE>      Input: image(s)
   -n, --in-data <IN_DATA>        Input: native data
   -p, --in-palette <IN_PALETTE>  Input: palette (native/json)
   -d, --out-data <OUT_DATA>      Output: native data
@@ -245,18 +246,19 @@ Full usage:
 Usage: superfamiconv map [OPTIONS]
 
 Options:
-  -i, --in-image <IN_IMAGE>          Input: image
-  -n, --in-data <IN_DATA>            Input: native data
-  -p, --in-palette <IN_PALETTE>      Input: palette (json/native)
-  -t, --in-tiles <IN_TILES>          Input: tiles (native)
-  -d, --out-data <OUT_DATA>          Output: native data
-  -j, --out-json <OUT_JSON>          Output: json
-  -7, --out-m7-data <OUT_M7_DATA>    Output: interleaved map/tile data (snes_mode7)
-      --out-gbc-bank <OUT_GBC_BANK>  Output: banked map data (gbc)
-      --out-pal-map <OUT_PAL_MAP>    Output: palette map (native 16-bit LE)
-  -o, --out-image <OUT_IMAGE>        Output: image
-  -v, --verbose...                   Verbose logging (-vv for extra verbosity)
-  -h, --help                         Print help (see more with '--help')
+  -i, --in-image <IN_IMAGE>                  Input: image
+  -n, --in-data <IN_DATA>                    Input: native data
+  -p, --in-palette <IN_PALETTE>              Input: palette (json/native)
+  -t, --in-tiles <IN_TILES>                  Input: tiles (native)
+  -a, --in-attribute-map <IN_ATTRIBUTE_MAP>  Input: priority attribute map image
+  -d, --out-data <OUT_DATA>                  Output: native data
+  -j, --out-json <OUT_JSON>                  Output: json
+  -7, --out-m7-data <OUT_M7_DATA>            Output: interleaved map/tile data (snes_mode7)
+      --out-gbc-bank <OUT_GBC_BANK>          Output: banked map data (gbc)
+      --out-pal-map <OUT_PAL_MAP>            Output: palette map (native 16-bit LE)
+  -o, --out-image <OUT_IMAGE>                Output: image
+  -v, --verbose...                           Verbose logging (-vv for extra verbosity)
+  -h, --help                                 Print help (see more with '--help')
 
 Settings:
   -M, --mode <MODE>
@@ -273,6 +275,8 @@ Settings:
           Quantize (match tiles to the closest subpalette and color)
       --dither <DITHER>
           Dithering to apply if quantizing [default: bayer4] [possible values: off, bayer2, bayer4, bayer8, checker, stipple_h, stipple_v, atkinson, fs]
+      --round
+          Round instead of truncate when reducing colors to mode-native precision
       --map-width <MAP_WIDTH>
           Map width (in tiles) [default: image width]
       --map-height <MAP_HEIGHT>
@@ -293,7 +297,7 @@ Settings:
 ## history
 - v0.0-v0.2 (2005.02.05-): Initial version. Not publicly circulated.
 - v0.3-v0.11 (2017.04.17-): "Modern" C++ rewrite.
-- v0.12- (2017.04.17-): Rust rewrite.
+- v0.12- (2026.xx.yy-): Rust rewrite.
 
 
 ## about
