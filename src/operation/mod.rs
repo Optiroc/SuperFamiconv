@@ -52,6 +52,27 @@ fn resolve_color_zero(
     }
 }
 
+fn check_dimensions(
+    mode: Mode,
+    image: &Image,
+    tile_width: u32,
+    tile_height: u32,
+) -> Result<(), String> {
+    match mode {
+        Mode::PceSprite => {
+            if !image.width.is_multiple_of(tile_width) || !image.height.is_multiple_of(tile_height) {
+                Err(format!(
+                    "Image dimensions must be a multiple of the sprite size ({}x{}) for mode '{}'",
+                    tile_width, tile_height, mode
+                ))
+            } else {
+                Ok(())
+            }
+        }
+        _ => Ok(()),
+    }
+}
+
 fn load_image(
     path: &std::path::Path,
     logger: Logger,
