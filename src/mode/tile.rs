@@ -140,7 +140,9 @@ impl ModeTile for Mode {
 
         let require_8x8 = |mode: Mode| -> Result<(), String> {
             if width != 8 || height != 8 {
-                Err(format!("Tile size must be 8x8 for mode '{mode}'"))
+                Err(format!(
+                    "Tile size must be 8x8 for mode '{mode}' (got {width}x{height})"
+                ))
             } else {
                 Ok(())
             }
@@ -181,9 +183,24 @@ impl ModeTile for Mode {
                 _ => unreachable!(),
             },
             PceSprite => {
+                if !matches!(width, 16 | 32) || !matches!(height, 16 | 32 | 64) {
+                    return Err(format!("Tile size {width}x{height} not supported for mode '{self}'"));
+                }
+                let cells_x = width / 16;
+                let cells_y = height / 16;
                 let mut nd = Vec::new();
-                for p in 0..4 {
-                    nd.extend(make_1bit_planes(data, p, false));
+                for cx in 0..cells_x {
+                    for cy in 0..cells_y {
+                        let mut cell = vec![0u8; 256];
+                        for row in 0..16 {
+                            let src = (((cy * 16 + row) * width) + cx * 16) as usize;
+                            let dst = (row * 16) as usize;
+                            cell[dst..dst + 16].copy_from_slice(&data[src..src + 16]);
+                        }
+                        for p in 0..4 {
+                            nd.extend(make_1bit_planes(&cell, p, false));
+                        }
+                    }
                 }
                 Ok(nd)
             }
@@ -281,8 +298,40 @@ impl ModeTile for Mode {
                     return Err(format!("Unsupported bpp for mode '{self}'"));
                 }
             }
-            // TODO: Implement unpacking of pce_sprite data
-            PceSprite => return Err("Using 'pce_sprite' native data as input not implemented".into()),
+            PceSprite => {
+                if !matches!(width, 16 | 32) || !matches!(height, 16 | 32 | 64) {
+                    return Err(format!(
+                        "Tile size must be 16x16, 32x16, 16x32, 32x32, 16x64 or 32x64 for mode 'pce_sprite' (got {width}x{height})"
+                    ));
+                }
+                let cells_wide = width / 16;
+                let cells_tall = height / 16;
+                if data.len() != (cells_wide * cells_tall * 128) as usize {
+                    return Err("pce_sprite native tile data has unexpected length".into());
+                }
+                let mut offset = 0usize;
+                for cx in 0..cells_wide {
+                    for cy in 0..cells_tall {
+                        let mut cell = vec![0u8; 256];
+                        for p in 0..4u32 {
+                            let plane = &data[offset..offset + 32];
+                            offset += 32;
+                            for row in 0..16usize {
+                                let (b0, b1) = (plane[row * 2], plane[row * 2 + 1]);
+                                for b in 0..8usize {
+                                    cell[row * 16 + b] |= ((b0 >> b) & 1) << p;
+                                    cell[row * 16 + 8 + b] |= ((b1 >> b) & 1) << p;
+                                }
+                            }
+                        }
+                        for row in 0..16 {
+                            let dst = (((cy * 16 + row) * width) + cx * 16) as usize;
+                            let src = (row * 16) as usize;
+                            ud[dst..dst + 16].copy_from_slice(&cell[src..src + 16]);
+                        }
+                    }
+                }
+            }
         }
         Ok(ud)
     }

@@ -58,10 +58,7 @@ pub fn execute(settings: TilesSettings) -> Result<(), String> {
     } else {
         let in_image = settings.in_image.expect("in_image or in_data required");
         let image = super::load_images(in_image, settings.logger)?;
-
-        if settings.mode == Mode::PceSprite && (image.width % 16 != 0 || image.height % 16 != 0) {
-            return Err("Mode 'pce_sprite' requires image dimensions to be a multiple of 16".into());
-        }
+        super::check_dimensions(settings.mode, &image, settings.tile_width, settings.tile_height)?;
 
         let slices = image.sliced(settings.tile_width, settings.tile_height, settings.mode);
         logger.very_verbose(format!(

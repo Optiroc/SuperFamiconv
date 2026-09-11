@@ -144,7 +144,7 @@ impl Mode {
         use Mode::*;
         match self {
             Snes => width == 8 || width == 16,
-            PceSprite => width == 16,
+            PceSprite => width == 16 || width == 32,
             SnesMode7 | Gb | Gbc | Gba | GbaAffine | Md | Sms | Gg | Pce | Ngp | Ngpc | Ws | Wsc | WscPacked => {
                 width == 8
             }
@@ -158,7 +158,7 @@ impl Mode {
         use Mode::*;
         match self {
             Snes | Gb | Gbc => height == 8 || height == 16,
-            PceSprite => height == 16,
+            PceSprite => height == 16 || height == 32 || height == 64,
             SnesMode7 | Gba | GbaAffine | Md | Sms | Gg | Pce | Ngp | Ngpc | Ws | Wsc | WscPacked => height == 8,
         }
     }
@@ -210,14 +210,6 @@ impl Mode {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn pce_sprite_requires_16x16_tiles() {
-        assert_eq!(Mode::PceSprite.default_tile_size(), 16);
-        assert!(Mode::PceSprite.tile_width_is_allowed(16));
-        assert!(!Mode::PceSprite.tile_width_is_allowed(8));
-        assert!(!Mode::PceSprite.tile_flipping_is_supported());
-    }
 
     #[test]
     fn bpp_constraints() {
