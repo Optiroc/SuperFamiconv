@@ -58,8 +58,8 @@ impl ModeMap for Mode {
                 (((t >> 8) & 0x03) | (h << 2) | (v << 3) | ((p << 4) & 0xf0)) as u8,
             ],
             Md => vec![
-                (t & 0xff) as u8,
                 (((t >> 8) & 0x07) | (h << 3) | (v << 4) | ((p << 5) & 0x60) | (pr << 7)) as u8,
+                (t & 0xff) as u8,
             ],
             Pce => vec![(t & 0xff) as u8, (((t >> 8) & 0x0f) | ((p << 4) & 0xf0)) as u8],
             Ws | Wsc | WscPacked => vec![
@@ -115,11 +115,11 @@ impl ModeMap for Mode {
                 (b1 >> 3) & 1 == 1,
             ),
             Md => Mapentry {
-                tile_index: b0 | ((b1 & 0x07) << 8),
-                palette_index: (b1 >> 5) & 0x03,
-                flip_h: (b1 >> 3) & 1 == 1,
-                flip_v: (b1 >> 4) & 1 == 1,
-                priority: (b1 >> 7) & 1 == 1,
+                tile_index: b1 | ((b0 & 0x07) << 8),
+                palette_index: (b0 >> 5) & 0x03,
+                flip_h: (b0 >> 3) & 1 == 1,
+                flip_v: (b0 >> 4) & 1 == 1,
+                priority: (b0 >> 7) & 1 == 1,
             },
             Pce => Mapentry::new(b0 | ((b1 & 0x0f) << 8), (b1 >> 4) & 0x0f, false, false),
             Ws | Wsc | WscPacked => Mapentry::new(
@@ -179,7 +179,7 @@ mod tests {
         let e = Mapentry::new(0x01f0, 2, true, false);
         assert_eq!(
             Mode::Md.pack_mapentry(e),
-            vec![0xf0, ((0x01f0 >> 8) & 0x07) as u8 | (1 << 3) | ((2 << 5) & 0x60)]
+            vec![((0x01f0 >> 8) & 0x07) as u8 | (1 << 3) | ((2 << 5) & 0x60), 0xf0]
         );
     }
 
