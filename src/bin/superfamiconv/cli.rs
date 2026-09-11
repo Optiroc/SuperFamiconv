@@ -267,9 +267,6 @@ pub struct MapArgs {
     /// Output: interleaved map/tile data (snes_mode7)
     #[arg(short = '7', long)]
     pub out_m7_data: Option<PathBuf>,
-    /// Output: banked map data (gbc)
-    #[arg(long)]
-    pub out_gbc_bank: Option<PathBuf>,
     /// Output: palette map (native 16-bit LE)
     #[arg(long)]
     pub out_pal_map: Option<PathBuf>,

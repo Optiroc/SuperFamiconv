@@ -195,7 +195,6 @@ pub fn resolve_map(args: MapArgs) -> Result<MapSettings, String> {
         out_json: args.out_json,
         out_image: args.out_image,
         out_m7_data: args.out_m7_data,
-        out_gbc_bank: args.out_gbc_bank,
         out_pal_map: args.out_pal_map,
         mode,
         bpp,

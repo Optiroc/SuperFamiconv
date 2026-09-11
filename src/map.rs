@@ -387,20 +387,6 @@ impl Map {
         Ok(data)
     }
 
-    pub fn get_gbc_banked_data(&self) -> Result<Vec<u8>, String> {
-        if !self.width.is_multiple_of(32) || !self.height.is_multiple_of(32) {
-            return Err("gbc/out-gbc-bank requires map dimensions to be multiples of 32".into());
-        }
-        let linear_data = self.to_native_data(0, 0, false);
-        let half = linear_data.len() / 2;
-        let mut banked_data = vec![0u8; linear_data.len()];
-        for i in 0..half {
-            banked_data[i] = linear_data[i << 1];
-            banked_data[i + half] = linear_data[(i << 1) + 1];
-        }
-        Ok(banked_data)
-    }
-
     pub fn get_palette_map(
         &self,
         split_w: u32,
@@ -755,15 +741,5 @@ mod tests {
         assert_eq!(data[2], 0xbb);
         assert_eq!(data[3], 0x00);
         assert!(data.len() >= 4);
-    }
-
-    #[test]
-    fn get_gbc_banked_data() {
-        let mut map = Map::new(Mode::Gbc, 32, 32, 8, 8, false, Off, Truncate);
-        map.entries[0] = Mapentry::new(0x0100, 3, false, false); // 2nd byte non-zero
-        let banked = map.get_gbc_banked_data().unwrap();
-        let linear = map.to_native_data(0, 0, false);
-        assert_eq!(banked[0], linear[0]);
-        assert_eq!(banked[linear.len() / 2], linear[1]);
     }
 }

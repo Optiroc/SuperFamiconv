@@ -20,7 +20,6 @@ pub struct MapSettings {
     pub out_json: Option<PathBuf>,
     pub out_image: Option<PathBuf>,
     pub out_m7_data: Option<PathBuf>,
-    pub out_gbc_bank: Option<PathBuf>,
     pub out_pal_map: Option<PathBuf>,
 
     pub mode: Mode,
@@ -216,13 +215,6 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
         let data = map.get_snes_mode7_interleaved_data(&tileset)?;
         std::fs::write(path, data).map_err(|e| e.to_string())?;
         logger.verbose(format!("Saved snes_mode7 interleaved data to '{}'", path.display()));
-    }
-    if settings.mode == Mode::Gbc
-        && let Some(path) = &settings.out_gbc_bank
-    {
-        let data = map.get_gbc_banked_data()?;
-        std::fs::write(path, data).map_err(|e| e.to_string())?;
-        logger.verbose(format!("Saved gbc banked map data to '{}'", path.display()));
     }
 
     Ok(())
