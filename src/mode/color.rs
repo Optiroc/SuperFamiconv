@@ -171,8 +171,8 @@ impl ModeColor for Mode {
             }
             Gb => vec![((0xffu32.wrapping_sub(color & 0x3)) & 0x3) as u8],
             Md => vec![
-                (((color << 1) & 0x0e) | ((color >> 3) & 0xe0)) as u8,
                 ((color >> 15) & 0x0e) as u8,
+                (((color << 1) & 0x0e) | ((color >> 3) & 0xe0)) as u8,
             ],
             Pce | PceSprite => {
                 vec![
@@ -268,7 +268,7 @@ impl ModeColor for Mode {
                     return Err("Native palette size not a multiple of 2".into());
                 }
                 for chunk in data.chunks_exact(2) {
-                    let cw = u16::from_le_bytes([chunk[0], chunk[1]]);
+                    let cw = u16::from_be_bytes([chunk[0], chunk[1]]);
                     let (r, g, b) = (
                         ((cw >> 1) & 0x7) as u8,
                         ((cw >> 5) & 0x7) as u8,
