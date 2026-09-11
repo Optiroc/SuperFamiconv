@@ -19,8 +19,10 @@ pub struct MapSettings {
     pub out_data: Option<PathBuf>,
     pub out_json: Option<PathBuf>,
     pub out_image: Option<PathBuf>,
-    pub out_m7_data: Option<PathBuf>,
-    pub out_pal_map: Option<PathBuf>,
+    pub out_palette_map: Option<PathBuf>,
+    pub out_tile_map: Option<PathBuf>,
+    pub out_attribute_map: Option<PathBuf>,
+    pub out_mode7_data: Option<PathBuf>,
 
     pub mode: Mode,
     pub bpp: u32,
@@ -34,9 +36,9 @@ pub struct MapSettings {
     pub map_height: Option<u32>,
     pub split_width: u32,
     pub split_height: u32,
-    pub column_order: bool,
     pub tile_base_offset: i32,
     pub palette_base_offset: i32,
+    pub column_order: bool,
 
     pub logger: Logger,
 }
@@ -195,7 +197,7 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
         std::fs::write(path, data).map_err(|e| e.to_string())?;
         logger.verbose(format!("Saved native map data to '{}'", path.display()));
     }
-    if let Some(path) = &settings.out_pal_map {
+    if let Some(path) = &settings.out_palette_map {
         let data = map.get_palette_map(settings.split_width, settings.split_height, settings.column_order);
         std::fs::write(path, data).map_err(|e| e.to_string())?;
         logger.verbose(format!("Saved palette map to '{}'", path.display()));
@@ -210,7 +212,7 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
         logger.verbose(format!("Saved map image to '{}'", path.display()));
     }
     if settings.mode == Mode::SnesMode7
-        && let Some(path) = &settings.out_m7_data
+        && let Some(path) = &settings.out_mode7_data
     {
         let data = map.get_snes_mode7_interleaved_data(&tileset)?;
         std::fs::write(path, data).map_err(|e| e.to_string())?;

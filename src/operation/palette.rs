@@ -12,9 +12,9 @@ use crate::mode::color::ColorRounding;
 pub struct PaletteSettings {
     pub in_image: Vec<PathBuf>,
     pub out_data: Option<PathBuf>,
-    pub out_act: Option<PathBuf>,
-    pub out_json: Option<PathBuf>,
     pub out_image: Option<PathBuf>,
+    pub out_json: Option<PathBuf>,
+    pub out_act: Option<PathBuf>,
 
     pub mode: Mode,
     pub palettes: u32,
@@ -22,7 +22,6 @@ pub struct PaletteSettings {
     pub tile_width: u32,
     pub tile_height: u32,
     pub no_remap: bool,
-    pub sprite_mode: bool,
     pub color_zero: Option<NormalizedColor>,
     pub quantize: bool,
     pub rounding: ColorRounding,

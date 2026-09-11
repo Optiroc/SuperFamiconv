@@ -17,10 +17,14 @@ pub struct ConvertSettings {
     pub out_palette: Option<PathBuf>,
     pub out_tiles: Option<PathBuf>,
     pub out_map: Option<PathBuf>,
+    pub out_palette_map: Option<PathBuf>,
+    pub out_tile_map: Option<PathBuf>,
+    pub out_attribute_map: Option<PathBuf>,
+    pub out_mode7_data: Option<PathBuf>,
     pub out_palette_image: Option<PathBuf>,
-    pub out_palette_act: Option<PathBuf>,
-    pub out_tiles_image: Option<PathBuf>,
+    pub out_tile_image: Option<PathBuf>,
     pub out_preview_image: Option<PathBuf>,
+    pub out_palette_act: Option<PathBuf>,
 
     pub mode: Mode,
     pub bpp: u32,
@@ -32,7 +36,6 @@ pub struct ConvertSettings {
     pub no_discard: bool,
     pub no_flip: bool,
     pub max_tiles: u32,
-    pub sprite_mode: bool,
     pub color_zero: Option<NormalizedColor>,
     pub quantize: bool,
     pub dither: Dither,
@@ -121,7 +124,7 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
         std::fs::write(path, tileset.to_native_data()?).map_err(|e| e.to_string())?;
         logger.verbose(format!("Saved native tile data to '{}'", path.display()));
     }
-    if let Some(path) = &settings.out_tiles_image {
+    if let Some(path) = &settings.out_tile_image {
         tileset.preview(None)?.save_rgba(path)?;
         logger.verbose(format!("Saved tileset image to '{}'", path.display()));
     }

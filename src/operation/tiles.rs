@@ -25,7 +25,6 @@ pub struct TilesSettings {
     pub no_discard: bool,
     pub no_flip: bool,
     pub max_tiles: u32,
-    pub sprite_mode: bool,
     pub quantize: bool,
     pub dither: Dither,
     pub rounding: ColorRounding,
