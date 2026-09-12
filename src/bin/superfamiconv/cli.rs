@@ -18,7 +18,7 @@ const STYLES: styling::Styles = styling::Styles::styled()
     about,
     version,
     long_about = None,
-    args_override_self = true,
+    args_override_self = false,
     disable_help_flag = true,
     disable_version_flag = true,
     hide_possible_values = true,
