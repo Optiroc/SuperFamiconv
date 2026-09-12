@@ -39,10 +39,14 @@ pub fn resolve_convert(args: ConvertArgs) -> Result<ConvertSettings, String> {
         out_palette: args.out_palette,
         out_tiles: args.out_tiles,
         out_map: args.out_map,
+        out_palette_map: args.out_palette_map,
+        out_tile_map: args.out_tile_map,
+        out_attribute_map: args.out_attribute_map,
+        out_mode7_data: args.out_mode7_data,
         out_palette_image: args.out_palette_image,
-        out_palette_act: args.out_palette_act,
-        out_tiles_image: args.out_tiles_image,
+        out_tile_image: args.out_tile_image,
         out_preview_image: args.out_preview_image,
+        out_palette_act: args.out_palette_act,
         mode,
         bpp,
         palettes,
@@ -53,7 +57,6 @@ pub fn resolve_convert(args: ConvertArgs) -> Result<ConvertSettings, String> {
         no_discard,
         no_flip,
         max_tiles,
-        sprite_mode,
         color_zero: args.color_zero,
         quantize: args.quantize,
         dither: args.dither,
@@ -65,7 +68,7 @@ pub fn resolve_convert(args: ConvertArgs) -> Result<ConvertSettings, String> {
 }
 
 pub fn resolve_palette(args: PaletteArgs) -> Result<PaletteSettings, String> {
-    let (mode, sprite_mode) = operation::resolve_sprite_mode(args.mode, args.sprite_mode);
+    let mode = args.mode;
     let palettes = args.palettes.unwrap_or_else(|| mode.default_palette_count());
     let colors = args.colors.unwrap_or_else(|| palette_size_at_bpp(mode.default_bpp()));
     let tile_width = args.tile_width.unwrap_or_else(|| mode.default_tile_size());
@@ -81,16 +84,15 @@ pub fn resolve_palette(args: PaletteArgs) -> Result<PaletteSettings, String> {
     Ok(PaletteSettings {
         in_image: args.in_image,
         out_data: args.out_data,
-        out_act: args.out_act,
-        out_json: args.out_json,
         out_image: args.out_image,
+        out_json: args.out_json,
+        out_act: args.out_act,
         mode,
         palettes,
         colors,
         tile_width,
         tile_height,
         no_remap: args.no_remap,
-        sprite_mode,
         color_zero: args.color_zero,
         quantize: args.quantize,
         rounding: ColorRounding::from(args.round),
@@ -117,14 +119,12 @@ pub fn resolve_tiles(args: TilesArgs) -> Result<TilesSettings, String> {
     if !mode.tile_height_is_allowed(tile_height) {
         return Err(format!("tile-height={tile_height} is not allowed for mode '{mode}'"));
     }
-
+    if !mode.bpp_is_allowed(bpp) {
+        return Err(format!("bpp={bpp} is not allowed for mode '{mode}'"));
+    }
     if sprite_mode {
         no_discard = true;
         no_flip = true;
-    }
-
-    if !mode.bpp_is_allowed(bpp) {
-        return Err(format!("bpp={bpp} is not allowed for mode '{mode}'"));
     }
 
     Ok(TilesSettings {
@@ -140,7 +140,6 @@ pub fn resolve_tiles(args: TilesArgs) -> Result<TilesSettings, String> {
         no_remap: args.no_remap,
         no_discard,
         no_flip,
-        sprite_mode,
         quantize: args.quantize,
         dither: args.dither,
         rounding: ColorRounding::from(args.round),
@@ -194,9 +193,10 @@ pub fn resolve_map(args: MapArgs) -> Result<MapSettings, String> {
         out_data: args.out_data,
         out_json: args.out_json,
         out_image: args.out_image,
-        out_m7_data: args.out_m7_data,
-        out_gbc_bank: args.out_gbc_bank,
-        out_pal_map: args.out_pal_map,
+        out_palette_map: args.out_palette_map,
+        out_tile_map: args.out_tile_map,
+        out_attribute_map: args.out_attribute_map,
+        out_mode7_data: args.out_mode7_data,
         mode,
         bpp,
         tile_width,
@@ -209,9 +209,9 @@ pub fn resolve_map(args: MapArgs) -> Result<MapSettings, String> {
         map_height: args.map_height,
         split_width,
         split_height,
-        column_order: args.column_order,
         tile_base_offset: args.tile_base_offset,
         palette_base_offset: args.palette_base_offset,
+        column_order: args.column_order,
         logger: Logger::new(Verbosity::from(args.verbose)),
     })
 }

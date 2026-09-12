@@ -387,20 +387,9 @@ impl Map {
         Ok(data)
     }
 
-    pub fn get_gbc_banked_data(&self) -> Result<Vec<u8>, String> {
-        if !self.width.is_multiple_of(32) || !self.height.is_multiple_of(32) {
-            return Err("gbc/out-gbc-bank requires map dimensions to be multiples of 32".into());
-        }
-        let linear_data = self.to_native_data(0, 0, false);
-        let half = linear_data.len() / 2;
-        let mut banked_data = vec![0u8; linear_data.len()];
-        for i in 0..half {
-            banked_data[i] = linear_data[i << 1];
-            banked_data[i + half] = linear_data[(i << 1) + 1];
-        }
-        Ok(banked_data)
-    }
-
+    /// Palette indices in native map ordering.
+    ///
+    /// One 16-bit little endian word per entry.
     pub fn get_palette_map(
         &self,
         split_w: u32,
@@ -412,6 +401,44 @@ impl Map {
             for entry in group {
                 data.push((entry.palette_index & 0xff) as u8);
                 data.push((entry.palette_index >> 8) as u8);
+            }
+        }
+        data
+    }
+
+    /// Tile indices in native map ordering.
+    ///
+    /// Returns one byte per entry if max_tile_count <= 256,
+    /// else one 16-bit little endian word per entry.
+    ///
+    /// Notes:
+    /// - Mode::Gbc considers the 9th bit as part of the attributes, so it returns 1 byte per entrry.
+    pub fn get_tile_map(
+        &self,
+        split_w: u32,
+        split_h: u32,
+        column_order: bool,
+    ) -> Vec<u8> {
+        let mut data = Vec::new();
+        for group in self.collect_entries(split_w, split_h, column_order) {
+            for entry in group {
+                data.extend(self.mode.get_tile_index(entry));
+            }
+        }
+        data
+    }
+
+    // Attribute bits in native map ordering.
+    pub fn get_attribute_map(
+        &self,
+        split_w: u32,
+        split_h: u32,
+        column_order: bool,
+    ) -> Vec<u8> {
+        let mut data = Vec::new();
+        for group in self.collect_entries(split_w, split_h, column_order) {
+            for entry in group {
+                data.push(self.mode.get_attribute(entry));
             }
         }
         data
@@ -755,15 +782,5 @@ mod tests {
         assert_eq!(data[2], 0xbb);
         assert_eq!(data[3], 0x00);
         assert!(data.len() >= 4);
-    }
-
-    #[test]
-    fn get_gbc_banked_data() {
-        let mut map = Map::new(Mode::Gbc, 32, 32, 8, 8, false, Off, Truncate);
-        map.entries[0] = Mapentry::new(0x0100, 3, false, false); // 2nd byte non-zero
-        let banked = map.get_gbc_banked_data().unwrap();
-        let linear = map.to_native_data(0, 0, false);
-        assert_eq!(banked[0], linear[0]);
-        assert_eq!(banked[linear.len() / 2], linear[1]);
     }
 }

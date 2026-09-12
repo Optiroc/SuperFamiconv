@@ -7,17 +7,29 @@ pub trait ModeMap {
     /// Size of one packed map entry.
     fn mapentry_size(&self) -> usize;
 
-    /// Packs one map `entry` into mode-native bytes.
+    /// Packs a map `entry` into mode-native bytes.
     fn pack_mapentry(
         &self,
         entry: Mapentry,
     ) -> Vec<u8>;
 
-    /// Unpacks one map entry from mode-native `bytes`.
+    /// Unpacks a map entry from mode-native `bytes`.
     fn unpack_mapentry(
         &self,
         bytes: &[u8],
     ) -> Mapentry;
+
+    /// Returns the tile index of a map `entry` in mode-native format.
+    fn get_tile_index(
+        &self,
+        entry: Mapentry,
+    ) -> Vec<u8>;
+
+    /// Returns the attribute bits of a map `entry` in mode-native format.
+    fn get_attribute(
+        &self,
+        entry: Mapentry,
+    ) -> u8;
 }
 
 impl ModeMap for Mode {
@@ -142,6 +154,46 @@ impl ModeMap for Mode {
             ),
             PceSprite => Mapentry::default(),
         }
+    }
+
+    fn get_tile_index(
+        &self,
+        entry: Mapentry,
+    ) -> Vec<u8> {
+        match self {
+            // On Gbc the 9th bit is part of attributes
+            Gbc => vec![(entry.tile_index & 0xff) as u8],
+            _ => {
+                if self.max_tile_count() > 256 {
+                    vec![(entry.tile_index & 0xff) as u8, (entry.tile_index >> 8) as u8]
+                } else {
+                    vec![(entry.tile_index & 0xff) as u8]
+                }
+            }
+        }
+    }
+
+    fn get_attribute(
+        &self,
+        entry: Mapentry,
+    ) -> u8 {
+        let mask: u8 = match self {
+            // Early exit if mode has no attributes
+            SnesMode7 | Gb | GbaAffine | PceSprite => return 0,
+            Snes | Gba => 0x03,
+            Sms | Gg | Ngp | Ngpc => 0x01,
+            Gbc => 0x10,
+            Md => 0x07,
+            Pce => 0x0f,
+            Ws | Wsc | WscPacked => 0x21,
+        };
+
+        let bytes = self.pack_mapentry(entry);
+        let byte = match self {
+            Md => bytes[0],
+            _ => bytes[1],
+        };
+        byte & !mask
     }
 }
 

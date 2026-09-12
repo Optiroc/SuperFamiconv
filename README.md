@@ -83,10 +83,9 @@ Commands:
   map      Convert an image, palette and tileset to map data
   help     Print this message or the help of the given subcommand(s)
 
-Options:
+Info:
   -h, --help     Print help
-  -V, --version  Print version
-```
+  -V, --version  Print version```
 
 ### convert
 `superfamiconv convert` takes one image as input and outputs palette, tile and/or map data. Sensible mode-dependent defaults are applied, but can of course be overridden.
@@ -113,54 +112,45 @@ Full usage:
 ```
 Usage: superfamiconv convert [OPTIONS]
 
-Options:
-  -i, --in-image <IN_IMAGE>                    Input: image(s)
-  -a, --in-attribute-map <IN_ATTRIBUTE_MAP>    Input: priority attribute map image
-  -p, --out-palette <OUT_PALETTE>              Output: palette data
-  -t, --out-tiles <OUT_TILES>                  Output: tile data
-  -m, --out-map <OUT_MAP>                      Output: map data
-      --out-palette-image <OUT_PALETTE_IMAGE>  Output: palette image
-      --out-palette-act <OUT_PALETTE_ACT>      Output: photoshop palette
-      --out-tiles-image <OUT_TILES_IMAGE>      Output: tiles image
-      --out-preview-image <OUT_PREVIEW_IMAGE>  Output: preview image
-  -v, --verbose...                             Verbose logging (-vv for extra verbosity)
-  -h, --help                                   Print help (see more with '--help')
+Input files:
+  -i, --in-image <FILE>          Source image(s)
+  -a, --in-attribute-map <FILE>  Priority attribute map image
 
-Settings:
-  -M, --mode <MODE>
-          Mode [default: snes] [possible values: snes, snes_mode7, gb, gbc, gba, gba_affine, md, sms, gg, pce, pce_sprite, ngp, ngpc, ws, wsc, wsc_packed]
-  -B, --bpp <BPP>
-          Bits per pixel [default: mode-dependent]
-  -N, --palettes <PALETTES>
-          Number of subpalettes [default: mode-dependent]
-  -C, --colors <COLORS>
-          Colors per subpalette [default: mode-dependent]
-  -W, --tile-width <TILE_WIDTH>
-          Tile width [default: mode-dependent]
-  -H, --tile-height <TILE_HEIGHT>
-          Tile height [default: mode-dependent]
-  -R, --no-remap
-          Don't remap colors
-  -D, --no-discard
-          Don't deduplicate redundant tiles
-  -F, --no-flip
-          Don't deduplicate using tile flipping
-  -T, --max-tiles <MAX_TILES>
-          Maximum number of tiles [default: mode-dependent]
-  -S, --sprite-mode
-          Apply sprite output settings
-  -Z, --color-zero <COLOR_ZERO>
-          Set color #0 (6 or 8 character hex string)
-  -Q, --quantize
-          Quantize colors and tiles to fit target palette settings
-      --dither <DITHER>
-          Dithering to apply if quantizing [default: bayer4] [possible values: off, bayer2, bayer4, bayer8, checker, stipple_h, stipple_v, atkinson, fs]
-      --round
-          Round instead of truncate when reducing colors to mode-native precision
-      --tile-base-offset <TILE_BASE_OFFSET>
-          Tile base offset for map data [default: 0]
-      --palette-base-offset <PALETTE_BASE_OFFSET>
-          Palette base offset for map data [default: 0]
+Output files:
+  -p, --out-palette <FILE>        Native palette data
+  -t, --out-tiles <FILE>          Native tile data
+  -m, --out-map <FILE>            Native map data
+      --out-palette-map <FILE>    Palette map [alias: --pm]
+      --out-tile-map <FILE>       Tile map [alias: --tm]
+      --out-attribute-map <FILE>  Attribute map [alias: --am]
+      --out-mode7-data <FILE>     Interleaved map/tile data [snes_mode7] [alias: --m7]
+      --out-palette-image <FILE>  Palette image [alias: --pi]
+      --out-tile-image <FILE>     Tile image [alias: --ti]
+      --out-preview-image <FILE>  Preview image [alias: --pri]
+      --out-palette-act <FILE>    Adobe color table [alias: --act]
+
+Options:
+  -M, --mode <MODE>                   Mode [default: snes]
+  -B, --bpp <BPP>                     Bits per pixel
+  -N, --palettes <PALETTES>           Number of subpalettes
+  -C, --colors <COLORS>               Colors per subpalette
+  -W, --tile-width <WIDTH>            Tile width
+  -H, --tile-height <HEIGHT>          Tile height
+  -R, --no-remap                      Do not remap colors
+  -D, --no-discard                    Do not deduplicate identical tiles
+  -F, --no-flip                       Do not deduplicate via tile flipping
+  -T, --max-tiles <MAX_TILES>         Maximum number of tiles
+  -S, --sprite-mode                   Apply sprite output settings
+  -Z, --color-zero <COLOR_ZERO>       Set color zero
+  -Q, --quantize                      Quantize colors and tiles to fit target palette
+      --dither <DITHER>               Dithering to apply if quantizing [default: bayer4]
+      --round                         Round colors instead of truncating
+      --tile-base-offset <OFFSET>     Tile base offset for map data [default: 0]
+      --palette-base-offset <OFFSET>  Palette base offset for map data [default: 0]
+
+Info:
+  -v, --verbose...  Verbose logging (-vv for extra verbosity)
+  -h, --help        Print help
 ```
 
 ### palette
@@ -170,26 +160,29 @@ Full usage:
 ```
 Usage: superfamiconv palette [OPTIONS]
 
-Options:
-  -i, --in-image <IN_IMAGE>    Input: image(s)
-  -d, --out-data <OUT_DATA>    Output: native data
-  -a, --out-act <OUT_ACT>      Output: adobe color table
-  -j, --out-json <OUT_JSON>    Output: json
-  -o, --out-image <OUT_IMAGE>  Output: image
-  -v, --verbose...             Verbose logging (-vv for extra verbosity)
-  -h, --help                   Print help (see more with '--help')
+Input files:
+  -i, --in-image <FILE>  Source image(s)
 
-Settings:
-  -M, --mode <MODE>                Mode [default: snes] [possible values: snes, snes_mode7, gb, gbc, gba, gba_affine, md, sms, gg, pce, pce_sprite, ngp, ngpc, ws, wsc, wsc_packed]
-  -N, --palettes <PALETTES>        Number of subpalettes [default: mode-dependent]
-  -C, --colors <COLORS>            Colors per subpalette [default: mode-dependent]
-  -W, --tile-width <TILE_WIDTH>    Tile width [default: mode-dependent]
-  -H, --tile-height <TILE_HEIGHT>  Tile height [default: mode-dependent]
-  -R, --no-remap                   Don't remap colors
-  -S, --sprite-mode                Apply sprite output settings
-  -Z, --color-zero <COLOR_ZERO>    Set color #0 (6 or 8 character hex string)
-  -Q, --quantize                   Quantize colors to fit target palette settings
-      --round                      Round instead of truncate when reducing colors to mode-native precision
+Output files:
+  -d, --out-data <FILE>   Native palette data
+  -o, --out-image <FILE>  Palette image
+  -j, --out-json <FILE>   Palette json
+      --out-act <FILE>    Adobe color table [alias: --act]
+
+Options:
+  -M, --mode <MODE>              Mode [default: snes]
+  -N, --palettes <PALETTES>      Number of subpalettes
+  -C, --colors <COLORS>          Colors per subpalette
+  -W, --tile-width <WIDTH>       Tile width
+  -H, --tile-height <HEIGHT>     Tile height
+  -R, --no-remap                 Do not remap colors
+  -Z, --color-zero <COLOR_ZERO>  Set color zero
+  -Q, --quantize                 Quantize colors to fit target palette
+      --round                    Round colors instead of truncating
+
+Info:
+  -v, --verbose...  Verbose logging (-vv for extra verbosity)
+  -h, --help        Print help
 ```
 
 
@@ -200,42 +193,33 @@ Full usage:
 ```
 Usage: superfamiconv tiles [OPTIONS]
 
-Options:
-  -i, --in-image <IN_IMAGE>      Input: image(s)
-  -n, --in-data <IN_DATA>        Input: native data
-  -p, --in-palette <IN_PALETTE>  Input: palette (native/json)
-  -d, --out-data <OUT_DATA>      Output: native data
-  -o, --out-image <OUT_IMAGE>    Output: image
-  -v, --verbose...               Verbose logging (-vv for extra verbosity)
-  -h, --help                     Print help (see more with '--help')
+Input files:
+  -i, --in-image <FILE>    Source image (multiple allowed)
+  -n, --in-data <FILE>     Native tile data
+  -p, --in-palette <FILE>  Palette (native or json)
 
-Settings:
-  -M, --mode <MODE>
-          Mode [default: snes] [possible values: snes, snes_mode7, gb, gbc, gba, gba_affine, md, sms, gg, pce, pce_sprite, ngp, ngpc, ws, wsc, wsc_packed]
-  -B, --bpp <BPP>
-          Bits per pixel [default: mode-dependent]
-  -W, --tile-width <TILE_WIDTH>
-          Tile width [default: mode-dependent]
-  -H, --tile-height <TILE_HEIGHT>
-          Tile height [default: mode-dependent]
-  -R, --no-remap
-          Don't remap colors
-  -D, --no-discard
-          Don't deduplicate redundant tiles
-  -F, --no-flip
-          Don't deduplicate using tile flipping
-  -T, --max-tiles <MAX_TILES>
-          Maximum number of tiles [default: mode-dependent]
-  -S, --sprite-mode
-          Apply sprite output settings
-  -Q, --quantize
-          Quantize (match tiles to the closest subpalette and color)
-      --dither <DITHER>
-          Dithering to apply if quantizing [default: bayer4] [possible values: off, bayer2, bayer4, bayer8, checker, stipple_h, stipple_v, atkinson, fs]
-      --round
-          Round instead of truncate when reducing colors to mode-native precision
-      --out-image-width <OUT_IMAGE_WIDTH>
-          Width of output tileset image
+Output files:
+  -d, --out-data <FILE>   Native tile data
+  -o, --out-image <FILE>  Tile image
+
+Options:
+  -M, --mode <MODE>              Mode [default: snes]
+  -B, --bpp <BPP>                Bits per pixel
+  -W, --tile-width <WIDTH>       Tile width
+  -H, --tile-height <HEIGHT>     Tile height
+  -R, --no-remap                 Do not remap colors
+  -D, --no-discard               Do not deduplicate identical tiles
+  -F, --no-flip                  Do not deduplicate via tile flipping
+  -T, --max-tiles <MAX_TILES>    Maximum number of tiles
+  -S, --sprite-mode              Apply sprite output settings
+  -Q, --quantize                 Quantize (match tiles to the closest subpalette)
+      --dither <DITHER>          Dithering to apply if quantizing [default: bayer4]
+      --round                    Round colors instead of truncating
+      --out-image-width <WIDTH>  Width of output tile image
+
+Info:
+  -v, --verbose...  Verbose logging (-vv for extra verbosity)
+  -h, --help        Print help
 ```
 
 ### map
@@ -245,52 +229,42 @@ Full usage:
 ```
 Usage: superfamiconv map [OPTIONS]
 
-Options:
-  -i, --in-image <IN_IMAGE>                  Input: image
-  -n, --in-data <IN_DATA>                    Input: native data
-  -p, --in-palette <IN_PALETTE>              Input: palette (json/native)
-  -t, --in-tiles <IN_TILES>                  Input: tiles (native)
-  -a, --in-attribute-map <IN_ATTRIBUTE_MAP>  Input: priority attribute map image
-  -d, --out-data <OUT_DATA>                  Output: native data
-  -j, --out-json <OUT_JSON>                  Output: json
-  -7, --out-m7-data <OUT_M7_DATA>            Output: interleaved map/tile data (snes_mode7)
-      --out-gbc-bank <OUT_GBC_BANK>          Output: banked map data (gbc)
-      --out-pal-map <OUT_PAL_MAP>            Output: palette map (native 16-bit LE)
-  -o, --out-image <OUT_IMAGE>                Output: image
-  -v, --verbose...                           Verbose logging (-vv for extra verbosity)
-  -h, --help                                 Print help (see more with '--help')
+Input files:
+  -i, --in-image <FILE>          Source image(s)
+  -n, --in-data <FILE>           Native map data
+  -p, --in-palette <FILE>        Palette (native or json)
+  -t, --in-tiles <FILE>          Native tile data
+  -a, --in-attribute-map <FILE>  Priority attribute map image
 
-Settings:
-  -M, --mode <MODE>
-          Mode [default: snes] [possible values: snes, snes_mode7, gb, gbc, gba, gba_affine, md, sms, gg, pce, pce_sprite, ngp, ngpc, ws, wsc, wsc_packed]
-  -B, --bpp <BPP>
-          Bits per pixel [default: mode-dependent]
-  -W, --tile-width <TILE_WIDTH>
-          Tile width [default: mode-dependent]
-  -H, --tile-height <TILE_HEIGHT>
-          Tile height [default: mode-dependent]
-  -F, --no-flip
-          Don't use flipped tiles
-  -Q, --quantize
-          Quantize (match tiles to the closest subpalette and color)
-      --dither <DITHER>
-          Dithering to apply if quantizing [default: bayer4] [possible values: off, bayer2, bayer4, bayer8, checker, stipple_h, stipple_v, atkinson, fs]
-      --round
-          Round instead of truncate when reducing colors to mode-native precision
-      --map-width <MAP_WIDTH>
-          Map width (in tiles) [default: image width]
-      --map-height <MAP_HEIGHT>
-          Map height (in tiles) [default: image height]
-      --split-width <SPLIT_WIDTH>
-          Split output into columns of <tiles> width [default: mode-dependent]
-      --split-height <SPLIT_HEIGHT>
-          Split output into rows of <tiles> height [default: mode-dependent]
-      --column-order
-          Output data in column-major order [default: row-major]
-      --tile-base-offset <TILE_BASE_OFFSET>
-          Tile base offset for map data [default: 0]
-      --palette-base-offset <PALETTE_BASE_OFFSET>
-          Palette base offset for map data [default: 0]
+Output files:
+  -d, --out-data <FILE>           Native map data
+  -j, --out-json <FILE>           JSON map data
+  -o, --out-image <FILE>          Map image
+      --out-palette-map <FILE>    Palette map [alias: --pm]
+      --out-tile-map <FILE>       Tile map [alias: --tm]
+      --out-attribute-map <FILE>  Attribute map [alias: --am]
+      --out-mode7-data <FILE>     Interleaved native map/tile data [snes_mode7] [alias: --m7]
+
+Options:
+  -M, --mode <MODE>                   Mode [default: snes]
+  -B, --bpp <BPP>                     Bits per pixel
+  -W, --tile-width <WIDTH>            Tile width
+  -H, --tile-height <HEIGHT>          Tile height
+  -F, --no-flip                       Do not allow tile flipping
+  -Q, --quantize                      Quantize (match tiles to the closest subpalette)
+      --dither <DITHER>               Dithering to apply if quantizing [default: bayer4]
+      --round                         Round colors instead of truncating
+      --map-width <WIDTH>             Map width (in tiles) [alias: --mw]
+      --map-height <HEIGHT>           Map height (in tiles) [alias: --mh]
+      --split-width <WIDTH>           Split output into columns of <tiles> width [alias: --sw]
+      --split-height <HEIGHT>         Split output into rows of <tiles> height [alias: --sh]
+      --tile-base-offset <OFFSET>     Tile base offset for map data [default: 0]
+      --palette-base-offset <OFFSET>  Palette base offset for map data [default: 0]
+      --column-order                  Output data in column-major order
+
+Info:
+  -v, --verbose...  Verbose logging (-vv for extra verbosity)
+  -h, --help        Print help
 ```
 
 
