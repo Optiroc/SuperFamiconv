@@ -138,6 +138,7 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
             map_height,
             settings.tile_width,
             settings.tile_height,
+            settings.mode.max_tile_count(),
             settings.quantize,
             settings.dither,
             settings.rounding,
@@ -182,20 +183,27 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
         }
     }
 
+    if let Some(path) = &settings.out_image {
+        map.preview(&tileset, &palette)?.save_rgba(path)?;
+        logger.verbose(format!("Saved map image to '{}'", path.display()));
+    }
+
+    let desc = map.description(settings.split_width, settings.split_height, settings.column_order);
+    logger.verbose(format!("Map laid out in {desc}"));
+    if settings.tile_base_offset != 0 {
+        logger.verbose(format!("Tile base offset: {}", settings.tile_base_offset));
+    }
+    if settings.palette_base_offset != 0 {
+        logger.verbose(format!("Palette base offset: {}", settings.palette_base_offset));
+    }
     if settings.tile_base_offset != 0 {
         map.add_base_offset(settings.tile_base_offset);
     }
     if settings.palette_base_offset != 0 {
         map.add_palette_base_offset(settings.palette_base_offset);
     }
-
-    let desc = map.description(settings.split_width, settings.split_height, settings.column_order);
-    logger.verbose(format!("Map laid out in {desc}"));
-    if settings.tile_base_offset != 0 {
-        logger.verbose(format!("  Tile base offset: {}", settings.tile_base_offset));
-    }
-    if settings.palette_base_offset != 0 {
-        logger.verbose(format!("  Palette base offset: {}", settings.palette_base_offset));
+    if let Some(warning) = map.get_tile_count_warning() {
+        Logger::error(warning);
     }
 
     if let Some(path) = &settings.out_data {
@@ -207,10 +215,6 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
         let json = map.to_json(settings.split_width, settings.split_height, settings.column_order);
         std::fs::write(path, json).map_err(|e| e.to_string())?;
         logger.verbose(format!("Saved JSON map data to '{}'", path.display()));
-    }
-    if let Some(path) = &settings.out_image {
-        map.preview(&tileset, &palette)?.save_rgba(path)?;
-        logger.verbose(format!("Saved map image to '{}'", path.display()));
     }
     if let Some(path) = &settings.out_palette_map {
         let data = map.get_palette_map(settings.split_width, settings.split_height, settings.column_order);
