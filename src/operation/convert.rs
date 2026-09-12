@@ -69,11 +69,6 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
         settings.logger,
     )?;
 
-    if let Some(path) = &settings.out_preview_image {
-        image.save_rgba(path)?;
-        logger.verbose(format!("Saved preview image to '{}'", path.display()));
-    }
-
     if let Some(path) = &settings.out_palette {
         std::fs::write(path, palette.native_data()?).map_err(|e| e.to_string())?;
         logger.verbose(format!("Saved native palette data to '{}'", path.display()));
@@ -131,12 +126,13 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
 
     // TODO: Factor out map generation to mod.rs and re-use between convert.rs and map.rs
     if settings.mode.map_generation_is_supported() {
-        // Skip map generation if no map outputs
+        // Skip map generation if no map or preview outputs
         let no_map_output = settings.out_map.is_none()
             && settings.out_palette_map.is_none()
             && settings.out_tile_map.is_none()
             && settings.out_attribute_map.is_none()
-            && settings.out_mode7_data.is_none();
+            && settings.out_mode7_data.is_none()
+            && settings.out_preview_image.is_none();
         if no_map_output {
             return Ok(());
         }
@@ -159,6 +155,7 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
             map_height,
             settings.tile_width,
             settings.tile_height,
+            settings.max_tiles,
             false,
             Dither::Off,
             settings.rounding,
@@ -166,22 +163,6 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
         for (i, slice) in slices.enumerate() {
             let i = i as u32;
             map.add(&slice, &tileset, &palette, settings.bpp, i % map_width, i / map_width)?;
-        }
-
-        if settings.tile_base_offset != 0 {
-            map.add_base_offset(settings.tile_base_offset);
-        }
-        if settings.palette_base_offset != 0 {
-            map.add_palette_base_offset(settings.palette_base_offset);
-        }
-
-        let desc = map.description(split_size, split_size, false);
-        logger.verbose(format!("Map laid out in {desc}"));
-        if settings.tile_base_offset != 0 {
-            logger.verbose(format!("  Tile base offset: {}", settings.tile_base_offset));
-        }
-        if settings.palette_base_offset != 0 {
-            logger.verbose(format!("  Palette base offset: {}", settings.palette_base_offset));
         }
 
         if let Some(path) = &settings.in_attribute_map {
@@ -200,6 +181,29 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
             } else {
                 Logger::error(format!("Attribute map not supported for mode '{}'", settings.mode));
             }
+        }
+
+        if let Some(path) = &settings.out_preview_image {
+            map.preview(&tileset, &palette)?.save_rgba(path)?;
+            logger.verbose(format!("Saved preview image to '{}'", path.display()));
+        }
+
+        let desc = map.description(split_size, split_size, false);
+        logger.verbose(format!("Map laid out in {desc}"));
+        if settings.tile_base_offset != 0 {
+            logger.verbose(format!("Tile base offset: {}", settings.tile_base_offset));
+        }
+        if settings.palette_base_offset != 0 {
+            logger.verbose(format!("Palette base offset: {}", settings.palette_base_offset));
+        }
+        if settings.tile_base_offset != 0 {
+            map.add_base_offset(settings.tile_base_offset);
+        }
+        if settings.palette_base_offset != 0 {
+            map.add_palette_base_offset(settings.palette_base_offset);
+        }
+        if let Some(warning) = map.get_tile_count_warning() {
+            Logger::error(warning);
         }
 
         if let Some(path) = &settings.out_map {
@@ -235,7 +239,17 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
             }
         }
     } else {
-        Logger::error(format!("Map output not supported for mode '{}'", settings.mode));
+        let no_map_output = settings.out_map.is_none()
+            && settings.out_palette_map.is_none()
+            && settings.out_tile_map.is_none()
+            && settings.out_attribute_map.is_none()
+            && settings.out_mode7_data.is_none();
+        if !no_map_output {
+            Logger::error(format!("Map output not supported for mode '{}'", settings.mode));
+        }
+        if settings.out_preview_image.is_some() {
+            Logger::error(format!("Preview image not supported for mode '{}'", settings.mode));
+        }
     }
 
     Ok(())
