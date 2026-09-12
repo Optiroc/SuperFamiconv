@@ -387,7 +387,9 @@ impl Map {
         Ok(data)
     }
 
-    /// Palette indices as 16-bit LE per entry, native map entry ordering.
+    /// Palette indices in native map ordering.
+    ///
+    /// One 16-bit little endian word per entry.
     pub fn get_palette_map(
         &self,
         split_w: u32,
@@ -404,27 +406,29 @@ impl Map {
         data
     }
 
-    /// Tile indices as bytes if max_tile_count <= 256, else 16-bit LE per entry, native map entry ordering.
+    /// Tile indices in native map ordering.
+    ///
+    /// Returns one byte per entry if max_tile_count <= 256,
+    /// else one 16-bit little endian word per entry.
+    ///
+    /// Notes:
+    /// - Mode::Gbc considers the 9th bit as part of the attributes, so it returns 1 byte per entrry.
     pub fn get_tile_map(
         &self,
         split_w: u32,
         split_h: u32,
         column_order: bool,
     ) -> Vec<u8> {
-        let wide = self.mode.max_tile_count() > 256;
         let mut data = Vec::new();
         for group in self.collect_entries(split_w, split_h, column_order) {
             for entry in group {
-                data.push((entry.tile_index & 0xff) as u8);
-                if wide {
-                    data.push((entry.tile_index >> 8) as u8);
-                }
+                data.extend(self.mode.get_tile_index(entry));
             }
         }
         data
     }
 
-    // Attribute bits in native map entry ordering.
+    // Attribute bits in native map ordering.
     pub fn get_attribute_map(
         &self,
         split_w: u32,
@@ -434,7 +438,7 @@ impl Map {
         let mut data = Vec::new();
         for group in self.collect_entries(split_w, split_h, column_order) {
             for entry in group {
-                data.push(self.mode.pack_attribute(entry));
+                data.push(self.mode.get_attribute(entry));
             }
         }
         data
