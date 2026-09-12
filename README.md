@@ -2,16 +2,18 @@
 
 A tile graphics converter with a flexible and composable command line interface.
 
-`superfamiconv` converts images into data suitable to use on a range of video game consoles: Super Nintendo, Game Boy (Color), Game Boy Advance, Mega Drive, Master System, Game Gear, PC Engine, Neo Geo Pocket (Color) and WonderSwan (Color). 
+`superfamiconv` converts images into data suitable for use on a range of video game consoles: Super Nintendo, Game Boy, Game Boy Color, Game Boy Advance, Mega Drive, Master System, Game Gear, PC Engine, Neo Geo Pocket, Neo Geo Pocket Color, WonderSwan and WonderSwan Color. 
 
 The initial target system was Super Nintendo, which is known as Super Famicom in Japan. That informed not only the name of the tool, but also some fundamental design decisions. Given the similarities between most tile-based platforms of the era, adding support for many other systems was relatively painless.
 
+The current version, v0.12, sheds the old C++ codebase completely in favor of Rust. The basic design is still mostly similar, but many longstanding issues have been fixed (and without a doubt new ones have been introduced). Refer to [this section](#notable-changes-in-v012) for a list of the changes you should be aware of if you're moving workflows from an older version.
+
 ## overview
-The targeted consoles generally don't draw arbitrary bitmaps. Instead, graphics are composed from three data structures: palettes, tiles and maps. The number of colors, tiles and specific features a map supports differ between systems, but the general idea is:
+The targeted consoles generally don't draw arbitrary bitmaps. Instead, graphics are composed from three basic data structures: palettes, tiles and maps. The number of colors, tiles and specific features a map supports differ between systems, but the general idea is:
 
 - Colors come from a "palette" consisting of one or more "subpalettes".
-- Pixel information comes from "tile" definitions, typically an array of 8x8 values that each represent an index into a "subpalette".
-- The image is pieced together from a "map", typically an array of 32x32 values that each represent tile and subpalette indices. 
+- Pixel information come from "tile" definitions, typically an array of 8x8 values that each represent an index into a "subpalette".
+- The image is pieced together from a "map", typically an array of 32x32 entries that each represent tile and subpalette indices, and sometimes additional attributes.
 
 `superfamiconv` turns an image into these representations in discrete stages:
 
@@ -23,56 +25,94 @@ The targeted consoles generally don't draw arbitrary bitmaps. Instead, graphics 
 
 You can also run all three stages in one fell swoop using the [`convert`](#convert) subcommand.
 
-## key concepts
+### example
+Before we get into the weeds let's run a simple example. Converting this logo to palette, tile and map data ready to be displayed by the Super Nintendo, using the `convert` command. With verbose logging (`-v`) turned on, each step of the process is detailed.
+
+![megaboys m logo](img/mb_logo.png)
+```
+$ superfamiconv convert -v -M snes -i mb_logo.png -p palette.bin -t tiles.bin -m map.bin --pi palette.png --ti tiles.png
+Performing convert operation (mode: snes)
+Loaded image from 'mb_logo.png' (256x224px RGB)
+Mapping palette with at most 8x16 entries
+Locking color zero to #d61818ff
+Created palette with 12 colors
+Saved native palette data to 'palette.bin'
+Saved palette image to 'palette.png'
+Created tileset with 81 entries (815 tiles deduplicated)
+Saved native tile data to 'tiles.bin'
+Saved tileset image to 'tiles.png'
+Mapping 896 8x8px tiles from image
+Map laid out in single group, 32x28 entries
+Saved native map data to 'map.bin'
+```
+In addition to the native data, preview images of the palette and tiles were saved. Only one subpalette was needed for this simple image:
+
+![palette](img/palette_16x.png)
+
+And the tiles, looking like an extended board of "15 Puzzle" (except impossible to clear, since there's only 81 tiles, and the full image consists of many more; identical tiles are discarded):
+
+![tiles](img/tiles_2x.png)
+
+## essential concepts
 
 ### mode
-The target system is specified with the `-M/--mode` setting, available in all subcommands. If omitted, `snes` is the default.
+The target system is specified with the `-M/--mode` option which available for all subcommands. If omitted, `snes` is the default.
 
 Palette size, tile size, bit depth and other default settings are applied depending on the selected mode. These can be overridden using various settings available on each subcommand.
 
 Supported modes and default settings:
 
-| mode | target | bpp | tile size | tile count | palette count | flip |
-|--|--|-:|-:|-:|-:|-:|
-| `snes` | Super Nintendo (modes 0-6) | 4 | 8x8 | 1024 | 8 | yes |
-| `snes_mode7` | Super Nintendo (mode 7) | 8 | 8x8 | 256 | 1 | no |
-| `gb` | Game Boy | 2 | 8x8 | 256 | 1 | no |
-| `gbc` | Game Boy Color | 2 | 8x8 | 512 | 8 | yes |
-| `gba` | Game Boy Advance | 4 | 8x8 | 1024 | 16 | yes |
-| `gba_affine` | Game Boy Advance (affine) | 8 | 8x8 | 256 | 1 | no |
-| `md` | Mega Drive | 4 | 8x8 | 2048 | 4 | yes |
-| `sms` | Master System | 4 | 8x8 | 512 | 2 | no |
-| `gg` | Game Gear | 4 | 8x8 | 512 | 2 | no |
-| `pce` | PC Engine | 4 | 8x8 | 2048 | 16 | no |
-| `pce_sprite` | PC Engine (sprite) | 4 | 16x16 | 2048 | 16 | no |
-| `ngp` | Neo Geo Pocket | 2 | 8x8 | 512 | 2 | yes |
-| `ngpc` | Neo Geo Pocket Color | 2 | 8x8 | 512 | 16 | yes |
-| `ws` | WonderSwan | 2 | 8x8 | 512 | 16 | yes |
-| `wsc` | WonderSwan Color (planar) | 4 | 8x8 | 1024 | 16 | yes |
-| `wsc_packed` | WonderSwan Color (packed) | 4 | 8x8 | 1024 | 16 | yes |
+| mode | target | tile size | tile count | subpalette count | bpp |  flip |
+|---|---|--:|--:|--:|--:|:-:|
+| `snes` | Super Nintendo (modes 0-6) | 8x8 | 1024 | 8 | 4 | ◯ |
+| `snes_mode7` | Super Nintendo (mode 7) | 8x8 | 256 | 1 | 8 | ✕ |
+| `gb` | Game Boy | 8x8 | 256 | 1 | 2 | ✕ |
+| `gbc` | Game Boy Color | 8x8 | 512 | 8 | 2 | ◯ |
+| `gba` | Game Boy Advance | 8x8 | 1024 | 16 | 4 | ◯ |
+| `gba_affine` | Game Boy Advance (affine) | 8x8 | 256 | 1 | 8 | ✕ |
+| `md` | Mega Drive | 8x8 | 2048 | 4 | 4 | ◯ |
+| `sms` | Master System | 8x8 | 512 | 2 | 4 | ✕ |
+| `gg` | Game Gear | 8x8 | 512 | 2 | 4 | ✕ |
+| `pce` | PC Engine | 8x8 | 2048 | 16 | 4 | ✕ |
+| `pce_sprite` | PC Engine (sprite) | 16x16 | ✕ | 16 | 4 | ✕ |
+| `ngp` | Neo Geo Pocket | 8x8 | 512 | 2 | 2 | ◯ |
+| `ngpc` | Neo Geo Pocket Color | 8x8 | 512 | 16 | 2 | ◯ |
+| `ws` | WonderSwan | 8x8 | 512 | 16 | 2 | ◯ |
+| `wsc` | WonderSwan Color (planar) | 8x8 | 1024 | 16 | 4 | ◯ |
+| `wsc_packed` | WonderSwan Color (packed) | 8x8 | 1024 | 16 | 4 | ◯ |
 
 ### palette generation and color zero
 Colors are reduced to the target's native depth and packed into as few subpalettes as possible. On targets where color index 0 is shared or transparent across all subpalettes (most consoles except `gb`, `gbc`, `sms` or `gg`), special care is sometimes needed to correctly convert the input. By default the color forming the longest continuous run of pixels in the source image is selected, but it can be overridden with the `--color-zero` setting.
 
-Note that no color space transformation is performed on input images. The raw RGB values are used directly when mapping to target specific precision, which I find most predictable. When performing color and luma comparisons the raw RGB values are treated as sRGB regardless of PNG metadata.
+Note that no color space transformation is performed on input images. The raw RGB values are used directly when mapping to target specific precision. When performing color and luma comparisons the raw RGB values are treated as sRGB regardless of PNG metadata.
 
 ### tile deduplication and flipping
 Identical tiles are merged into a single tileset entry. On formats that support flipped tiles (see table above), tiles that are duplicates only after a horizontal and/or vertical flip can also be merged. The flip information is stored in tilemap attribbutes instead of the pixel data.
 
 Pass `--no-discard` to keep every tile distinct, or `--no-flip` to disable flip-deduplication while still discarding exact duplicates.
 
-### working from indexed images
-Normally, colors are quantized from 24-bit color information and packed into subpalettes. With `--no-remap`, `superfamiconv` will instead use the palette and indexed-color pixels from an image as-is:
+### working from indexed color images
+Normally, colors are read from each pixel and packed into subpalettes. With `--no-remap`, `superfamiconv` will instead use the palette and indexed-color pixels from an image as-is:
 - The `palette` subcommand creates a palette without reording colors. Only quantization to the target bit depth is applied.
 - The `tiles` subcommand uses pixel indices straight from the image, without remapping against a supplied palette.
 
 The `--no-remap` option requires the input PNG to be saved in indexed color mode.
 
+### quantization
+The default operation of `superfamiconv` is to perform lossless conversion, except for the inevitable loss of color precision when going from 8-bit per channel source data to the native precision of the target `mode`.
+
+When converting pixel art this is essential; you don't want carefully chosen shades of color in hand drawn art to get discarded.
+
+Sometimes this might be okay or even expected, though. Common examples might be high color illustrations or 3D renderings intended for a title screen or cut scene. In those cases you can let `superfamiconv` perform lossy conversion by enabling the `-Q`/`--quantize` option. Palettes will be created that loses the least of the original color information. Tiles, in turn, are rendered using the palette that most closely matches its color contents. By default dithering is applied but it can be disabled, or a different algorithm can be chosen.
+
+
+## option reference
+TODO
 
 ## detailed operation
 
 ### command overview
-TODO: Subcommands, help, bla bla
+TODO
 ```
 Usage: superfamiconv <COMMAND>
 
@@ -85,36 +125,20 @@ Commands:
 
 Info:
   -h, --help     Print help
-  -V, --version  Print version```
+  -V, --version  Print version
+```
+
 
 ### convert
 `superfamiconv convert` takes one image as input and outputs palette, tile and/or map data. Sensible mode-dependent defaults are applied, but can of course be overridden.
-
-Example:
-```
-superfamiconv convert -v --mode snes --in-image snes.png --out-palette snes_palette.bin --out-tiles snes_tiles.bin --out-map snes_map.bin --out-palette-image snes_palette.png --out-tiles-image snes_tiles.png
-Performing convert operation (mode: snes)
-Loaded image from 'snes.png' (256x256px RGB)
-Mapping palette with at most 8x16 entries
-Locking color zero to #000000ff
-Created palette with 112 colors [16, 16, 16, 16, 16, 16, 16]
-Saved native palette data to 'snes_palette.bin'
-Saved palette image to 'snes_palette.png'
-Created tileset with 583 entries (441 tiles deduplicated)
-Saved native tile data to 'snes_tiles.bin'
-Saved tileset image to 'snes_tiles.png'
-Mapping 1024 8x8px tiles from image
-Map laid out in single group, 32x32 entries
-Saved native map data to 'snes_map.bin'
-```
 
 Full usage:
 ```
 Usage: superfamiconv convert [OPTIONS]
 
 Input files:
-  -i, --in-image <FILE>          Source image(s)
-  -a, --in-attribute-map <FILE>  Priority attribute map image
+  -i, --in-image <FILE>           Source image(s)
+  -a, --in-attribute-map <FILE>   Priority attribute map image
 
 Output files:
   -p, --out-palette <FILE>        Native palette data
@@ -126,27 +150,27 @@ Output files:
       --out-mode7-data <FILE>     Interleaved map/tile data [snes_mode7] [alias: --m7]
       --out-palette-image <FILE>  Palette image [alias: --pi]
       --out-tile-image <FILE>     Tile image [alias: --ti]
-      --out-preview-image <FILE>  Preview image [alias: --pri]
+      --out-preview-image <FILE>  Preview image [alias: --img]
       --out-palette-act <FILE>    Adobe color table [alias: --act]
 
 Options:
-  -M, --mode <MODE>                   Mode [default: snes]
-  -B, --bpp <BPP>                     Bits per pixel
-  -N, --palettes <PALETTES>           Number of subpalettes
-  -C, --colors <COLORS>               Colors per subpalette
-  -W, --tile-width <WIDTH>            Tile width
-  -H, --tile-height <HEIGHT>          Tile height
-  -R, --no-remap                      Do not remap colors
-  -D, --no-discard                    Do not deduplicate identical tiles
-  -F, --no-flip                       Do not deduplicate via tile flipping
-  -T, --max-tiles <MAX_TILES>         Maximum number of tiles
-  -S, --sprite-mode                   Apply sprite output settings
-  -Z, --color-zero <COLOR_ZERO>       Set color zero
-  -Q, --quantize                      Quantize colors and tiles to fit target palette
-      --dither <DITHER>               Dithering to apply if quantizing [default: bayer4]
-      --round                         Round colors instead of truncating
-      --tile-base-offset <OFFSET>     Tile base offset for map data [default: 0]
-      --palette-base-offset <OFFSET>  Palette base offset for map data [default: 0]
+  -M, --mode <MODE>               Mode [default: snes]
+  -B, --bpp <BPP>                 Bits per pixel
+  -N, --palettes <N>              Number of subpalettes
+  -C, --colors <N>                Colors per subpalette
+  -W, --tile-width <W>            Tile width
+  -H, --tile-height <H>           Tile height
+  -R, --no-remap                  Do not remap colors
+  -D, --no-discard                Do not deduplicate identical tiles
+  -F, --no-flip                   Do not deduplicate via tile flipping
+  -T, --max-tiles <N>             Maximum number of tiles
+  -S, --sprite-mode               Apply sprite output settings
+  -Z, --color-zero <COLOR>        Set color zero
+  -Q, --quantize                  Quantize colors and tiles to fit target palette
+      --dither <DITHER>           Dithering to apply if quantizing [default: bayer4]
+      --round                     Round colors instead of truncating
+      --tile-base-offset <N>      Tile base offset for map data [default: 0]
+      --palette-base-offset <N>   Palette base offset for map data [default: 0]
 
 Info:
   -v, --verbose...  Verbose logging (-vv for extra verbosity)
@@ -164,21 +188,21 @@ Input files:
   -i, --in-image <FILE>  Source image(s)
 
 Output files:
-  -d, --out-data <FILE>   Native palette data
-  -o, --out-image <FILE>  Palette image
-  -j, --out-json <FILE>   Palette json
-      --out-act <FILE>    Adobe color table [alias: --act]
+  -d, --out-data <FILE>     Native palette data
+  -o, --out-image <FILE>    Palette image
+  -j, --out-json <FILE>     Palette json
+      --out-act <FILE>      Adobe color table [alias: --act]
 
 Options:
-  -M, --mode <MODE>              Mode [default: snes]
-  -N, --palettes <PALETTES>      Number of subpalettes
-  -C, --colors <COLORS>          Colors per subpalette
-  -W, --tile-width <WIDTH>       Tile width
-  -H, --tile-height <HEIGHT>     Tile height
-  -R, --no-remap                 Do not remap colors
-  -Z, --color-zero <COLOR_ZERO>  Set color zero
-  -Q, --quantize                 Quantize colors to fit target palette
-      --round                    Round colors instead of truncating
+  -M, --mode <MODE>         Mode [default: snes]
+  -N, --palettes <N>        Number of subpalettes
+  -C, --colors <N>          Colors per subpalette
+  -W, --tile-width <W>      Tile width
+  -H, --tile-height <H>     Tile height
+  -R, --no-remap            Do not remap colors
+  -Z, --color-zero <COLOR>  Set color zero
+  -Q, --quantize            Quantize colors to fit target palette
+      --round               Round colors instead of truncating
 
 Info:
   -v, --verbose...  Verbose logging (-vv for extra verbosity)
@@ -194,28 +218,28 @@ Full usage:
 Usage: superfamiconv tiles [OPTIONS]
 
 Input files:
-  -i, --in-image <FILE>    Source image (multiple allowed)
-  -n, --in-data <FILE>     Native tile data
-  -p, --in-palette <FILE>  Palette (native or json)
+  -i, --in-image <FILE>      Source image (multiple allowed)
+  -n, --in-data <FILE>       Native tile data
+  -p, --in-palette <FILE>    Palette (native or json)
 
 Output files:
-  -d, --out-data <FILE>   Native tile data
-  -o, --out-image <FILE>  Tile image
+  -d, --out-data <FILE>      Native tile data
+  -o, --out-image <FILE>     Tile image
 
 Options:
-  -M, --mode <MODE>              Mode [default: snes]
-  -B, --bpp <BPP>                Bits per pixel
-  -W, --tile-width <WIDTH>       Tile width
-  -H, --tile-height <HEIGHT>     Tile height
-  -R, --no-remap                 Do not remap colors
-  -D, --no-discard               Do not deduplicate identical tiles
-  -F, --no-flip                  Do not deduplicate via tile flipping
-  -T, --max-tiles <MAX_TILES>    Maximum number of tiles
-  -S, --sprite-mode              Apply sprite output settings
-  -Q, --quantize                 Quantize (match tiles to the closest subpalette)
-      --dither <DITHER>          Dithering to apply if quantizing [default: bayer4]
-      --round                    Round colors instead of truncating
-      --out-image-width <WIDTH>  Width of output tile image
+  -M, --mode <MODE>          Mode [default: snes]
+  -B, --bpp <BPP>            Bits per pixel
+  -W, --tile-width <W>       Tile width
+  -H, --tile-height <H>      Tile height
+  -R, --no-remap             Do not remap colors
+  -D, --no-discard           Do not deduplicate identical tiles
+  -F, --no-flip              Do not deduplicate via tile flipping
+  -T, --max-tiles <N>        Maximum number of tiles
+  -S, --sprite-mode          Apply sprite output settings
+  -Q, --quantize             Quantize (match tiles to the closest subpalette)
+      --dither <DITHER>      Dithering to apply if quantizing [default: bayer4]
+      --round                Round colors instead of truncating
+      --out-image-width <W>  Width of output tile image
 
 Info:
   -v, --verbose...  Verbose logging (-vv for extra verbosity)
@@ -230,11 +254,11 @@ Full usage:
 Usage: superfamiconv map [OPTIONS]
 
 Input files:
-  -i, --in-image <FILE>          Source image(s)
-  -n, --in-data <FILE>           Native map data
-  -p, --in-palette <FILE>        Palette (native or json)
-  -t, --in-tiles <FILE>          Native tile data
-  -a, --in-attribute-map <FILE>  Priority attribute map image
+  -i, --in-image <FILE>           Source image(s)
+  -n, --in-data <FILE>            Native map data
+  -p, --in-palette <FILE>         Palette (native or json)
+  -t, --in-tiles <FILE>           Native tile data
+  -a, --in-attribute-map <FILE>   Priority attribute map image
 
 Output files:
   -d, --out-data <FILE>           Native map data
@@ -246,21 +270,21 @@ Output files:
       --out-mode7-data <FILE>     Interleaved native map/tile data [snes_mode7] [alias: --m7]
 
 Options:
-  -M, --mode <MODE>                   Mode [default: snes]
-  -B, --bpp <BPP>                     Bits per pixel
-  -W, --tile-width <WIDTH>            Tile width
-  -H, --tile-height <HEIGHT>          Tile height
-  -F, --no-flip                       Do not allow tile flipping
-  -Q, --quantize                      Quantize (match tiles to the closest subpalette)
-      --dither <DITHER>               Dithering to apply if quantizing [default: bayer4]
-      --round                         Round colors instead of truncating
-      --map-width <WIDTH>             Map width (in tiles) [alias: --mw]
-      --map-height <HEIGHT>           Map height (in tiles) [alias: --mh]
-      --split-width <WIDTH>           Split output into columns of <tiles> width [alias: --sw]
-      --split-height <HEIGHT>         Split output into rows of <tiles> height [alias: --sh]
-      --tile-base-offset <OFFSET>     Tile base offset for map data [default: 0]
-      --palette-base-offset <OFFSET>  Palette base offset for map data [default: 0]
-      --column-order                  Output data in column-major order
+  -M, --mode <MODE>               Mode [default: snes]
+  -B, --bpp <BPP>                 Bits per pixel
+  -W, --tile-width <W>            Tile width
+  -H, --tile-height <H>           Tile height
+  -F, --no-flip                   Do not allow tile flipping
+  -Q, --quantize                  Quantize (match tiles to the closest subpalette)
+      --dither <DITHER>           Dithering to apply if quantizing [default: bayer4]
+      --round                     Round colors instead of truncating
+      --map-width <W>             Map width (in tiles) [alias: --mw]
+      --map-height <H>            Map height (in tiles) [alias: --mh]
+      --split-width <W>           Split output into columns of <tiles> width [alias: --sw]
+      --split-height <H>          Split output into rows of <tiles> height [alias: --sh]
+      --tile-base-offset <N>      Tile base offset for map data [default: 0]
+      --palette-base-offset <N>   Palette base offset for map data [default: 0]
+      --column-order              Output data in column-major order
 
 Info:
   -v, --verbose...  Verbose logging (-vv for extra verbosity)
@@ -268,10 +292,22 @@ Info:
 ```
 
 
+## notable changes in v0.12
+
+### added
+TODO
+
+### changed
+TODO
+
+### removed
+TODO
+
+
 ## history
-- v0.0-v0.2 (2005.02.05-): Initial version. Not publicly circulated.
-- v0.3-v0.11 (2017.04.17-): "Modern" C++ rewrite.
-- v0.12- (2026.xx.yy-): Rust rewrite.
+- v0.0-v0.2 (2005.02.05): C-style C++98. Not publicly circulated.
+- v0.3-v0.11 (2017.04.17): C++14 rewrite.
+- v0.12- (2026.xx.yy): Rust rewrite.
 
 
 ## about

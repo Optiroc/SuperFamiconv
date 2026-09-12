@@ -90,7 +90,7 @@ pub struct ConvertArgs {
     #[arg(long, visible_alias = "ti", value_name = "FILE", help_heading = "Output files")]
     pub out_tile_image: Option<PathBuf>,
     /// Preview image
-    #[arg(long, visible_alias = "pri", value_name = "FILE", help_heading = "Output files")]
+    #[arg(long, visible_alias = "img", value_name = "FILE", help_heading = "Output files")]
     pub out_preview_image: Option<PathBuf>,
     /// Adobe color table
     #[arg(long, visible_alias = "act", value_name = "FILE", help_heading = "Output files")]
@@ -103,16 +103,16 @@ pub struct ConvertArgs {
     #[arg(short = 'B', long, help_heading = "Options")]
     pub bpp: Option<u32>,
     /// Number of subpalettes
-    #[arg(short = 'N', long, help_heading = "Options")]
+    #[arg(short = 'N', long, value_name = "N", help_heading = "Options")]
     pub palettes: Option<u32>,
     /// Colors per subpalette
-    #[arg(short = 'C', long, help_heading = "Options")]
+    #[arg(short = 'C', long, value_name = "N", help_heading = "Options")]
     pub colors: Option<u32>,
     /// Tile width
-    #[arg(short = 'W', long, value_name = "WIDTH", help_heading = "Options")]
+    #[arg(short = 'W', long, value_name = "W", help_heading = "Options")]
     pub tile_width: Option<u32>,
     /// Tile height
-    #[arg(short = 'H', long, value_name = "HEIGHT", help_heading = "Options")]
+    #[arg(short = 'H', long, value_name = "H", help_heading = "Options")]
     pub tile_height: Option<u32>,
     /// Do not remap colors
     #[arg(short = 'R', long, help_heading = "Options")]
@@ -124,13 +124,13 @@ pub struct ConvertArgs {
     #[arg(short = 'F', long, help_heading = "Options")]
     pub no_flip: bool,
     /// Maximum number of tiles
-    #[arg(short = 'T', long, help_heading = "Options")]
+    #[arg(short = 'T', long, value_name = "N", help_heading = "Options")]
     pub max_tiles: Option<u32>,
     /// Apply sprite output settings
     #[arg(short = 'S', long, help_heading = "Options")]
     pub sprite_mode: bool,
     /// Set color zero
-    #[arg(short = 'Z', long, value_parser = color::from_hexstring, help_heading = "Options")]
+    #[arg(short = 'Z', long, value_name = "COLOR", value_parser = color::from_hexstring, help_heading = "Options")]
     pub color_zero: Option<NormalizedColor>,
     /// Quantize colors and tiles to fit target palette
     #[arg(short = 'Q', long, help_heading = "Options")]
@@ -142,10 +142,10 @@ pub struct ConvertArgs {
     #[arg(long, help_heading = "Options")]
     pub round: bool,
     /// Tile base offset for map data
-    #[arg(long, default_value_t = 0, value_name = "OFFSET", help_heading = "Options")]
+    #[arg(long, default_value_t = 0, value_name = "N", help_heading = "Options")]
     pub tile_base_offset: i32,
     /// Palette base offset for map data
-    #[arg(long, default_value_t = 0, value_name = "OFFSET", help_heading = "Options")]
+    #[arg(long, default_value_t = 0, value_name = "N", help_heading = "Options")]
     pub palette_base_offset: i32,
 
     /// Verbose logging (-vv for extra verbosity)
@@ -181,22 +181,22 @@ pub struct PaletteArgs {
     #[arg(short = 'M', long, value_enum, default_value_t = Mode::Snes, help_heading = "Options")]
     pub mode: Mode,
     /// Number of subpalettes
-    #[arg(short = 'N', long, help_heading = "Options")]
+    #[arg(short = 'N', long, value_name = "N", help_heading = "Options")]
     pub palettes: Option<u32>,
     /// Colors per subpalette
-    #[arg(short = 'C', long, help_heading = "Options")]
+    #[arg(short = 'C', long, value_name = "N", help_heading = "Options")]
     pub colors: Option<u32>,
     /// Tile width
-    #[arg(short = 'W', long, value_name = "WIDTH", help_heading = "Options")]
+    #[arg(short = 'W', long, value_name = "W", help_heading = "Options")]
     pub tile_width: Option<u32>,
     /// Tile height
-    #[arg(short = 'H', long, value_name = "HEIGHT", help_heading = "Options")]
+    #[arg(short = 'H', long, value_name = "H", help_heading = "Options")]
     pub tile_height: Option<u32>,
     /// Do not remap colors
     #[arg(short = 'R', long, help_heading = "Options")]
     pub no_remap: bool,
     /// Set color zero
-    #[arg(short = 'Z', long, value_parser = color::from_hexstring, help_heading = "Options")]
+    #[arg(short = 'Z', long, value_name = "COLOR", value_parser = color::from_hexstring, help_heading = "Options")]
     pub color_zero: Option<NormalizedColor>,
     /// Quantize colors to fit target palette
     #[arg(short = 'Q', long, help_heading = "Options")]
@@ -241,10 +241,10 @@ pub struct TilesArgs {
     #[arg(short = 'B', long, help_heading = "Options")]
     pub bpp: Option<u32>,
     /// Tile width
-    #[arg(short = 'W', long, value_name = "WIDTH", help_heading = "Options")]
+    #[arg(short = 'W', long, value_name = "W", help_heading = "Options")]
     pub tile_width: Option<u32>,
     /// Tile height
-    #[arg(short = 'H', long, value_name = "HEIGHT", help_heading = "Options")]
+    #[arg(short = 'H', long, value_name = "H", help_heading = "Options")]
     pub tile_height: Option<u32>,
     /// Do not remap colors
     #[arg(short = 'R', long, help_heading = "Options")]
@@ -256,7 +256,7 @@ pub struct TilesArgs {
     #[arg(short = 'F', long, help_heading = "Options")]
     pub no_flip: bool,
     /// Maximum number of tiles
-    #[arg(short = 'T', long, help_heading = "Options")]
+    #[arg(short = 'T', long, value_name = "N", help_heading = "Options")]
     pub max_tiles: Option<u32>,
     /// Apply sprite output settings
     #[arg(short = 'S', long, help_heading = "Options")]
@@ -271,7 +271,7 @@ pub struct TilesArgs {
     #[arg(long, help_heading = "Options")]
     pub round: bool,
     /// Width of output tile image
-    #[arg(long, value_name = "WIDTH", help_heading = "Options")]
+    #[arg(long, value_name = "W", help_heading = "Options")]
     pub out_image_width: Option<u32>,
 
     /// Verbose logging (-vv for extra verbosity)
@@ -331,10 +331,10 @@ pub struct MapArgs {
     #[arg(short = 'B', long, help_heading = "Options")]
     pub bpp: Option<u32>,
     /// Tile width
-    #[arg(short = 'W', long, value_name = "WIDTH", help_heading = "Options")]
+    #[arg(short = 'W', long, value_name = "W", help_heading = "Options")]
     pub tile_width: Option<u32>,
     /// Tile height
-    #[arg(short = 'H', long, value_name = "HEIGHT", help_heading = "Options")]
+    #[arg(short = 'H', long, value_name = "H", help_heading = "Options")]
     pub tile_height: Option<u32>,
     /// Do not allow tile flipping
     #[arg(short = 'F', long, help_heading = "Options")]
@@ -349,22 +349,22 @@ pub struct MapArgs {
     #[arg(long, help_heading = "Options")]
     pub round: bool,
     /// Map width (in tiles)
-    #[arg(long, visible_alias = "mw", value_name = "WIDTH", value_parser = clap::value_parser!(u32).range(1..), help_heading = "Options")]
+    #[arg(long, visible_alias = "mw", value_name = "W", value_parser = clap::value_parser!(u32).range(1..), help_heading = "Options")]
     pub map_width: Option<u32>,
     /// Map height (in tiles)
-    #[arg(long, visible_alias = "mh", value_name = "HEIGHT", value_parser = clap::value_parser!(u32).range(1..), help_heading = "Options")]
+    #[arg(long, visible_alias = "mh", value_name = "H", value_parser = clap::value_parser!(u32).range(1..), help_heading = "Options")]
     pub map_height: Option<u32>,
     /// Split output into columns of <tiles> width
-    #[arg(long, visible_alias = "sw", value_name = "WIDTH", value_parser = clap::value_parser!(u32).range(1..), help_heading = "Options")]
+    #[arg(long, visible_alias = "sw", value_name = "W", value_parser = clap::value_parser!(u32).range(1..), help_heading = "Options")]
     pub split_width: Option<u32>,
     /// Split output into rows of <tiles> height
-    #[arg(long, visible_alias = "sh", value_name = "HEIGHT", value_parser = clap::value_parser!(u32).range(1..), help_heading = "Options")]
+    #[arg(long, visible_alias = "sh", value_name = "H", value_parser = clap::value_parser!(u32).range(1..), help_heading = "Options")]
     pub split_height: Option<u32>,
     /// Tile base offset for map data
-    #[arg(long, value_name = "OFFSET", default_value_t = 0, help_heading = "Options")]
+    #[arg(long, value_name = "N", default_value_t = 0, help_heading = "Options")]
     pub tile_base_offset: i32,
     /// Palette base offset for map data
-    #[arg(long, value_name = "OFFSET", default_value_t = 0, help_heading = "Options")]
+    #[arg(long, value_name = "N", default_value_t = 0, help_heading = "Options")]
     pub palette_base_offset: i32,
     /// Output data in column-major order
     #[arg(long, help_heading = "Options")]
