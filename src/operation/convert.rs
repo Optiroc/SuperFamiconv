@@ -129,6 +129,7 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
         logger.verbose(format!("Saved tileset image to '{}'", path.display()));
     }
 
+    // TODO: Factor out map generation to mod.rs and re-use between convert.rs and map.rs
     if settings.mode.map_generation_is_supported() {
         // Skip map generation if no map outputs
         let no_map_output = settings.out_map.is_none()

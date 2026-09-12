@@ -23,33 +23,36 @@ The targeted consoles generally don't draw arbitrary bitmaps. Instead, graphics 
 
 You can also run all three stages in one fell swoop using the [`convert`](#convert) subcommand.
 
-## key concepts
+### example
+TODO
+
+## essential concepts
 
 ### mode
-The target system is specified with the `-M/--mode` setting, available in all subcommands. If omitted, `snes` is the default.
+The target system is specified with the `-M/--mode` option which available for all subcommands. If omitted, `snes` is the default.
 
 Palette size, tile size, bit depth and other default settings are applied depending on the selected mode. These can be overridden using various settings available on each subcommand.
 
 Supported modes and default settings:
 
-| mode | target | bpp | tile size | tile count | palette count | flip |
+| mode | target | tile size | tile count | subpalette count | bpp |  flip |
 |--|--|-:|-:|-:|-:|-:|
-| `snes` | Super Nintendo (modes 0-6) | 4 | 8x8 | 1024 | 8 | yes |
-| `snes_mode7` | Super Nintendo (mode 7) | 8 | 8x8 | 256 | 1 | no |
-| `gb` | Game Boy | 2 | 8x8 | 256 | 1 | no |
-| `gbc` | Game Boy Color | 2 | 8x8 | 512 | 8 | yes |
-| `gba` | Game Boy Advance | 4 | 8x8 | 1024 | 16 | yes |
-| `gba_affine` | Game Boy Advance (affine) | 8 | 8x8 | 256 | 1 | no |
-| `md` | Mega Drive | 4 | 8x8 | 2048 | 4 | yes |
-| `sms` | Master System | 4 | 8x8 | 512 | 2 | no |
-| `gg` | Game Gear | 4 | 8x8 | 512 | 2 | no |
-| `pce` | PC Engine | 4 | 8x8 | 2048 | 16 | no |
-| `pce_sprite` | PC Engine (sprite) | 4 | 16x16 | 2048 | 16 | no |
-| `ngp` | Neo Geo Pocket | 2 | 8x8 | 512 | 2 | yes |
-| `ngpc` | Neo Geo Pocket Color | 2 | 8x8 | 512 | 16 | yes |
-| `ws` | WonderSwan | 2 | 8x8 | 512 | 16 | yes |
-| `wsc` | WonderSwan Color (planar) | 4 | 8x8 | 1024 | 16 | yes |
-| `wsc_packed` | WonderSwan Color (packed) | 4 | 8x8 | 1024 | 16 | yes |
+| `snes` | Super Nintendo (modes 0-6) | 8x8 | 1024 | 8 | 4 | ◯ |
+| `snes_mode7` | Super Nintendo (mode 7) | 8x8 | 256 | 1 | 8 | ✕ |
+| `gb` | Game Boy | 8x8 | 256 | 1 | 2 | ✕ |
+| `gbc` | Game Boy Color | 8x8 | 512 | 8 | 2 | ◯ |
+| `gba` | Game Boy Advance | 8x8 | 1024 | 16 | 4 | ◯ |
+| `gba_affine` | Game Boy Advance (affine) | 8x8 | 256 | 1 | 8 | ✕ |
+| `md` | Mega Drive | 8x8 | 2048 | 4 | 4 | ◯ |
+| `sms` | Master System | 8x8 | 512 | 2 | 4 | ✕ |
+| `gg` | Game Gear | 8x8 | 512 | 2 | 4 | ✕ |
+| `pce` | PC Engine | 8x8 | 2048 | 16 | 4 | ✕ |
+| `pce_sprite` | PC Engine (sprite) | 16x16 | 2048 | 16 | 4 | ✕ |
+| `ngp` | Neo Geo Pocket | 8x8 | 512 | 2 | 2 | ◯ |
+| `ngpc` | Neo Geo Pocket Color | 8x8 | 512 | 16 | 2 | ◯ |
+| `ws` | WonderSwan | 8x8 | 512 | 16 | 2 | ◯ |
+| `wsc` | WonderSwan Color (planar) | 8x8 | 1024 | 16 | 4 | ◯ |
+| `wsc_packed` | WonderSwan Color (packed) | 8x8 | 1024 | 16 | 4 | ◯ |
 
 ### palette generation and color zero
 Colors are reduced to the target's native depth and packed into as few subpalettes as possible. On targets where color index 0 is shared or transparent across all subpalettes (most consoles except `gb`, `gbc`, `sms` or `gg`), special care is sometimes needed to correctly convert the input. By default the color forming the longest continuous run of pixels in the source image is selected, but it can be overridden with the `--color-zero` setting.
@@ -69,10 +72,13 @@ Normally, colors are quantized from 24-bit color information and packed into sub
 The `--no-remap` option requires the input PNG to be saved in indexed color mode.
 
 
+## option reference
+TODO
+
 ## detailed operation
 
 ### command overview
-TODO: Subcommands, help, bla bla
+TODO
 ```
 Usage: superfamiconv <COMMAND>
 
@@ -85,7 +91,9 @@ Commands:
 
 Info:
   -h, --help     Print help
-  -V, --version  Print version```
+  -V, --version  Print version
+```
+
 
 ### convert
 `superfamiconv convert` takes one image as input and outputs palette, tile and/or map data. Sensible mode-dependent defaults are applied, but can of course be overridden.
