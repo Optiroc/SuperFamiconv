@@ -18,6 +18,12 @@ pub trait ModeMap {
         &self,
         bytes: &[u8],
     ) -> Mapentry;
+
+    /// Packs the attribute bits from one map `entry` into mode-native byte.
+    fn pack_attribute(
+        &self,
+        entry: Mapentry,
+    ) -> u8;
 }
 
 impl ModeMap for Mode {
@@ -142,6 +148,29 @@ impl ModeMap for Mode {
             ),
             PceSprite => Mapentry::default(),
         }
+    }
+
+    fn pack_attribute(
+        &self,
+        entry: Mapentry,
+    ) -> u8 {
+        let tile_mask: u8 = match self {
+            // Early exit if mode has no attributes
+            SnesMode7 | Gb | GbaAffine | PceSprite => return 0,
+            Snes | Gba => 0x03,
+            Sms | Gg | Ngp | Ngpc => 0x01,
+            Gbc => 0x08,
+            Md => 0x07,
+            Pce => 0x0f,
+            Ws | Wsc | WscPacked => 0x21,
+        };
+
+        let bytes = self.pack_mapentry(entry);
+        let byte = match self {
+            Md => bytes[0],
+            _ => bytes[1],
+        };
+        byte & !tile_mask
     }
 }
 

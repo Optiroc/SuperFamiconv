@@ -191,16 +191,17 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
 
     let desc = map.description(settings.split_width, settings.split_height, settings.column_order);
     logger.verbose(format!("Map laid out in {desc}"));
+    if settings.tile_base_offset != 0 {
+        logger.verbose(format!("  Tile base offset: {}", settings.tile_base_offset));
+    }
+    if settings.palette_base_offset != 0 {
+        logger.verbose(format!("  Palette base offset: {}", settings.palette_base_offset));
+    }
 
     if let Some(path) = &settings.out_data {
         let data = map.to_native_data(settings.split_width, settings.split_height, settings.column_order);
         std::fs::write(path, data).map_err(|e| e.to_string())?;
         logger.verbose(format!("Saved native map data to '{}'", path.display()));
-    }
-    if let Some(path) = &settings.out_palette_map {
-        let data = map.get_palette_map(settings.split_width, settings.split_height, settings.column_order);
-        std::fs::write(path, data).map_err(|e| e.to_string())?;
-        logger.verbose(format!("Saved palette map to '{}'", path.display()));
     }
     if let Some(path) = &settings.out_json {
         let json = map.to_json(settings.split_width, settings.split_height, settings.column_order);
@@ -211,12 +212,32 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
         map.preview(&tileset, &palette)?.save_rgba(path)?;
         logger.verbose(format!("Saved map image to '{}'", path.display()));
     }
-    if settings.mode == Mode::SnesMode7
-        && let Some(path) = &settings.out_mode7_data
-    {
-        let data = map.get_snes_mode7_interleaved_data(&tileset)?;
+    if let Some(path) = &settings.out_palette_map {
+        let data = map.get_palette_map(settings.split_width, settings.split_height, settings.column_order);
         std::fs::write(path, data).map_err(|e| e.to_string())?;
-        logger.verbose(format!("Saved snes_mode7 interleaved data to '{}'", path.display()));
+        logger.verbose(format!("Saved palette map to '{}'", path.display()));
+    }
+    if let Some(path) = &settings.out_tile_map {
+        let data = map.get_tile_map(settings.split_width, settings.split_height, settings.column_order);
+        std::fs::write(path, data).map_err(|e| e.to_string())?;
+        logger.verbose(format!("Saved tile map to '{}'", path.display()));
+    }
+    if let Some(path) = &settings.out_attribute_map {
+        let data = map.get_attribute_map(settings.split_width, settings.split_height, settings.column_order);
+        std::fs::write(path, data).map_err(|e| e.to_string())?;
+        logger.verbose(format!("Saved attribute map to '{}'", path.display()));
+    }
+    if let Some(path) = &settings.out_mode7_data {
+        if settings.mode == Mode::SnesMode7 {
+            let data = map.get_snes_mode7_interleaved_data(&tileset)?;
+            std::fs::write(path, data).map_err(|e| e.to_string())?;
+            logger.verbose(format!("Saved interleaved data to '{}'", path.display()));
+        } else {
+            Logger::error(format!(
+                "Warning: --out-mode7-data not supported for mode '{}'",
+                settings.mode
+            ))
+        }
     }
 
     Ok(())

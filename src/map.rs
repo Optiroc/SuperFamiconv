@@ -387,6 +387,7 @@ impl Map {
         Ok(data)
     }
 
+    /// Palette indices as 16-bit LE per entry, native map entry ordering.
     pub fn get_palette_map(
         &self,
         split_w: u32,
@@ -398,6 +399,42 @@ impl Map {
             for entry in group {
                 data.push((entry.palette_index & 0xff) as u8);
                 data.push((entry.palette_index >> 8) as u8);
+            }
+        }
+        data
+    }
+
+    /// Tile indices as bytes if max_tile_count <= 256, else 16-bit LE per entry, native map entry ordering.
+    pub fn get_tile_map(
+        &self,
+        split_w: u32,
+        split_h: u32,
+        column_order: bool,
+    ) -> Vec<u8> {
+        let wide = self.mode.max_tile_count() > 256;
+        let mut data = Vec::new();
+        for group in self.collect_entries(split_w, split_h, column_order) {
+            for entry in group {
+                data.push((entry.tile_index & 0xff) as u8);
+                if wide {
+                    data.push((entry.tile_index >> 8) as u8);
+                }
+            }
+        }
+        data
+    }
+
+    // Attribute bits in native map entry ordering.
+    pub fn get_attribute_map(
+        &self,
+        split_w: u32,
+        split_h: u32,
+        column_order: bool,
+    ) -> Vec<u8> {
+        let mut data = Vec::new();
+        for group in self.collect_entries(split_w, split_h, column_order) {
+            for entry in group {
+                data.push(self.mode.pack_attribute(entry));
             }
         }
         data
