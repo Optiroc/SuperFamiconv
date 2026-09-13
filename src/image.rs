@@ -77,12 +77,13 @@ impl Image {
             let mut raw = vec![0u8; reader.output_buffer_size().ok_or("Image too large")?];
             reader.next_frame(&mut raw).map_err(|e| e.to_string())?;
             let indices = expand(&raw, width, height, bit_depth as u8);
-            let palette_size = *indices.iter().max().ok_or("Indexed PNG contains no pixel data")? as usize + 1;
+            let max_index = *indices.iter().max().ok_or("Indexed PNG contains no pixel data")? as usize;
             // Read palette
             let plte = reader.info().palette.as_ref().ok_or("Indexed PNG missing PLTE chunk")?;
             let trns = reader.info().trns.as_deref();
-            if plte.len() / 3 < palette_size {
-                Err("Indexed PNG has too few colors in PLTE chunk")?;
+            let palette_size = plte.len() / 3;
+            if max_index >= palette_size {
+                Err("Indexed PNG references palette index out of range")?;
             }
             let mut pal = Vec::with_capacity(palette_size);
             for i in 0..palette_size {
