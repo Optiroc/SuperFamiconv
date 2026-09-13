@@ -12,12 +12,25 @@ use crate::color::{NormalizedColor, ReducedColor};
 use crate::dither::Dither;
 use crate::image::Image;
 use crate::logger::Logger;
+use crate::map::Map;
 use crate::mode::{
     Mode,
     color::{ColorRounding, ModeColor},
 };
 use crate::palette::Palette;
 use crate::quantize::quantize_palette;
+use crate::tileset::Tileset;
+
+struct MapPaths<'a> {
+    pub in_attribute_map: Option<&'a PathBuf>,
+    pub out_preview: Option<&'a PathBuf>,
+    pub out_data: Option<&'a PathBuf>,
+    pub out_json: Option<&'a PathBuf>,
+    pub out_palette_map: Option<&'a PathBuf>,
+    pub out_tile_map: Option<&'a PathBuf>,
+    pub out_attribute_map: Option<&'a PathBuf>,
+    pub out_mode7_data: Option<&'a PathBuf>,
+}
 
 pub fn resolve_sprite_mode(
     mode: Mode,
@@ -221,4 +234,152 @@ fn make_palette(
     }
 
     Ok((palette, out_image))
+}
+
+fn make_map(
+    image: &Image,
+    tileset: &Tileset,
+    palette: &Palette,
+    mode: Mode,
+    tile_width: u32,
+    tile_height: u32,
+    max_tile_count: u32,
+    bpp: u32,
+    quantize: bool,
+    dither: Dither,
+    rounding: ColorRounding,
+    logger: Logger,
+) -> Result<Map, String> {
+    let map_width = image.width.div_ceil(tile_width);
+    let map_height = image.height.div_ceil(tile_height);
+    let mut map = Map::new(
+        mode,
+        map_width,
+        map_height,
+        tile_width,
+        tile_height,
+        max_tile_count,
+        quantize,
+        dither,
+        rounding,
+    );
+
+    let slices = image.sliced(tile_width, tile_height, mode);
+    let slice_count = slices.len();
+    logger.verbose(format!(
+        "Mapping {slice_count} {tile_width}x{tile_height}px tiles from image"
+    ));
+
+    let mut unmatched = 0u32;
+    for (i, slice) in slices.enumerate() {
+        let i = i as u32;
+        if !map.add(&slice, tileset, palette, bpp, i % map_width, i / map_width)? {
+            unmatched += 1;
+        }
+    }
+
+    if unmatched > 0 {
+        let hint = if quantize {
+            "\n> With --quantize, make sure to use the same dithering setting for both tileset and map"
+        } else {
+            ""
+        };
+        Logger::error(format!(
+            "> {unmatched} of {slice_count} tiles had no match in the tileset{hint}"
+        ));
+    }
+
+    Ok(map)
+}
+
+fn finalize_map(
+    map: &mut Map,
+    tileset: &Tileset,
+    palette: &Palette,
+    mode: Mode,
+    split_width: u32,
+    split_height: u32,
+    column_order: bool,
+    tile_base_offset: i32,
+    palette_base_offset: i32,
+    paths: MapPaths,
+    logger: Logger,
+) -> Result<(), String> {
+    if let Some(path) = paths.in_attribute_map {
+        if mode.priority_map_is_supported() {
+            let priorities = load_priority_map(
+                path,
+                mode,
+                map.width(),
+                map.height(),
+                map.tile_width(),
+                map.tile_height(),
+                logger,
+            )?;
+            map.set_priorities(&priorities);
+            logger.verbose(format!("Loaded attribute map from '{}'", path.display()));
+        } else {
+            Logger::error(format!("Attribute map not supported for mode '{mode}'"));
+        }
+    }
+
+    if let Some(path) = paths.out_preview {
+        map.preview(tileset, palette)?.save_rgba(path)?;
+        logger.verbose(format!("Saved map image to '{}'", path.display()));
+    }
+
+    let desc = map.description(split_width, split_height, column_order);
+    logger.verbose(format!("Map laid out in {desc}"));
+    if tile_base_offset != 0 {
+        logger.verbose(format!("Tile base offset: {tile_base_offset}"));
+    }
+    if palette_base_offset != 0 {
+        logger.verbose(format!("Palette base offset: {palette_base_offset}"));
+    }
+    if tile_base_offset != 0 {
+        map.add_base_offset(tile_base_offset);
+    }
+    if palette_base_offset != 0 {
+        map.add_palette_base_offset(palette_base_offset);
+    }
+    if let Some(warning) = map.get_tile_count_warning() {
+        Logger::error(warning);
+    }
+
+    if let Some(path) = paths.out_data {
+        let data = map.to_native_data(split_width, split_height, column_order);
+        std::fs::write(path, data).map_err(|e| e.to_string())?;
+        logger.verbose(format!("Saved native map data to '{}'", path.display()));
+    }
+    if let Some(path) = paths.out_json {
+        let json = map.to_json(split_width, split_height, column_order);
+        std::fs::write(path, json).map_err(|e| e.to_string())?;
+        logger.verbose(format!("Saved JSON map data to '{}'", path.display()));
+    }
+    if let Some(path) = paths.out_palette_map {
+        let data = map.get_palette_map(split_width, split_height, column_order);
+        std::fs::write(path, data).map_err(|e| e.to_string())?;
+        logger.verbose(format!("Saved palette map to '{}'", path.display()));
+    }
+    if let Some(path) = paths.out_tile_map {
+        let data = map.get_tile_map(split_width, split_height, column_order);
+        std::fs::write(path, data).map_err(|e| e.to_string())?;
+        logger.verbose(format!("Saved tile map to '{}'", path.display()));
+    }
+    if let Some(path) = paths.out_attribute_map {
+        let data = map.get_attribute_map(split_width, split_height, column_order);
+        std::fs::write(path, data).map_err(|e| e.to_string())?;
+        logger.verbose(format!("Saved attribute map to '{}'", path.display()));
+    }
+    if let Some(path) = paths.out_mode7_data {
+        if mode == Mode::SnesMode7 {
+            let data = map.get_snes_mode7_interleaved_data(tileset)?;
+            std::fs::write(path, data).map_err(|e| e.to_string())?;
+            logger.verbose(format!("Saved interleaved data to '{}'", path.display()));
+        } else {
+            Logger::error(format!("Warning: --out-mode7-data not supported for mode '{mode}'"));
+        }
+    }
+
+    Ok(())
 }

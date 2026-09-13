@@ -80,6 +80,7 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
     ));
 
     let mut map = if let Some(in_data) = &settings.in_data {
+        // Make map from native data
         let map_width = settings
             .map_width
             .ok_or("Map width required when reading native map data")?;
@@ -105,6 +106,7 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
         ));
         map
     } else {
+        // Make map from image
         let in_image = settings.in_image.as_ref().expect("in_image or in_data required");
         let mut image = super::load_image(in_image, settings.logger)?;
 
@@ -125,124 +127,44 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
             );
         }
 
-        let dimensions = image.slice_dimensions(settings.tile_width, settings.tile_height);
-        let slice_count = dimensions.0 * dimensions.1;
-        logger.verbose(format!(
-            "Mapping {slice_count} {}x{}px tiles from image",
-            settings.tile_width, settings.tile_height
-        ));
-
-        let mut map = Map::new(
+        super::make_map(
+            &image,
+            &tileset,
+            &palette,
             settings.mode,
-            map_width,
-            map_height,
             settings.tile_width,
             settings.tile_height,
             settings.mode.max_tile_count(),
+            settings.bpp,
             settings.quantize,
             settings.dither,
             settings.rounding,
-        );
-
-        let slices = image.sliced(settings.tile_width, settings.tile_height, settings.mode);
-        let mut unmatched = 0u32;
-        for (i, slice) in slices.enumerate() {
-            let i = i as u32;
-            if !map.add(&slice, &tileset, &palette, settings.bpp, i % map_width, i / map_width)? {
-                unmatched += 1;
-            }
-        }
-        if unmatched > 0 {
-            let hint = if settings.quantize {
-                "\n> With --quantize, make sure to use the same dithering setting for both tileset and map"
-            } else {
-                ""
-            };
-            Logger::error(format!(
-                "> {unmatched} of {slice_count} tiles had no match in the tileset{hint}"
-            ));
-        }
-        map
+            logger,
+        )?
     };
 
-    if let Some(path) = &settings.in_attribute_map {
-        if settings.mode.priority_map_is_supported() {
-            let priorities = super::load_priority_map(
-                path,
-                settings.mode,
-                map.width(),
-                map.height(),
-                settings.tile_width,
-                settings.tile_height,
-                logger,
-            )?;
-            map.set_priorities(&priorities);
-            logger.verbose(format!("Loaded attribute map from '{}'", path.display()));
-        } else {
-            Logger::error(format!("Attribute map not supported for mode '{}'", settings.mode));
-        }
-    }
+    let paths = super::MapPaths {
+        in_attribute_map: settings.in_attribute_map.as_ref(),
+        out_preview: settings.out_image.as_ref(),
+        out_data: settings.out_data.as_ref(),
+        out_json: settings.out_json.as_ref(),
+        out_palette_map: settings.out_palette_map.as_ref(),
+        out_tile_map: settings.out_tile_map.as_ref(),
+        out_attribute_map: settings.out_attribute_map.as_ref(),
+        out_mode7_data: settings.out_mode7_data.as_ref(),
+    };
 
-    if let Some(path) = &settings.out_image {
-        map.preview(&tileset, &palette)?.save_rgba(path)?;
-        logger.verbose(format!("Saved map image to '{}'", path.display()));
-    }
-
-    let desc = map.description(settings.split_width, settings.split_height, settings.column_order);
-    logger.verbose(format!("Map laid out in {desc}"));
-    if settings.tile_base_offset != 0 {
-        logger.verbose(format!("Tile base offset: {}", settings.tile_base_offset));
-    }
-    if settings.palette_base_offset != 0 {
-        logger.verbose(format!("Palette base offset: {}", settings.palette_base_offset));
-    }
-    if settings.tile_base_offset != 0 {
-        map.add_base_offset(settings.tile_base_offset);
-    }
-    if settings.palette_base_offset != 0 {
-        map.add_palette_base_offset(settings.palette_base_offset);
-    }
-    if let Some(warning) = map.get_tile_count_warning() {
-        Logger::error(warning);
-    }
-
-    if let Some(path) = &settings.out_data {
-        let data = map.to_native_data(settings.split_width, settings.split_height, settings.column_order);
-        std::fs::write(path, data).map_err(|e| e.to_string())?;
-        logger.verbose(format!("Saved native map data to '{}'", path.display()));
-    }
-    if let Some(path) = &settings.out_json {
-        let json = map.to_json(settings.split_width, settings.split_height, settings.column_order);
-        std::fs::write(path, json).map_err(|e| e.to_string())?;
-        logger.verbose(format!("Saved JSON map data to '{}'", path.display()));
-    }
-    if let Some(path) = &settings.out_palette_map {
-        let data = map.get_palette_map(settings.split_width, settings.split_height, settings.column_order);
-        std::fs::write(path, data).map_err(|e| e.to_string())?;
-        logger.verbose(format!("Saved palette map to '{}'", path.display()));
-    }
-    if let Some(path) = &settings.out_tile_map {
-        let data = map.get_tile_map(settings.split_width, settings.split_height, settings.column_order);
-        std::fs::write(path, data).map_err(|e| e.to_string())?;
-        logger.verbose(format!("Saved tile map to '{}'", path.display()));
-    }
-    if let Some(path) = &settings.out_attribute_map {
-        let data = map.get_attribute_map(settings.split_width, settings.split_height, settings.column_order);
-        std::fs::write(path, data).map_err(|e| e.to_string())?;
-        logger.verbose(format!("Saved attribute map to '{}'", path.display()));
-    }
-    if let Some(path) = &settings.out_mode7_data {
-        if settings.mode == Mode::SnesMode7 {
-            let data = map.get_snes_mode7_interleaved_data(&tileset)?;
-            std::fs::write(path, data).map_err(|e| e.to_string())?;
-            logger.verbose(format!("Saved interleaved data to '{}'", path.display()));
-        } else {
-            Logger::error(format!(
-                "Warning: --out-mode7-data not supported for mode '{}'",
-                settings.mode
-            ))
-        }
-    }
-
-    Ok(())
+    super::finalize_map(
+        &mut map,
+        &tileset,
+        &palette,
+        settings.mode,
+        settings.split_width,
+        settings.split_height,
+        settings.column_order,
+        settings.tile_base_offset,
+        settings.palette_base_offset,
+        paths,
+        logger,
+    )
 }
