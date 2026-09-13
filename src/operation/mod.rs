@@ -164,13 +164,31 @@ fn make_palette(
             return Err("no-remap requires indexed color image".into());
         }
         logger.verbose("Mapping palette straight from indexed color image");
+
+        let max_colors = (max_subpalettes * max_colors_per_subpalette) as usize;
+        let source_palette = if image.palette.len() > max_colors {
+            if image.indexed_data.iter().any(|&i| i as usize >= max_colors) {
+                return Err(format!(
+                    "Indexed color image uses palette indices beyond the {}x{} colors allowed for no-remap mode",
+                    max_subpalettes, max_colors_per_subpalette
+                ));
+            }
+            Logger::error(format!(
+                "Warning: Palette from indexed color image contains {} colors, truncating unused tail to {max_colors}",
+                image.palette.len()
+            ));
+            &image.palette[..max_colors]
+        } else {
+            &image.palette[..]
+        };
+        let colors: Vec<ReducedColor> = source_palette.iter().map(|&c| mode.reduce_color(c, rounding)).collect();
+
         palette = Palette::new(
             mode,
             max_subpalettes as usize,
             max_colors_per_subpalette as usize,
             rounding,
         );
-        let colors: Vec<ReducedColor> = image.palette.iter().map(|&c| mode.reduce_color(c, rounding)).collect();
         palette.add_colors(&colors)?;
         out_image = image.clone();
     } else if quantize {
