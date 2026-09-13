@@ -5,7 +5,6 @@ use std::path::PathBuf;
 use crate::color::NormalizedColor;
 use crate::dither::Dither;
 use crate::logger::Logger;
-use crate::map::Map;
 use crate::mode::Mode;
 use crate::mode::color::ColorRounding;
 use crate::tileset::Tileset;
@@ -124,7 +123,6 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
         logger.verbose(format!("Saved tileset image to '{}'", path.display()));
     }
 
-    // TODO: Factor out map generation to mod.rs and re-use between convert.rs and map.rs
     if settings.mode.map_generation_is_supported() {
         // Skip map generation if no map or preview outputs
         let no_map_output = settings.out_map.is_none()
@@ -137,107 +135,47 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
             return Ok(());
         }
 
-        let map_width = image.width.div_ceil(settings.tile_width);
-        let map_height = image.height.div_ceil(settings.tile_height);
         let split_size = settings.mode.default_map_size().unwrap();
 
-        let slices = image.sliced(settings.tile_width, settings.tile_height, settings.mode);
-        logger.verbose(format!(
-            "Mapping {} {}x{}px tiles from image",
-            slices.len(),
-            settings.tile_width,
-            settings.tile_height
-        ));
-
-        let mut map = Map::new(
+        let mut map = super::make_map(
+            &image,
+            &tileset,
+            &palette,
             settings.mode,
-            map_width,
-            map_height,
             settings.tile_width,
             settings.tile_height,
             settings.max_tiles,
+            settings.bpp,
             false,
             Dither::Off,
             settings.rounding,
-        );
-        for (i, slice) in slices.enumerate() {
-            let i = i as u32;
-            map.add(&slice, &tileset, &palette, settings.bpp, i % map_width, i / map_width)?;
-        }
+            logger,
+        )?;
 
-        if let Some(path) = &settings.in_attribute_map {
-            if settings.mode.priority_map_is_supported() {
-                let priorities = super::load_priority_map(
-                    path,
-                    settings.mode,
-                    map.width(),
-                    map.height(),
-                    settings.tile_width,
-                    settings.tile_height,
-                    logger,
-                )?;
-                map.set_priorities(&priorities);
-                logger.verbose(format!("Loaded attribute map from '{}'", path.display()));
-            } else {
-                Logger::error(format!("Attribute map not supported for mode '{}'", settings.mode));
-            }
-        }
+        let paths = super::MapPaths {
+            in_attribute_map: settings.in_attribute_map.as_ref(),
+            out_preview: settings.out_preview_image.as_ref(),
+            out_data: settings.out_map.as_ref(),
+            out_json: None,
+            out_palette_map: settings.out_palette_map.as_ref(),
+            out_tile_map: settings.out_tile_map.as_ref(),
+            out_attribute_map: settings.out_attribute_map.as_ref(),
+            out_mode7_data: settings.out_mode7_data.as_ref(),
+        };
 
-        if let Some(path) = &settings.out_preview_image {
-            map.preview(&tileset, &palette)?.save_rgba(path)?;
-            logger.verbose(format!("Saved preview image to '{}'", path.display()));
-        }
-
-        let desc = map.description(split_size, split_size, false);
-        logger.verbose(format!("Map laid out in {desc}"));
-        if settings.tile_base_offset != 0 {
-            logger.verbose(format!("Tile base offset: {}", settings.tile_base_offset));
-        }
-        if settings.palette_base_offset != 0 {
-            logger.verbose(format!("Palette base offset: {}", settings.palette_base_offset));
-        }
-        if settings.tile_base_offset != 0 {
-            map.add_base_offset(settings.tile_base_offset);
-        }
-        if settings.palette_base_offset != 0 {
-            map.add_palette_base_offset(settings.palette_base_offset);
-        }
-        if let Some(warning) = map.get_tile_count_warning() {
-            Logger::error(warning);
-        }
-
-        if let Some(path) = &settings.out_map {
-            let data = map.to_native_data(0, 0, false);
-            std::fs::write(path, data).map_err(|e| e.to_string())?;
-            logger.verbose(format!("Saved native map data to '{}'", path.display()));
-        }
-        if let Some(path) = &settings.out_palette_map {
-            let data = map.get_palette_map(0, 0, false);
-            std::fs::write(path, data).map_err(|e| e.to_string())?;
-            logger.verbose(format!("Saved palette map to '{}'", path.display()));
-        }
-        if let Some(path) = &settings.out_tile_map {
-            let data = map.get_tile_map(0, 0, false);
-            std::fs::write(path, data).map_err(|e| e.to_string())?;
-            logger.verbose(format!("Saved tile map to '{}'", path.display()));
-        }
-        if let Some(path) = &settings.out_attribute_map {
-            let data = map.get_attribute_map(0, 0, false);
-            std::fs::write(path, data).map_err(|e| e.to_string())?;
-            logger.verbose(format!("Saved attribute map to '{}'", path.display()));
-        }
-        if let Some(path) = &settings.out_mode7_data {
-            if settings.mode == Mode::SnesMode7 {
-                let data = map.get_snes_mode7_interleaved_data(&tileset)?;
-                std::fs::write(path, data).map_err(|e| e.to_string())?;
-                logger.verbose(format!("Saved interleaved data to '{}'", path.display()));
-            } else {
-                Logger::error(format!(
-                    "Warning: --out-mode7-data not supported for mode '{}'",
-                    settings.mode
-                ))
-            }
-        }
+        super::finalize_map(
+            &mut map,
+            &tileset,
+            &palette,
+            settings.mode,
+            split_size,
+            split_size,
+            false,
+            settings.tile_base_offset,
+            settings.palette_base_offset,
+            paths,
+            logger,
+        )?;
     } else {
         let no_map_output = settings.out_map.is_none()
             && settings.out_palette_map.is_none()
