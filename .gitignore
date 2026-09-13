@@ -4,4 +4,5 @@ __pycache__/
  *.pyc
 docs/
 out/
+tmp/
 test_data/tmp/
