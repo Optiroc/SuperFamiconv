@@ -143,20 +143,7 @@ pub fn dither_to_mode(
     rounding: ColorRounding,
     color_zero: Option<ReducedColor>,
 ) -> Image {
-    let mut reduced: Vec<ReducedColor> = image
-        .data
-        .iter()
-        .map(|&c| mode.reduce_color(c, rounding))
-        .filter(|c| !c.is_transparent())
-        .collect();
-    reduced.sort();
-    reduced.dedup();
-
-    let candidates: Vec<CandidateColor> = reduced
-        .iter()
-        .map(|&r| CandidateColor::new(r, mode.normalize_color(r)))
-        .collect();
-
+    let candidates = candidate_colors_in(image, mode, rounding);
     let size = (image.width * image.height) as usize;
     let mut data = vec![NormalizedColor::TRANSPARENT; size];
     let mut ditherer = Ditherer::new(dither, image.src_x, image.src_y, image.width, image.height);
@@ -191,6 +178,27 @@ pub fn dither_to_mode(
         palette: Vec::new(),
         colors,
     }
+}
+
+/// Distinct candidate colors in `image`.
+pub fn candidate_colors_in(
+    image: &Image,
+    mode: Mode,
+    rounding: ColorRounding,
+) -> Vec<CandidateColor> {
+    let mut reduced: Vec<ReducedColor> = image
+        .data
+        .iter()
+        .map(|&c| mode.reduce_color(c, rounding))
+        .filter(|c| !c.is_transparent())
+        .collect();
+    reduced.sort();
+    reduced.dedup();
+
+    reduced
+        .iter()
+        .map(|&r| CandidateColor::new(r, mode.normalize_color(r)))
+        .collect()
 }
 
 const fn ordered_threshold(
@@ -349,7 +357,7 @@ fn nearest(
     best.unwrap().0
 }
 
-fn nearest_two(
+pub fn nearest_two(
     color: NormalizedColor,
     candidates: &[CandidateColor],
 ) -> (&CandidateColor, Option<&CandidateColor>) {
@@ -368,7 +376,7 @@ fn nearest_two(
     (best.unwrap().0, second.map(|(c, _)| c))
 }
 
-fn lerp(
+pub fn lerp(
     c1: NormalizedColor,
     c2: NormalizedColor,
     color: NormalizedColor,

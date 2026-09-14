@@ -497,7 +497,7 @@ impl std::fmt::Display for Image {
 }
 
 /// Returns the unique set of colors in `data`.
-pub(crate) fn colors_in(data: &[NormalizedColor]) -> BTreeSet<NormalizedColor> {
+pub fn colors_in(data: &[NormalizedColor]) -> BTreeSet<NormalizedColor> {
     data.iter().copied().collect()
 }
 
