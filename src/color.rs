@@ -139,7 +139,10 @@ pub fn eq_rgb(
     a.r == b.r && a.g == b.g && a.b == b.b
 }
 
-/// Squared distance between two `Oklab` colors.
+/// Chroma mismatch penalty relative to lightness difference.
+const CHROMA_WEIGHT: f32 = 2.15;
+
+/// Squared distance between two `Oklab` colors, penalizing chroma mismatch.
 pub fn oklab_sqdist(
     a: Oklab,
     b: Oklab,
@@ -147,19 +150,7 @@ pub fn oklab_sqdist(
     let dl = a.l - b.l;
     let da = a.a - b.a;
     let db = a.b - b.b;
-    dl * dl + da * da + db * db
-}
-
-/// Squared distance between two `Oklab` colors, with `chroma_weight` factor.
-pub fn oklab_sqdist_hue_weighted(
-    a: Oklab,
-    b: Oklab,
-    chroma_weight: f32,
-) -> f32 {
-    let dl = a.l - b.l;
-    let da = a.a - b.a;
-    let db = a.b - b.b;
-    dl * dl + chroma_weight * (da * da + db * db)
+    dl * dl + CHROMA_WEIGHT * (da * da + db * db)
 }
 
 /// Summed distance from `colors` to their nearest entry in `candidates`.
