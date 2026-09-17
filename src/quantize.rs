@@ -1,5 +1,7 @@
 //! Tile-aware palette quantization.
 
+// TODO: Test weighing color/group importance by extracting saliency map
+
 use quantette::PaletteSize;
 use quantette::color_space::{oklab_to_srgb8, srgb8_to_oklab};
 use quantette::deps::palette::{Oklab, Srgb};

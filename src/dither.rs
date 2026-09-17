@@ -2,7 +2,7 @@
 
 use clap::ValueEnum;
 
-use crate::color::{CandidateColor, NormalizedColor, ReducedColor, eq_rgb, oklab_sqdist, oklab_sqdist_hue_weighted};
+use crate::color::{CandidateColor, NormalizedColor, ReducedColor, eq_rgb, oklab_sqdist};
 use crate::image::{self, Image};
 use crate::mode::Mode;
 use crate::mode::color::{ColorRounding, ModeColor};
@@ -33,9 +33,6 @@ pub enum Dither {
     #[clap(name = "fs")]
     FloydSteinberg,
 }
-
-/// Chroma mismatch penalty when chosing dither candidates.
-const CHROMA_WEIGHT: f32 = 3.0;
 
 /// Max number of candidates to consider for `nearest_two``.
 const MAX_BRACKET_WIDTH: usize = 16;
@@ -364,7 +361,7 @@ fn nearest(
     let color = color.to_oklab();
     let mut best: Option<(&CandidateColor, f32)> = None;
     for candidate in candidates {
-        let d = oklab_sqdist_hue_weighted(color, candidate.oklab, CHROMA_WEIGHT);
+        let d = oklab_sqdist(color, candidate.oklab);
         if best.is_none_or(|(_, bd)| d < bd) {
             best = Some((candidate, d));
         }
@@ -382,13 +379,7 @@ pub fn nearest_two(
     // Nearest candidate
     let a = candidates
         .iter()
-        .min_by(|x, y| {
-            oklab_sqdist_hue_weighted(oklab_color, x.oklab, CHROMA_WEIGHT).total_cmp(&oklab_sqdist_hue_weighted(
-                oklab_color,
-                y.oklab,
-                CHROMA_WEIGHT,
-            ))
-        })
+        .min_by(|x, y| oklab_sqdist(oklab_color, x.oklab).total_cmp(&oklab_sqdist(oklab_color, y.oklab)))
         .unwrap();
 
     // Fill shortlist for second nearest candidate search
@@ -398,7 +389,6 @@ pub fn nearest_two(
         if std::ptr::eq(c, a) {
             continue;
         }
-        // TODO: try chroma penalized distance
         let d = oklab_sqdist(a.oklab, c.oklab);
         if d < nearest[bracket_width - 1].1 {
             let mut i = bracket_width - 1;
