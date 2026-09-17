@@ -8,7 +8,7 @@ use quantette::wu::{BinnerF32x3, WuF32x3};
 
 use super::dither::{Dither, Ditherer};
 use crate::color::{CandidateColor, NormalizedColor, ReducedColor, eq_rgb, oklab_sqdist};
-use crate::dither::{candidate_colors_in, dither_to_mode, lerp, nearest_two};
+use crate::dither::{bracket_width, candidate_colors_in, dither_to_mode, lerp, nearest_two};
 use crate::image::{self, Image};
 use crate::mode::{
     Mode,
@@ -17,7 +17,7 @@ use crate::mode::{
 use crate::palette::Palette;
 
 const MAX_ITERATIONS: usize = 10;
-const DITHER_2ND_SAMPLE_WEIGHT: f32 = 0.225;
+const DITHER_2ND_SAMPLE_WEIGHT: f32 = 0.2;
 
 /// Creates a palette and a matching quantized image for `image` using tile-aware k-means clustering.
 pub fn quantize_palette(
@@ -62,7 +62,7 @@ pub fn quantize_palette(
 
     let tiles_colors: Vec<Vec<Oklab>> = slices
         .iter()
-        .map(|slice| get_oklab_colors(slice, mode, rounding, color_zero_reduced, &candidates))
+        .map(|slice| get_oklab_colors(slice, mode, rounding, color_zero_reduced, &candidates, capacity))
         .collect();
 
     // Initialize k centroids:
@@ -156,16 +156,21 @@ pub fn quantize_palette(
     }
     let mut group_candidates: Vec<Vec<CandidateColor>> = Vec::with_capacity(max_subpalettes);
 
-    for group_palette in &group_palettes {
-        let mut reduced: Vec<ReducedColor> = Vec::new();
-        for srgb in oklab_to_srgb8(group_palette) {
-            let normalized = NormalizedColor::new(srgb.red, srgb.green, srgb.blue, 0xff);
-            let r = mode.reduce_color(normalized, rounding);
-            if !r.is_transparent() && !reduced.contains(&r) {
-                reduced.push(r);
-            }
-        }
+    for (g, group_palette) in group_palettes.iter().enumerate() {
+        let mut reduced = dedup_reduced(group_palette, mode, rounding);
         reduced.truncate(capacity);
+
+        if reduced.len() < capacity {
+            // Some fitted colors mode-reduce to the same color, attempt to fill up.
+            let group_colors: Vec<Oklab> = tiles_colors
+                .iter()
+                .zip(&group_of)
+                .filter(|&(_, &gi)| gi == g)
+                .flat_map(|(colors, _)| colors.iter().copied())
+                .collect();
+            reduced = grow_to_capacity(reduced, &group_colors, capacity, mode, rounding, binner)?;
+        }
+
         if let Some(cz) = color_zero_reduced {
             reduced.retain(|&c| !eq_rgb(c, cz));
             reduced.insert(0, cz);
@@ -195,15 +200,19 @@ pub fn quantize_palette(
 }
 
 /// The `image`'s colors mapped to `Oklab`.
+///
+/// If a color is close enough to its second candidate for the ditherer to pick
+/// it with some probability (`DITHER_2ND_SAMPLE_WEIGHT`), add it as an extra sample.
+///
 /// - Transparent and color-zero values are ignored.
-/// - If a color is close enough to its second candidate for the ditherer to
-///   pick it with some probability, add it as an extra sample.
+/// - `capacity` is the per-subpalette capacity.
 fn get_oklab_colors(
     image: &Image,
     mode: Mode,
     rounding: ColorRounding,
     color_zero: Option<ReducedColor>,
     candidates: &[CandidateColor],
+    capacity: usize,
 ) -> Vec<Oklab> {
     let pixels: Vec<NormalizedColor> = image
         .data
@@ -219,10 +228,11 @@ fn get_oklab_colors(
     let mut colors = srgb8_to_oklab(&srgb);
 
     if !candidates.is_empty() {
+        let bracket_width = bracket_width(mode, capacity);
         for &pixel in &pixels {
-            let (a, b) = nearest_two(pixel, candidates);
+            let (a, b) = nearest_two(pixel, candidates, bracket_width);
             let Some(b) = b else { continue };
-            if lerp(a.normalized, b.normalized, pixel) >= DITHER_2ND_SAMPLE_WEIGHT {
+            if lerp(a.normalized, b.normalized, pixel, true) >= DITHER_2ND_SAMPLE_WEIGHT {
                 colors.push(b.oklab);
             }
         }
@@ -317,6 +327,48 @@ fn fit_palette<const B1: usize, const B2: usize, const B3: usize>(
     Ok(palette.into_vec())
 }
 
+/// Attempt to top up `current` to `capacity` by refitting `colors`.
+fn grow_to_capacity<const B1: usize, const B2: usize, const B3: usize>(
+    mut current: Vec<ReducedColor>,
+    colors: &[Oklab],
+    capacity: usize,
+    mode: Mode,
+    rounding: ColorRounding,
+    binner: BinnerF32x3<B1, B2, B3>,
+) -> Result<Vec<ReducedColor>, String> {
+    const REFIT_ATTEMPTS: usize = 4;
+    let mut k = capacity;
+    for _ in 0..REFIT_ATTEMPTS {
+        if current.len() >= capacity || k >= colors.len() {
+            break;
+        }
+        k += capacity - current.len();
+        let mut next = dedup_reduced(&fit_palette(colors, k, binner)?, mode, rounding);
+        next.truncate(capacity);
+        if next.len() > current.len() {
+            current = next;
+        }
+    }
+    Ok(current)
+}
+
+/// Colors in `palette`, mode-reduced and deduplicated.
+fn dedup_reduced(
+    palette: &[Oklab],
+    mode: Mode,
+    rounding: ColorRounding,
+) -> Vec<ReducedColor> {
+    let mut reduced: Vec<ReducedColor> = Vec::new();
+    for srgb in oklab_to_srgb8(palette) {
+        let normalized = NormalizedColor::new(srgb.red, srgb.green, srgb.blue, 0xff);
+        let r = mode.reduce_color(normalized, rounding);
+        if !r.is_transparent() && !reduced.contains(&r) {
+            reduced.push(r);
+        }
+    }
+    reduced
+}
+
 /// Remaps every tile's pixels to its assigned group's colors, optionally dithered.
 fn make_output_image(
     image: &Image,
@@ -337,7 +389,8 @@ fn make_output_image(
         }
         let w = slice.width.min(image.width.saturating_sub(slice.src_x));
         let h = slice.height.min(image.height.saturating_sub(slice.src_y));
-        let mut ditherer = Ditherer::new(dither, slice.src_x, slice.src_y, w, h);
+        let bracket_width = bracket_width(mode, palette.len());
+        let mut ditherer = Ditherer::new(dither, slice.src_x, slice.src_y, w, h, bracket_width);
         for row in 0..h {
             for col in 0..w {
                 let nc = slice.color_at((row * slice.width + col) as usize);
@@ -385,8 +438,15 @@ fn try_lossless(
     rounding: ColorRounding,
 ) -> Option<(Palette, Image)> {
     let color_zero_reduced = color_zero.map(|c| mode.reduce_color(c, rounding));
-    let image = dither_to_mode(image, mode, dither, rounding, color_zero_reduced);
     let max_colors_per_subpalette = capacity + usize::from(color_zero.is_some());
+    let image = dither_to_mode(
+        image,
+        mode,
+        dither,
+        rounding,
+        color_zero_reduced,
+        max_colors_per_subpalette,
+    );
     let mut palette = Palette::new(mode, max_subpalettes, max_colors_per_subpalette, rounding);
     if let Some(color_zero) = color_zero {
         palette.set_color_zero(color_zero);

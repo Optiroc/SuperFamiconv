@@ -2,7 +2,7 @@
 
 use clap::ValueEnum;
 
-use crate::color::{CandidateColor, NormalizedColor, ReducedColor, eq_rgb, oklab_sqdist_hue_weighted};
+use crate::color::{CandidateColor, NormalizedColor, ReducedColor, eq_rgb, oklab_sqdist, oklab_sqdist_hue_weighted};
 use crate::image::{self, Image};
 use crate::mode::Mode;
 use crate::mode::color::{ColorRounding, ModeColor};
@@ -36,6 +36,9 @@ pub enum Dither {
 
 /// Chroma mismatch penalty when chosing dither candidates.
 const CHROMA_WEIGHT: f32 = 3.0;
+
+/// Max number of candidates to consider for `nearest_two``.
+const MAX_BRACKET_WIDTH: usize = 16;
 
 #[rustfmt::skip]
 const BAYER_2X2_MATRIX: [[u8; 2]; 2] = [
@@ -117,7 +120,7 @@ pub fn quantize_pixels(
     let size = (width * height) as usize;
     let mut indexed_data = vec![0u8; size];
     let mut data = vec![NormalizedColor::TRANSPARENT; size];
-    let mut ditherer = Ditherer::new(dither, 0, 0, width, height);
+    let mut ditherer = Ditherer::new(dither, 0, 0, width, height, bracket_width(mode, candidates.len()));
 
     for i in 0..size {
         let nc = color_at(i);
@@ -142,11 +145,19 @@ pub fn dither_to_mode(
     dither: Dither,
     rounding: ColorRounding,
     color_zero: Option<ReducedColor>,
+    max_colors_per_subpalette: usize,
 ) -> Image {
     let candidates = candidate_colors_in(image, mode, rounding);
     let size = (image.width * image.height) as usize;
     let mut data = vec![NormalizedColor::TRANSPARENT; size];
-    let mut ditherer = Ditherer::new(dither, image.src_x, image.src_y, image.width, image.height);
+    let mut ditherer = Ditherer::new(
+        dither,
+        image.src_x,
+        image.src_y,
+        image.width,
+        image.height,
+        bracket_width(mode, max_colors_per_subpalette),
+    );
 
     for (i, out) in data.iter_mut().enumerate() {
         let nc = image.color_at(i);
@@ -211,8 +222,8 @@ const fn ordered_threshold(
         Dither::Bayer4x4 => (BAYER_4X4_MATRIX[(y & 3) as usize][(x & 3) as usize] as f32 + 0.5) / 16.0,
         Dither::Bayer8x8 => (BAYER_8X8_MATRIX[(y & 7) as usize][(x & 7) as usize] as f32 + 0.5) / 64.0,
         Dither::Checker => (CHECKER_MATRIX[(y & 1) as usize][(x & 1) as usize] as f32 + 0.5) / 2.0,
-        Dither::StippleH => (STIPPLE_H_MATRIX[(y & 1) as usize][(x & 3) as usize] as f32 + 0.5) / 8.0,
-        Dither::StippleV => (STIPPLE_V_MATRIX[(y & 3) as usize][(x & 1) as usize] as f32 + 0.5) / 8.0,
+        Dither::StippleH => (STIPPLE_H_MATRIX[(y & 3) as usize][(x & 1) as usize] as f32 + 0.5) / 8.0,
+        Dither::StippleV => (STIPPLE_V_MATRIX[(y & 1) as usize][(x & 3) as usize] as f32 + 0.5) / 8.0,
         Dither::Off | Dither::Atkinson | Dither::FloydSteinberg => {
             panic!("ordered_threshold called for non-ordered dither")
         }
@@ -226,6 +237,7 @@ pub struct Ditherer {
     width: u32,
     height: u32,
     error: Vec<[f32; 3]>,
+    bracket_width: usize,
 }
 
 impl Ditherer {
@@ -235,6 +247,7 @@ impl Ditherer {
         origin_y: u32,
         width: u32,
         height: u32,
+        bracket_width: usize,
     ) -> Self {
         let error = if matches!(dither, Dither::Atkinson | Dither::FloydSteinberg) {
             vec![[0.0f32; 3]; (width * height) as usize]
@@ -248,6 +261,7 @@ impl Ditherer {
             width,
             height,
             error,
+            bracket_width,
         }
     }
 
@@ -265,7 +279,7 @@ impl Ditherer {
             | Dither::Bayer8x8
             | Dither::Checker
             | Dither::StippleH
-            | Dither::StippleV => ordered_color_at(x, y, color, candidates, self.dither),
+            | Dither::StippleV => ordered_color_at(x, y, color, candidates, self.dither, self.bracket_width),
             Dither::Atkinson | Dither::FloydSteinberg => {
                 self.diffusion_color_at(x - self.origin_x, y - self.origin_y, color, candidates, self.dither)
             }
@@ -329,12 +343,13 @@ fn ordered_color_at(
     color: NormalizedColor,
     candidates: &[CandidateColor],
     dither: Dither,
+    bracket_width: usize,
 ) -> ReducedColor {
-    let (a, b) = nearest_two(color, candidates);
+    let (a, b) = nearest_two(color, candidates, bracket_width);
     let Some(b) = b else {
         return a.reduced;
     };
-    let t = lerp(a.normalized, b.normalized, color);
+    let t = lerp(a.normalized, b.normalized, color, true);
     if t > ordered_threshold(dither, x, y) {
         b.reduced
     } else {
@@ -360,26 +375,73 @@ fn nearest(
 pub fn nearest_two(
     color: NormalizedColor,
     candidates: &[CandidateColor],
+    bracket_width: usize,
 ) -> (&CandidateColor, Option<&CandidateColor>) {
-    let color = color.to_oklab();
-    let mut best: Option<(&CandidateColor, f32)> = None;
-    let mut second: Option<(&CandidateColor, f32)> = None;
-    for candidate in candidates {
-        let d1 = oklab_sqdist_hue_weighted(color, candidate.oklab, CHROMA_WEIGHT);
-        if best.is_none_or(|(_, bd)| d1 < bd) {
-            second = best;
-            best = Some((candidate, d1));
-        } else if second.is_none_or(|(_, d2)| d1 < d2) {
-            second = Some((candidate, d1));
+    let oklab_color = color.to_oklab();
+
+    // Nearest candidate
+    let a = candidates
+        .iter()
+        .min_by(|x, y| {
+            oklab_sqdist_hue_weighted(oklab_color, x.oklab, CHROMA_WEIGHT).total_cmp(&oklab_sqdist_hue_weighted(
+                oklab_color,
+                y.oklab,
+                CHROMA_WEIGHT,
+            ))
+        })
+        .unwrap();
+
+    // Fill shortlist for second nearest candidate search
+    let bracket_width = bracket_width.clamp(1, MAX_BRACKET_WIDTH);
+    let mut nearest: [(Option<&CandidateColor>, f32); MAX_BRACKET_WIDTH] = [(None, f32::INFINITY); MAX_BRACKET_WIDTH];
+    for c in candidates {
+        if std::ptr::eq(c, a) {
+            continue;
+        }
+        // TODO: try chroma penalized distance
+        let d = oklab_sqdist(a.oklab, c.oklab);
+        if d < nearest[bracket_width - 1].1 {
+            let mut i = bracket_width - 1;
+            while i > 0 && nearest[i - 1].1 > d {
+                nearest[i] = nearest[i - 1];
+                i -= 1;
+            }
+            nearest[i] = (Some(c), d);
         }
     }
-    (best.unwrap().0, second.map(|(c, _)| c))
+
+    // Second nearest = shortlist candidate with smallest error when lerped
+    let b = nearest[..bracket_width]
+        .iter()
+        .filter_map(|&(c, _)| c)
+        .filter_map(|c| {
+            let t = lerp(a.normalized, c.normalized, color, false);
+            (0.0..=1.0)
+                .contains(&t)
+                .then(|| (c, mix_residual(a.normalized, c.normalized, t, color)))
+        })
+        .min_by(|x, y| x.1.total_cmp(&y.1))
+        .map(|(c, _)| c);
+    let b = b.or(nearest[0].0);
+
+    (a, b)
+}
+
+/// Number of candidates to consider in `nearest_two`.
+pub fn bracket_width(
+    mode: Mode,
+    max_colors_per_subpalette: usize,
+) -> usize {
+    let width_ratio = f32::from(mode.channel_shift()) / 16.0;
+    let width = (max_colors_per_subpalette as f32 * width_ratio).round() as usize;
+    width.clamp(1, MAX_BRACKET_WIDTH)
 }
 
 pub fn lerp(
     c1: NormalizedColor,
     c2: NormalizedColor,
     color: NormalizedColor,
+    clamp: bool,
 ) -> f32 {
     let (dx, dy, dz) = (
         f32::from(c2.r) - f32::from(c1.r),
@@ -395,7 +457,27 @@ pub fn lerp(
         f32::from(color.g) - f32::from(c1.g),
         f32::from(color.b) - f32::from(c1.b),
     );
-    ((px * dx + py * dy + pz * dz) / len2).clamp(0.0, 1.0)
+    if clamp {
+        ((px * dx + py * dy + pz * dz) / len2).clamp(0.0, 1.0)
+    } else {
+        (px * dx + py * dy + pz * dz) / len2
+    }
+}
+
+/// Squared error from `color` after mixing `a` and `b` at `t`.
+fn mix_residual(
+    a: NormalizedColor,
+    b: NormalizedColor,
+    t: f32,
+    color: NormalizedColor,
+) -> f32 {
+    let mix = |c1: u8, c2: u8| f32::from(c1) + t * (f32::from(c2) - f32::from(c1));
+    let (dr, dg, db) = (
+        f32::from(color.r) - mix(a.r, b.r),
+        f32::from(color.g) - mix(a.g, b.g),
+        f32::from(color.b) - mix(a.b, b.b),
+    );
+    dr * dr + dg * dg + db * db
 }
 
 fn clamp_u8(v: f32) -> u8 {

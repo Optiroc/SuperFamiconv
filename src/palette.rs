@@ -443,6 +443,12 @@ impl Palette {
             .cloned()
             .collect();
 
+        // Bail if there are more unique colors than palette slots
+        let total_colors: BTreeSet<ReducedColor> = required_colors.iter().flatten().copied().collect();
+        if total_colors.len() > self.max_subpalettes * capacity {
+            return Err("Colors do not fit in available palettes".into());
+        }
+
         let optimized = pack(&required_colors, capacity);
         if optimized.len() > self.max_subpalettes {
             return Err("Colors do not fit in available palettes".into());
@@ -605,10 +611,10 @@ impl std::fmt::Display for Palette {
     ) -> std::fmt::Result {
         let counts: Vec<usize> = self.subpalettes.iter().map(|sp| sp.colors.len()).collect();
         let total: usize = counts.iter().sum();
+
         if total == 0 {
-            return write!(f, "zero colors");
-        }
-        if counts.len() == 1 {
+            write!(f, "zero colors")
+        } else if counts.len() == 1 {
             write!(f, "{total} colors")
         } else {
             let list = counts.iter().map(ToString::to_string).collect::<Vec<_>>().join(", ");

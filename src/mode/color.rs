@@ -26,7 +26,10 @@ impl ColorRounding {
 }
 
 pub trait ModeColor {
-    /// Scales a normalized color down to `mode`'s native range.
+    /// The shift amount when reducing a color to mode-native range.
+    fn channel_shift(&self) -> u8;
+
+    /// Reduces a normalized color down to mode-native range.
     /// - Colors with alpha below 0x80 become fully transparent for modes that support it.
     fn reduce_color(
         &self,
@@ -34,13 +37,13 @@ pub trait ModeColor {
         rounding: ColorRounding,
     ) -> ReducedColor;
 
-    /// Scales a `mode`-native color to normalized range.
+    /// Scales a mode-native color up to normalized range.
     fn normalize_color(
         &self,
         color: ReducedColor,
     ) -> NormalizedColor;
 
-    /// Reduces `color` to `mode`'s native range and back, snapping it to the nearest
+    /// Reduces `color` to mode-native range and back, snapping it to the nearest
     /// value `mode` can represent.
     fn quantize_color(
         &self,
@@ -68,31 +71,41 @@ pub trait ModeColor {
 }
 
 impl ModeColor for Mode {
+    fn channel_shift(&self) -> u8 {
+        match self {
+            Snes | SnesMode7 | Gbc | Gba | GbaAffine => 3,
+            Gg | Ngpc | Wsc | WscPacked => 4,
+            Md | Pce | PceSprite | Ngp | Ws => 5,
+            Gb | Sms => 6,
+        }
+    }
+
     fn reduce_color(
         &self,
         color: NormalizedColor,
         rounding: ColorRounding,
     ) -> ReducedColor {
+        let shift = u32::from(self.channel_shift());
         match self {
             Snes | SnesMode7 | Gbc | Gba | GbaAffine => match color.a {
                 0x00..0x80 => ReducedColor::TRANSPARENT,
                 _ => ReducedColor::new(
-                    reduce_channel(color.r, 3, rounding),
-                    reduce_channel(color.g, 3, rounding),
-                    reduce_channel(color.b, 3, rounding),
+                    reduce_channel(color.r, shift, rounding),
+                    reduce_channel(color.g, shift, rounding),
+                    reduce_channel(color.b, shift, rounding),
                     0xff,
                 ),
             },
             Gb => {
                 let c = opaque_threshold(color);
-                let gray = reduce_channel(c.luma_u8(), 6, rounding);
+                let gray = reduce_channel(c.luma_u8(), shift, rounding);
                 ReducedColor::new(gray, gray, gray, 0xff)
             }
             Ngp | Ws => {
                 // WonderSwan technically supports 8 out of 16 gray shades with
                 // it's palette indirection, but we just treat it as NGP.
                 let c = opaque_threshold(color);
-                let gray = reduce_channel(c.luma_u8(), 5, rounding);
+                let gray = reduce_channel(c.luma_u8(), shift, rounding);
                 ReducedColor::new(gray, gray, gray, 0xff)
             }
             Md | Pce | PceSprite => {
@@ -100,9 +113,9 @@ impl ModeColor for Mode {
                     ReducedColor::TRANSPARENT
                 } else {
                     ReducedColor::new(
-                        reduce_channel(color.r, 5, rounding),
-                        reduce_channel(color.g, 5, rounding),
-                        reduce_channel(color.b, 5, rounding),
+                        reduce_channel(color.r, shift, rounding),
+                        reduce_channel(color.g, shift, rounding),
+                        reduce_channel(color.b, shift, rounding),
                         0xff,
                     )
                 }
@@ -110,20 +123,20 @@ impl ModeColor for Mode {
             Sms => {
                 let c = opaque_threshold(color);
                 ReducedColor::new(
-                    reduce_channel(c.r, 6, rounding),
-                    reduce_channel(c.g, 6, rounding),
-                    reduce_channel(c.b, 6, rounding),
+                    reduce_channel(c.r, shift, rounding),
+                    reduce_channel(c.g, shift, rounding),
+                    reduce_channel(c.b, shift, rounding),
                     0xff,
                 )
             }
-            Ngpc | Gg | Wsc | WscPacked => {
+            Gg | Ngpc | Wsc | WscPacked => {
                 if color.a < 0x80 {
                     ReducedColor::TRANSPARENT
                 } else {
                     ReducedColor::new(
-                        reduce_channel(color.r, 4, rounding),
-                        reduce_channel(color.g, 4, rounding),
-                        reduce_channel(color.b, 4, rounding),
+                        reduce_channel(color.r, shift, rounding),
+                        reduce_channel(color.g, shift, rounding),
+                        reduce_channel(color.b, shift, rounding),
                         0xff,
                     )
                 }
@@ -135,12 +148,7 @@ impl ModeColor for Mode {
         &self,
         color: ReducedColor,
     ) -> NormalizedColor {
-        let shift = match self {
-            Snes | SnesMode7 | Gbc | Gba | GbaAffine => 3,
-            Gb | Sms => 6,
-            Wsc | WscPacked | Ngpc | Gg => 4,
-            Md | Pce | PceSprite | Ws | Ngp => 5,
-        };
+        let shift = u32::from(self.channel_shift());
         NormalizedColor::new(
             scale_up(color.r, shift),
             scale_up(color.g, shift),

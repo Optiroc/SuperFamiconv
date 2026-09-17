@@ -136,7 +136,7 @@ pub struct ConvertArgs {
     #[arg(short = 'Q', long, help_heading = "Options")]
     pub quantize: bool,
     /// Dithering to apply if quantizing
-    #[arg(long, value_enum, default_value_t = Dither::Bayer4x4, help_heading = "Options")]
+    #[arg(long, value_enum, default_value_t = Dither::Bayer2x2, help_heading = "Options")]
     pub dither: Dither,
     /// Round colors instead of truncating
     #[arg(long, help_heading = "Options")]
@@ -265,7 +265,7 @@ pub struct TilesArgs {
     #[arg(short = 'Q', long, help_heading = "Options")]
     pub quantize: bool,
     /// Dithering to apply if quantizing
-    #[arg(long, value_enum, default_value_t = Dither::Bayer4x4, help_heading = "Options")]
+    #[arg(long, value_enum, default_value_t = Dither::Bayer2x2, help_heading = "Options")]
     pub dither: Dither,
     /// Round colors instead of truncating
     #[arg(long, help_heading = "Options")]
@@ -343,7 +343,7 @@ pub struct MapArgs {
     #[arg(short = 'Q', long, help_heading = "Options")]
     pub quantize: bool,
     /// Dithering to apply if quantizing
-    #[arg(long, value_enum, default_value_t = Dither::Bayer4x4, help_heading = "Options")]
+    #[arg(long, value_enum, default_value_t = Dither::Bayer2x2, help_heading = "Options")]
     pub dither: Dither,
     /// Round colors instead of truncating
     #[arg(long, help_heading = "Options")]

@@ -1,5 +1,8 @@
 //! Tileset type.
 
+// TODO: If over max_tiles budget, remove tiles with least perceptual distance
+//       - Look at source truecolor tiles? Can't consider palette swaps that way..
+
 use crate::color::NormalizedColor;
 use crate::dither::Dither;
 use crate::image::{self, Image};
