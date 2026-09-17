@@ -4,4 +4,5 @@ The images in this directory were gathered from [Unsplash](https://unsplash.com/
 
 - `akihabara.png` is by [APX Photography](https://unsplash.com/@axpphotography)
 - `bryggen.png` is by [Michael Fousert](https://unsplash.com/@michaelfousert)
+- `cat.png` is by [Road Ahead](https://unsplash.com/@roadahead_2223)
 - `racoon.png` is by [Gary Bendig](https://unsplash.com/@kris_ricepees)
