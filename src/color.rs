@@ -153,6 +153,23 @@ pub fn oklab_sqdist(
     dl * dl + CHROMA_WEIGHT * (da * da + db * db)
 }
 
+/// Component-wise mean of `colors` in Oklab space, or `None` if empty.
+pub fn mean_oklab(colors: impl IntoIterator<Item = Oklab>) -> Option<Oklab> {
+    let (mut l, mut a, mut b) = (0.0f32, 0.0f32, 0.0f32);
+    let mut count = 0u32;
+    for c in colors {
+        l += c.l;
+        a += c.a;
+        b += c.b;
+        count += 1;
+    }
+    if count == 0 {
+        return None;
+    }
+    let n = count as f32;
+    Some(Oklab::new(l / n, a / n, b / n))
+}
+
 /// Summed distance from `colors` to their nearest entry in `candidates`.
 pub fn summed_distance(
     colors: impl IntoIterator<Item = NormalizedColor>,

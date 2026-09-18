@@ -1,4 +1,4 @@
-//! Tileset type.
+//! Tileset representation.
 
 // TODO: If over max_tiles budget, remove tiles with least perceptual distance
 //       - Look at source truecolor tiles? Can't consider palette swaps that way..
@@ -9,7 +9,12 @@ use crate::image::{self, Image};
 use crate::mode::Mode;
 use crate::mode::color::ColorRounding;
 use crate::palette::Palette;
+use crate::quant::Method;
 use crate::tile::Tile;
+
+const D_OFF: Dither = Dither::Off;
+const Q_OFF: Method = Method::Off;
+const TRUNC: ColorRounding = ColorRounding::Truncate;
 
 #[derive(Debug)]
 pub struct Tileset {
@@ -20,7 +25,7 @@ pub struct Tileset {
     no_discard: bool,
     no_flip: bool,
     no_remap: bool,
-    quantize: bool,
+    quant_method: Method,
     dither: Dither,
     rounding: ColorRounding,
     max_tiles: u32,
@@ -37,7 +42,7 @@ impl Tileset {
         no_discard: bool,
         no_flip: bool,
         no_remap: bool,
-        quantize: bool,
+        quant_method: Method,
         dither: Dither,
         rounding: ColorRounding,
         max_tiles: u32,
@@ -50,7 +55,7 @@ impl Tileset {
             no_discard,
             no_flip,
             no_remap,
-            quantize,
+            quant_method,
             dither,
             rounding,
             max_tiles,
@@ -91,7 +96,7 @@ impl Tileset {
         self.tiles.iter().position(|t| t.matches(tile.data()))
     }
 
-    /// Takes `image` and converts to a Tile.
+    /// Takes `image` and converts to a Tile which is added to the set.
     ///
     /// Maps color indices straight from indexed data in `image` if `no_remap`, else
     /// from `palette`, then it is added if an identical tile is not already present.
@@ -104,16 +109,19 @@ impl Tileset {
             Tile::from_image(image, self.mode, self.bpp, self.no_flip)?
         } else {
             let palette = palette.ok_or("Can't remap tile without palette")?;
-            let remapped = if self.quantize {
-                let subpalette = palette
-                    .subpalettes_by_distance(image)
-                    .first()
-                    .copied()
-                    .ok_or("Palette has no subpalettes")?;
-                image.remapped_quantized(subpalette, self.dither, self.rounding)?
-            } else {
-                let subpalette = palette.subpalette_matching(image)?;
-                image.remapped(subpalette, self.rounding)?
+            let remapped = match self.quant_method {
+                Method::Off => {
+                    let subpalette = palette.subpalette_matching(image)?;
+                    image.remapped(subpalette, self.rounding)?
+                }
+                method => {
+                    let subpalette = palette
+                        .subpalettes_by_distance(image)
+                        .first()
+                        .copied()
+                        .ok_or("Palette has no subpalettes")?;
+                    image.remapped_quantized(subpalette, method, self.dither, self.rounding)?
+                }
             };
             Tile::from_image(&remapped, self.mode, self.bpp, self.no_flip)?
         };
@@ -227,9 +235,9 @@ impl Tileset {
             no_discard: false,
             no_flip,
             no_remap: false,
-            quantize: false,
-            dither: Dither::Off,
-            rounding: ColorRounding::Truncate,
+            quant_method: Q_OFF,
+            dither: D_OFF,
+            rounding: TRUNC,
             max_tiles: 0,
             tiles,
             discarded_tiles: 0,
@@ -338,14 +346,12 @@ fn remap_tiles_for_input(
 mod tests {
     use super::*;
     use crate::color::ReducedColor;
-    use crate::dither::Dither::*;
-    use crate::mode::color::ColorRounding::*;
     use crate::tile;
     use crate::tile::tests::{column_index_image, make_tile, solid_image};
 
     #[test]
     fn tileset_add_discard() {
-        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, false, false, true, false, Off, Truncate, 0);
+        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, false, false, true, Q_OFF, D_OFF, TRUNC, 0);
         let img = solid_image(Mode::Snes, ReducedColor::new(31, 0, 0, 0xff));
         ts.add(&img, None).unwrap();
         ts.add(&img, None).unwrap();
@@ -355,7 +361,7 @@ mod tests {
 
     #[test]
     fn tileset_add_no_discard() {
-        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, true, false, Off, Truncate, 0);
+        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, true, Q_OFF, D_OFF, TRUNC, 0);
         let img = solid_image(Mode::Snes, ReducedColor::new(31, 0, 0, 0xff));
         ts.add(&img, None).unwrap();
         ts.add(&img, None).unwrap();
@@ -365,21 +371,21 @@ mod tests {
 
     #[test]
     fn tileset_no_remap_requires_no_palette() {
-        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, false, false, true, false, Off, Truncate, 0);
+        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, false, false, true, Q_OFF, D_OFF, TRUNC, 0);
         let img = solid_image(Mode::Snes, ReducedColor::new(31, 0, 0, 0xff));
         assert!(ts.add(&img, None).is_ok());
     }
 
     #[test]
     fn tileset_remap_requires_palette() {
-        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, false, false, false, false, Off, Truncate, 0);
+        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, false, false, false, Q_OFF, D_OFF, TRUNC, 0);
         let img = column_index_image();
         assert!(ts.add(&img, None).is_err());
     }
 
     #[test]
     fn tileset_index_of_finds_flip_aware_match() {
-        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, true, false, Off, Truncate, 0);
+        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, true, Q_OFF, D_OFF, TRUNC, 0);
         let base = solid_image(Mode::Snes, ReducedColor::new(31, 0, 0, 0xff));
         ts.add(&base, None).unwrap();
 
@@ -387,7 +393,7 @@ mod tests {
         let tile = Tile::from_image(&column, Mode::Snes, 4, true).unwrap();
         assert_eq!(ts.index_of(&tile), None);
 
-        let mut ts2 = Tileset::new(Mode::Snes, 4, 8, 8, true, false, true, false, Off, Truncate, 0);
+        let mut ts2 = Tileset::new(Mode::Snes, 4, 8, 8, true, false, true, Q_OFF, D_OFF, TRUNC, 0);
         ts2.add(&column, None).unwrap();
         let flipped_data = tile::flipped_h(tile.data(), 8);
         let flipped_tile = Tile::with_mirrors(Mode::Snes, 4, 8, 8, flipped_data, vec![], true);
@@ -396,7 +402,7 @@ mod tests {
 
     #[test]
     fn tileset_native_data_roundtrip() {
-        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, true, true, true, false, Off, Truncate, 0);
+        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, true, true, true, Q_OFF, D_OFF, TRUNC, 0);
         ts.add(&column_index_image(), None).unwrap();
         let native = ts.to_native_data().unwrap();
 

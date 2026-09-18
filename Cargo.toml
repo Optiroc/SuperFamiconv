@@ -29,7 +29,7 @@ unusual_byte_groupings = { level = "allow", priority = 1 }
 
 [profile.release]
 codegen-units = 1
-opt-level = "z"
+opt-level = 3
 lto = "fat"
 panic = "abort"
 strip = "symbols"

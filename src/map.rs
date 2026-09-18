@@ -5,8 +5,13 @@ use crate::dither::Dither;
 use crate::image::Image;
 use crate::mode::{Mode, color::ColorRounding, map::ModeMap};
 use crate::palette::Palette;
+use crate::quant::Method;
 use crate::tile::Tile;
 use crate::tileset::{self, Tileset};
+
+const D_OFF: Dither = Dither::Off;
+const Q_OFF: Method = Method::Off;
+const TRUNC: ColorRounding = ColorRounding::Truncate;
 
 #[derive(Debug)]
 pub struct Map {
@@ -16,7 +21,7 @@ pub struct Map {
     tile_width: u32,
     tile_height: u32,
     max_tile_count: u32,
-    quantize: bool,
+    quant_method: Method,
     dither: Dither,
     rounding: ColorRounding,
     entries: Vec<Mapentry>,
@@ -56,7 +61,7 @@ impl Map {
         tile_width: u32,
         tile_height: u32,
         max_tile_count: u32,
-        quantize: bool,
+        quant_method: Method,
         dither: Dither,
         rounding: ColorRounding,
     ) -> Self {
@@ -67,7 +72,7 @@ impl Map {
             tile_width,
             tile_height,
             max_tile_count,
-            quantize,
+            quant_method,
             dither,
             rounding,
             entries: vec![Mapentry::default(); (width * height) as usize],
@@ -94,16 +99,15 @@ impl Map {
         // Search all viable palette mappings of image in tileset
         let mut status = true;
         let mut found: Option<(usize, usize, Tile)> = None;
-        let candidates = if self.quantize {
-            palette.subpalettes_by_distance(image)
-        } else {
+        let candidates = if self.quant_method == Method::Off {
             palette.subpalettes_matching(image)?
+        } else {
+            palette.subpalettes_by_distance(image)
         };
         for candidate in candidates {
-            let remapped_image = if self.quantize {
-                image.remapped_quantized(candidate, self.dither, self.rounding)?
-            } else {
-                image.remapped(candidate, self.rounding)?
+            let remapped_image = match self.quant_method {
+                Method::Off => image.remapped(candidate, self.rounding)?,
+                method => image.remapped_quantized(candidate, method, self.dither, self.rounding)?,
             };
             let remapped_tile = Tile::from_image(&remapped_image, self.mode, bpp, true)?;
             if let Some(tileset_index) = tileset.index_of(&remapped_tile) {
@@ -366,9 +370,9 @@ impl Map {
             tile_width,
             tile_height,
             max_tile_count: mode.max_tile_count(),
-            quantize: false,
-            dither: Dither::Off,
-            rounding: ColorRounding::Truncate,
+            quant_method: Q_OFF,
+            dither: D_OFF,
+            rounding: TRUNC,
             entries,
         })
     }
@@ -579,8 +583,7 @@ impl Map {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dither::Dither::*;
-    use crate::mode::color::{ColorRounding::*, ModeColor};
+    use crate::mode::color::ModeColor;
 
     /// A Map with increasing tile indices.
     fn mock_map(
@@ -588,17 +591,7 @@ mod tests {
         width: u32,
         height: u32,
     ) -> Map {
-        let mut map = Map::new(
-            mode,
-            width,
-            height,
-            8,
-            8,
-            mode.max_tile_count(),
-            false,
-            Dither::Off,
-            Truncate,
-        );
+        let mut map = Map::new(mode, width, height, 8, 8, mode.max_tile_count(), Q_OFF, D_OFF, TRUNC);
         for (i, e) in map.entries.iter_mut().enumerate() {
             e.tile_index = i as u32;
         }
@@ -619,8 +612,8 @@ mod tests {
         mode: Mode,
         colors: &[NormalizedColor],
     ) -> Palette {
-        let mut pal = Palette::new(mode, 8, 8, Truncate);
-        let reduced: Vec<_> = colors.iter().map(|&c| mode.reduce_color(c, Truncate)).collect();
+        let mut pal = Palette::new(mode, 8, 8, TRUNC);
+        let reduced: Vec<_> = colors.iter().map(|&c| mode.reduce_color(c, TRUNC)).collect();
         pal.add_colors(&reduced).unwrap();
         pal
     }
@@ -631,11 +624,11 @@ mod tests {
         let pal = palette_for(Mode::Snes, &colors);
         let image = mock_image(&colors);
 
-        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, false, false, Off, Truncate, 0);
+        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, false, Q_OFF, D_OFF, TRUNC, 0);
         ts.add(&image, Some(&pal)).unwrap();
 
         let mode = Mode::Snes;
-        let mut map = Map::new(mode, 1, 1, 8, 8, mode.max_tile_count(), false, Off, Truncate);
+        let mut map = Map::new(mode, 1, 1, 8, 8, mode.max_tile_count(), Q_OFF, D_OFF, TRUNC);
         assert!(map.add(&image, &ts, &pal, 4, 0, 0).unwrap());
         assert_eq!(map.entries[0], Mapentry::new(0, 0, false, false));
     }
@@ -650,11 +643,11 @@ mod tests {
         flipped_colors.reverse();
         let flipped_image = mock_image(&flipped_colors);
 
-        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, false, false, Off, Truncate, 0);
+        let mut ts = Tileset::new(Mode::Snes, 4, 8, 8, true, false, false, Q_OFF, D_OFF, TRUNC, 0);
         ts.add(&image, Some(&pal)).unwrap();
 
         let mode = Mode::Snes;
-        let mut map = Map::new(mode, 1, 1, 8, 8, mode.max_tile_count(), false, Off, Truncate);
+        let mut map = Map::new(mode, 1, 1, 8, 8, mode.max_tile_count(), Q_OFF, D_OFF, TRUNC);
         assert!(map.add(&flipped_image, &ts, &pal, 4, 0, 0).unwrap());
         assert_eq!(map.entries[0], Mapentry::new(0, 0, true, false));
     }
@@ -666,8 +659,8 @@ mod tests {
         let image = mock_image(&colors);
 
         let mode = Mode::Snes;
-        let ts = Tileset::new(mode, 4, 8, 8, true, false, true, false, Off, Truncate, 0);
-        let mut map = Map::new(mode, 1, 1, 8, 8, mode.max_tile_count(), false, Off, Truncate);
+        let ts = Tileset::new(mode, 4, 8, 8, true, false, true, Q_OFF, D_OFF, TRUNC, 0);
+        let mut map = Map::new(mode, 1, 1, 8, 8, mode.max_tile_count(), Q_OFF, D_OFF, TRUNC);
         assert!(!map.add(&image, &ts, &pal, 4, 0, 0).unwrap());
         assert_eq!(map.entries[0], Mapentry::default());
     }
@@ -679,15 +672,15 @@ mod tests {
         let image = mock_image(&colors);
 
         let mode = Mode::Snes;
-        let ts = Tileset::new(mode, 4, 8, 8, true, false, true, false, Off, Truncate, 0);
-        let mut map = Map::new(mode, 1, 1, 8, 8, mode.max_tile_count(), false, Off, Truncate);
+        let ts = Tileset::new(mode, 4, 8, 8, true, false, true, Q_OFF, D_OFF, TRUNC, 0);
+        let mut map = Map::new(mode, 1, 1, 8, 8, mode.max_tile_count(), Q_OFF, D_OFF, TRUNC);
         assert!(map.add(&image, &ts, &pal, 4, 5, 5).is_err());
     }
 
     #[test]
     fn native_tile_index_16x16() {
         let mode = Mode::Snes;
-        let mut map = Map::new(mode, 2, 1, 16, 16, mode.max_tile_count(), false, Off, Truncate);
+        let mut map = Map::new(mode, 2, 1, 16, 16, mode.max_tile_count(), Q_OFF, D_OFF, TRUNC);
         map.entries[0].tile_index = 0;
         map.entries[1].tile_index = 1;
         let groups = map.collect_entries(0, 0, false);
@@ -774,7 +767,7 @@ mod tests {
     #[test]
     fn from_native_data_16x16() {
         let mode = Mode::Snes;
-        let mut map = Map::new(mode, 2, 1, 16, 16, mode.max_tile_count(), false, Off, Truncate);
+        let mut map = Map::new(mode, 2, 1, 16, 16, mode.max_tile_count(), Q_OFF, D_OFF, TRUNC);
         map.entries[0].tile_index = 0;
         map.entries[1].tile_index = 1;
         let data = map.to_native_data(0, 0, false);

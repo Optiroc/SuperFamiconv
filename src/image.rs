@@ -14,6 +14,7 @@ use crate::mode::{
     color::{ColorRounding, ModeColor},
 };
 use crate::palette::Subpalette;
+use crate::quant;
 
 #[derive(Debug, Clone)]
 pub struct Image {
@@ -371,11 +372,11 @@ impl Image {
         })
     }
 
-    /// Creates a new image with each pixel mapped to its closest color
-    /// in `subpalette` and dithered.
+    /// Creates a new image with each pixel mapped to its closest color in `subpalette`.
     pub fn remapped_quantized(
         &self,
         subpalette: &Subpalette,
+        quant_method: quant::Method,
         dither: dither::Dither,
         rounding: ColorRounding,
     ) -> Result<Image, String> {
@@ -383,15 +384,7 @@ impl Image {
             return Err("No colors".into());
         }
 
-        let (indexed_data, data) = dither::quantize_pixels(
-            subpalette.mode,
-            &subpalette.colors,
-            self.width,
-            self.height,
-            dither,
-            rounding,
-            |i| self.color_at(i),
-        );
+        let (indexed_data, data) = quant::remap(self, subpalette, quant_method, dither, rounding)?;
 
         let colors = colors_in(&data);
         Ok(Image {

@@ -9,6 +9,7 @@ pub mod map;
 pub mod mode;
 pub mod operation;
 pub mod palette;
-pub mod quantize;
+pub mod prng;
+pub mod quant;
 pub mod tile;
 pub mod tileset;

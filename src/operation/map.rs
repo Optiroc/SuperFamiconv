@@ -7,6 +7,7 @@ use crate::logger::Logger;
 use crate::map::Map;
 use crate::mode::{Mode, color::ColorRounding};
 use crate::palette::{Palette, palette_size_at_bpp};
+use crate::quant;
 use crate::tileset::Tileset;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -29,7 +30,7 @@ pub struct MapSettings {
     pub tile_width: u32,
     pub tile_height: u32,
     pub no_flip: bool,
-    pub quantize: bool,
+    pub quant_method: quant::Method,
     pub dither: Dither,
     pub rounding: ColorRounding,
     pub map_width: Option<u32>,
@@ -136,7 +137,7 @@ pub fn execute(settings: MapSettings) -> Result<(), String> {
             settings.tile_height,
             settings.mode.max_tile_count(),
             settings.bpp,
-            settings.quantize,
+            settings.quant_method,
             settings.dither,
             settings.rounding,
             logger,
