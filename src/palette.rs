@@ -1,4 +1,4 @@
-//! Palette generation: building subpalettes from an image's tiles.
+//! Palette/Subpalette types and functionality for building a packed palette from tiles
 
 use std::collections::{BTreeSet, HashSet};
 use std::path::Path;
@@ -25,182 +25,6 @@ pub struct Palette {
     subpalettes: Vec<Subpalette>,
     color_zero: ReducedColor,
     color_zero_is_shared: bool,
-}
-
-#[derive(Debug, Clone)]
-pub struct Subpalette {
-    pub mode: Mode,
-    pub colors: Vec<ReducedColor>,
-    max_colors: usize,
-    colors_set: HashSet<ReducedColor>,
-}
-
-impl Subpalette {
-    pub fn new(
-        mode: Mode,
-        max_colors: usize,
-    ) -> Self {
-        Subpalette {
-            mode,
-            max_colors,
-            colors: Vec::new(),
-            colors_set: HashSet::new(),
-        }
-    }
-
-    pub fn is_full(&self) -> bool {
-        self.colors.len() == self.max_colors
-    }
-
-    pub fn normalized_colors(&self) -> Vec<NormalizedColor> {
-        self.colors.iter().map(|&c| self.mode.normalize_color(c)).collect()
-    }
-
-    /// Count of `new_colors` not already present in subpalette.
-    pub fn diff(
-        &self,
-        new_colors: &BTreeSet<ReducedColor>,
-    ) -> usize {
-        new_colors.iter().filter(|c| !self.colors_set.contains(c)).count()
-    }
-
-    /// Adds one (reduced-space) color.
-    pub fn add(
-        &mut self,
-        color: ReducedColor,
-        add_duplicates: bool,
-    ) -> Result<(), String> {
-        let should_push = add_duplicates || !self.colors_set.contains(&color);
-        if should_push {
-            if self.is_full() {
-                return Err("Colors don't fit in palette".into());
-            }
-            self.colors.push(color);
-        }
-        self.colors_set.insert(color);
-        Ok(())
-    }
-
-    /// Adds several (reduced-space) colors.
-    pub fn add_all(
-        &mut self,
-        colors: impl IntoIterator<Item = ReducedColor>,
-        add_duplicates: bool,
-    ) -> Result<(), String> {
-        for c in colors {
-            self.add(c, add_duplicates)?;
-        }
-        Ok(())
-    }
-
-    /// Returns a copy padded with transparent/black entries up to `max_colors`,
-    /// for outputs that expect fixed-size palettes (native binary, .act).
-    pub fn padded(&self) -> Subpalette {
-        let mut sp = self.clone();
-        while sp.colors.len() < sp.max_colors {
-            sp.add(ReducedColor::TRANSPARENT, true).unwrap();
-        }
-        sp
-    }
-
-    /// Aesthetically pleasing color sorting.
-    /// - 9 groups of near-grays + 8 hue bands, sorted by perceived luma.
-    /// - If `lock_color_zero`, index 0 is left in place;
-    pub fn sort(
-        &mut self,
-        lock_color_zero: bool,
-    ) {
-        if self.colors.len() < 3 {
-            return;
-        }
-        let (zero, start) = if lock_color_zero {
-            (Some(self.colors[0]), 1)
-        } else {
-            (None, 0)
-        };
-        let mut sorted = self.colors[start..].to_vec();
-        sorted.sort_by(|&a, &b| {
-            visual_sort_key(a, self.mode)
-                .partial_cmp(&visual_sort_key(b, self.mode))
-                .unwrap()
-        });
-        self.colors = zero.into_iter().chain(sorted).collect();
-    }
-
-    /// If a duplicate of color-zero exists elsewhere in this subpalette,
-    /// clears color-zero's alpha (marking it transparent) and returns true.
-    ///
-    /// Used when loading a Palette from native bytes.
-    fn fix_color_zero_duplicates(&mut self) -> bool {
-        if self.colors.len() <= 1 {
-            return false;
-        }
-        let cz = self.colors[0];
-        if self.colors[1..].contains(&cz) {
-            self.colors[0] = ReducedColor::new(cz.r, cz.g, cz.b, 0);
-            self.colors_set = self.colors.iter().copied().collect();
-            true
-        } else {
-            false
-        }
-    }
-}
-
-#[allow(clippy::float_cmp)]
-fn visual_sort_key(
-    color: ReducedColor,
-    mode: Mode,
-) -> (f32, f32, f32) {
-    let color = mode.normalize_color(color);
-    let r = (f32::from(color.r)) / f32::from(u8::MAX);
-    let g = (f32::from(color.g)) / f32::from(u8::MAX);
-    let b = (f32::from(color.b)) / f32::from(u8::MAX);
-    let max = r.max(g).max(b);
-    let min = r.min(g).min(b);
-
-    let delta = max - min;
-    let hue = if delta <= 0.0 {
-        0.0
-    } else if max == r {
-        60.0 * (((g - b) / delta).rem_euclid(6.0))
-    } else if max == g {
-        60.0 * (((b - r) / delta) + 2.0)
-    } else {
-        60.0 * (((r - g) / delta) + 4.0)
-    };
-    let luma = perceived_luma(color);
-    let sat = if max <= 0.0 { 0.0 } else { delta / (max + min) };
-
-    // Group hue into n_bands + near grayscale
-    let n_bands = 8.0;
-    let degrees_per_band = 360.0 / n_bands;
-    let hue_rot = (hue + degrees_per_band / 2.0) % 360.0;
-    let hue_grouped = if sat < 0.005 {
-        -1.0
-    } else {
-        (hue_rot / degrees_per_band).round()
-    };
-    (hue_grouped, luma, max)
-}
-
-/// Perceived luma in range 0..=1.
-fn perceived_luma(color: NormalizedColor) -> f32 {
-    let r = srgb_to_linear(f32::from(color.r) / f32::from(u8::MAX));
-    let g = srgb_to_linear(f32::from(color.g) / f32::from(u8::MAX));
-    let b = srgb_to_linear(f32::from(color.b) / f32::from(u8::MAX));
-    let pr = 0.299;
-    let pg = 0.587;
-    let pb = 0.114;
-    (r * r * pr + g * g * pg + b * b * pb).sqrt()
-}
-
-/// Converts a single sRGB-encoded channel value (0.0-1.0) to linear light.
-fn srgb_to_linear(v: f32) -> f32 {
-    if v <= 0.04045 {
-        v / 12.92
-    } else {
-        ((v + 0.055) / 1.055).powf(2.4)
-    }
 }
 
 impl Palette {
@@ -620,6 +444,182 @@ impl std::fmt::Display for Palette {
             let list = counts.iter().map(ToString::to_string).collect::<Vec<_>>().join(", ");
             write!(f, "{total} colors [{list}]")
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Subpalette {
+    pub mode: Mode,
+    pub colors: Vec<ReducedColor>,
+    max_colors: usize,
+    colors_set: HashSet<ReducedColor>,
+}
+
+impl Subpalette {
+    pub fn new(
+        mode: Mode,
+        max_colors: usize,
+    ) -> Self {
+        Subpalette {
+            mode,
+            max_colors,
+            colors: Vec::new(),
+            colors_set: HashSet::new(),
+        }
+    }
+
+    pub fn is_full(&self) -> bool {
+        self.colors.len() == self.max_colors
+    }
+
+    pub fn normalized_colors(&self) -> Vec<NormalizedColor> {
+        self.colors.iter().map(|&c| self.mode.normalize_color(c)).collect()
+    }
+
+    /// Count of `new_colors` not already present in subpalette.
+    pub fn diff(
+        &self,
+        new_colors: &BTreeSet<ReducedColor>,
+    ) -> usize {
+        new_colors.iter().filter(|c| !self.colors_set.contains(c)).count()
+    }
+
+    /// Adds one (reduced-space) color.
+    pub fn add(
+        &mut self,
+        color: ReducedColor,
+        add_duplicates: bool,
+    ) -> Result<(), String> {
+        let should_push = add_duplicates || !self.colors_set.contains(&color);
+        if should_push {
+            if self.is_full() {
+                return Err("Colors don't fit in palette".into());
+            }
+            self.colors.push(color);
+        }
+        self.colors_set.insert(color);
+        Ok(())
+    }
+
+    /// Adds several (reduced-space) colors.
+    pub fn add_all(
+        &mut self,
+        colors: impl IntoIterator<Item = ReducedColor>,
+        add_duplicates: bool,
+    ) -> Result<(), String> {
+        for c in colors {
+            self.add(c, add_duplicates)?;
+        }
+        Ok(())
+    }
+
+    /// Returns a copy padded with transparent/black entries up to `max_colors`,
+    /// for outputs that expect fixed-size palettes (native binary, .act).
+    pub fn padded(&self) -> Subpalette {
+        let mut sp = self.clone();
+        while sp.colors.len() < sp.max_colors {
+            sp.add(ReducedColor::TRANSPARENT, true).unwrap();
+        }
+        sp
+    }
+
+    /// Aesthetically pleasing color sorting.
+    /// - 9 groups of near-grays + 8 hue bands, sorted by perceived luma.
+    /// - If `lock_color_zero`, index 0 is left in place;
+    pub fn sort(
+        &mut self,
+        lock_color_zero: bool,
+    ) {
+        if self.colors.len() < 3 {
+            return;
+        }
+        let (zero, start) = if lock_color_zero {
+            (Some(self.colors[0]), 1)
+        } else {
+            (None, 0)
+        };
+        let mut sorted = self.colors[start..].to_vec();
+        sorted.sort_by(|&a, &b| {
+            visual_sort_key(a, self.mode)
+                .partial_cmp(&visual_sort_key(b, self.mode))
+                .unwrap()
+        });
+        self.colors = zero.into_iter().chain(sorted).collect();
+    }
+
+    /// If a duplicate of color-zero exists elsewhere in this subpalette,
+    /// clears color-zero's alpha (marking it transparent) and returns true.
+    ///
+    /// Used when loading a Palette from native bytes.
+    fn fix_color_zero_duplicates(&mut self) -> bool {
+        if self.colors.len() <= 1 {
+            return false;
+        }
+        let cz = self.colors[0];
+        if self.colors[1..].contains(&cz) {
+            self.colors[0] = ReducedColor::new(cz.r, cz.g, cz.b, 0);
+            self.colors_set = self.colors.iter().copied().collect();
+            true
+        } else {
+            false
+        }
+    }
+}
+
+#[allow(clippy::float_cmp)]
+fn visual_sort_key(
+    color: ReducedColor,
+    mode: Mode,
+) -> (f32, f32, f32) {
+    let color = mode.normalize_color(color);
+    let r = (f32::from(color.r)) / f32::from(u8::MAX);
+    let g = (f32::from(color.g)) / f32::from(u8::MAX);
+    let b = (f32::from(color.b)) / f32::from(u8::MAX);
+    let max = r.max(g).max(b);
+    let min = r.min(g).min(b);
+
+    let delta = max - min;
+    let hue = if delta <= 0.0 {
+        0.0
+    } else if max == r {
+        60.0 * (((g - b) / delta).rem_euclid(6.0))
+    } else if max == g {
+        60.0 * (((b - r) / delta) + 2.0)
+    } else {
+        60.0 * (((r - g) / delta) + 4.0)
+    };
+    let luma = perceived_luma(color);
+    let sat = if max <= 0.0 { 0.0 } else { delta / (max + min) };
+
+    // Group hue into n_bands + near grayscale
+    let n_bands = 8.0;
+    let degrees_per_band = 360.0 / n_bands;
+    let hue_rot = (hue + degrees_per_band / 2.0) % 360.0;
+    let hue_grouped = if sat < 0.005 {
+        -1.0
+    } else {
+        (hue_rot / degrees_per_band).round()
+    };
+    (hue_grouped, luma, max)
+}
+
+/// Perceived luma in range 0..=1.
+fn perceived_luma(color: NormalizedColor) -> f32 {
+    let r = srgb_to_linear(f32::from(color.r) / f32::from(u8::MAX));
+    let g = srgb_to_linear(f32::from(color.g) / f32::from(u8::MAX));
+    let b = srgb_to_linear(f32::from(color.b) / f32::from(u8::MAX));
+    let pr = 0.299;
+    let pg = 0.587;
+    let pb = 0.114;
+    (r * r * pr + g * g * pg + b * b * pb).sqrt()
+}
+
+/// Converts a single sRGB-encoded channel value (0.0-1.0) to linear light.
+fn srgb_to_linear(v: f32) -> f32 {
+    if v <= 0.04045 {
+        v / 12.92
+    } else {
+        ((v + 0.055) / 1.055).powf(2.4)
     }
 }
 

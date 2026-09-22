@@ -7,6 +7,7 @@ use crate::dither::Dither;
 use crate::logger::Logger;
 use crate::mode::Mode;
 use crate::mode::color::ColorRounding;
+use crate::quant;
 use crate::tileset::Tileset;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -36,7 +37,7 @@ pub struct ConvertSettings {
     pub no_flip: bool,
     pub max_tiles: u32,
     pub color_zero: Option<NormalizedColor>,
-    pub quantize: bool,
+    pub quant_method: quant::Method,
     pub dither: Dither,
     pub rounding: ColorRounding,
     pub tile_base_offset: i32,
@@ -62,7 +63,7 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
         settings.tile_height,
         settings.no_remap,
         color_zero,
-        settings.quantize,
+        settings.quant_method,
         settings.dither,
         settings.rounding,
         settings.logger,
@@ -89,7 +90,7 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
         settings.no_discard,
         settings.no_flip,
         false, // In convert mode no-remap only applies to palette
-        false,
+        quant::Method::Off,
         Dither::Off,
         settings.rounding,
         settings.max_tiles,
@@ -146,7 +147,7 @@ pub fn execute(settings: ConvertSettings) -> Result<(), String> {
             settings.tile_height,
             settings.max_tiles,
             settings.bpp,
-            false,
+            quant::Method::Off,
             Dither::Off,
             settings.rounding,
             logger,

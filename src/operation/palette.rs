@@ -7,6 +7,7 @@ use crate::dither::Dither;
 use crate::logger::Logger;
 use crate::mode::Mode;
 use crate::mode::color::ColorRounding;
+use crate::quant;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct PaletteSettings {
@@ -23,7 +24,7 @@ pub struct PaletteSettings {
     pub tile_height: u32,
     pub no_remap: bool,
     pub color_zero: Option<NormalizedColor>,
-    pub quantize: bool,
+    pub quant_method: quant::Method,
     pub rounding: ColorRounding,
 
     pub logger: Logger,
@@ -45,7 +46,7 @@ pub fn execute(settings: PaletteSettings) -> Result<(), String> {
         settings.tile_height,
         settings.no_remap,
         color_zero,
-        settings.quantize,
+        settings.quant_method,
         Dither::Off,
         settings.rounding,
         settings.logger,

@@ -1,14 +1,13 @@
 use std::collections::{BTreeSet, HashMap, HashSet, VecDeque};
 
-use crate::binpack::prng::Prng;
 use crate::color::ReducedColor as Symbol;
+use crate::prng::Prng;
 
 /// Optimizes palettes using overload-and-remove bin packing.
 ///
 /// References:
 /// - <https://arxiv.org/abs/1605.00558>
 /// - <https://git.sr.ht/~issotm/pagination-rs/tree/master/item/src/lib.rs>
-/// - <https://github.com/gbdev/rgbds/tree/master/src/gfx/pal_packing.cpp>
 pub fn pack(
     requirements: &[BTreeSet<Symbol>],
     capacity: usize,

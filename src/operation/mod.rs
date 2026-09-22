@@ -18,7 +18,7 @@ use crate::mode::{
     color::{ColorRounding, ModeColor},
 };
 use crate::palette::Palette;
-use crate::quantize::quantize_palette;
+use crate::quant;
 use crate::tileset::Tileset;
 
 struct MapPaths<'a> {
@@ -150,7 +150,7 @@ fn make_palette(
     tile_height: u32,
     no_remap: bool,
     color_zero: Option<NormalizedColor>,
-    quantize: bool,
+    quant_method: quant::Method,
     dither: Dither,
     rounding: ColorRounding,
     logger: Logger,
@@ -191,10 +191,15 @@ fn make_palette(
         );
         palette.add_colors(&colors)?;
         out_image = image.clone();
-    } else if quantize {
+    } else if quant_method != quant::Method::Off {
         // Quantize: create best-effort palette and matching image
+        let d = if dither != Dither::Off {
+            format!(", {dither} dithering")
+        } else {
+            "".to_string()
+        };
         logger.verbose(format!(
-            "Quantizing palette with at most {max_subpalettes}x{max_colors_per_subpalette} entries"
+            "Quantizing palette with {max_subpalettes}x{max_colors_per_subpalette} colors ({quant_method}{d})"
         ));
 
         let capacity: usize;
@@ -209,7 +214,7 @@ fn make_palette(
             capacity = max_colors_per_subpalette as usize;
         }
 
-        (palette, out_image) = quantize_palette(
+        (palette, out_image) = quant::quantize_palette(
             image,
             mode,
             max_subpalettes as usize,
@@ -217,13 +222,14 @@ fn make_palette(
             color_zero,
             tile_width,
             tile_height,
+            quant_method,
             dither,
             rounding,
         )?;
     } else {
         // Default: lossless palette packing
         logger.verbose(format!(
-            "Mapping palette with at most {max_subpalettes}x{max_colors_per_subpalette} entries"
+            "Mapping palette with {max_subpalettes}x{max_colors_per_subpalette} colors"
         ));
         palette = Palette::new(
             mode,
@@ -263,7 +269,7 @@ fn make_map(
     tile_height: u32,
     max_tile_count: u32,
     bpp: u32,
-    quantize: bool,
+    quant_method: quant::Method,
     dither: Dither,
     rounding: ColorRounding,
     logger: Logger,
@@ -277,7 +283,7 @@ fn make_map(
         tile_width,
         tile_height,
         max_tile_count,
-        quantize,
+        quant_method,
         dither,
         rounding,
     );
@@ -297,7 +303,7 @@ fn make_map(
     }
 
     if unmatched > 0 {
-        let hint = if quantize {
+        let hint = if quant_method != quant::Method::Off {
             "\n> With --quantize, make sure to use the same dithering setting for both tileset and map"
         } else {
             ""

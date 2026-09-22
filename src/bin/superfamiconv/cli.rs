@@ -7,6 +7,7 @@ use clap::{Args, Parser, Subcommand};
 use superfamiconv::color::{self, NormalizedColor};
 use superfamiconv::dither::Dither;
 use superfamiconv::mode::Mode;
+use superfamiconv::quant::Method;
 
 const STYLES: styling::Styles = styling::Styles::styled()
     .header(Style::new().bold())
@@ -132,9 +133,9 @@ pub struct ConvertArgs {
     /// Set color zero
     #[arg(short = 'Z', long, value_name = "COLOR", value_parser = color::from_hexstring, help_heading = "Options")]
     pub color_zero: Option<NormalizedColor>,
-    /// Quantize colors and tiles to fit target palette
-    #[arg(short = 'Q', long, help_heading = "Options")]
-    pub quantize: bool,
+    /// Quantize colors and tiles to fit palette
+    #[arg(short = 'Q', long, value_name = "METHOD", value_enum, num_args = 0..=1, default_missing_value = "incremental", help_heading = "Options")]
+    pub quantize: Option<Method>,
     /// Dithering to apply if quantizing
     #[arg(long, value_enum, default_value_t = Dither::Bayer2x2, help_heading = "Options")]
     pub dither: Dither,
@@ -199,8 +200,8 @@ pub struct PaletteArgs {
     #[arg(short = 'Z', long, value_name = "COLOR", value_parser = color::from_hexstring, help_heading = "Options")]
     pub color_zero: Option<NormalizedColor>,
     /// Quantize colors to fit target palette
-    #[arg(short = 'Q', long, help_heading = "Options")]
-    pub quantize: bool,
+    #[arg(short = 'Q', long, value_name = "METHOD", value_enum, num_args = 0..=1, default_missing_value = "incremental", help_heading = "Options")]
+    pub quantize: Option<Method>,
     /// Round colors instead of truncating
     #[arg(long, help_heading = "Options")]
     pub round: bool,
@@ -262,8 +263,8 @@ pub struct TilesArgs {
     #[arg(short = 'S', long, help_heading = "Options")]
     pub sprite_mode: bool,
     /// Quantize (match tiles to the closest subpalette)
-    #[arg(short = 'Q', long, help_heading = "Options")]
-    pub quantize: bool,
+    #[arg(short = 'Q', long, value_name = "METHOD", value_enum, num_args = 0..=1, default_missing_value = "incremental", help_heading = "Options")]
+    pub quantize: Option<Method>,
     /// Dithering to apply if quantizing
     #[arg(long, value_enum, default_value_t = Dither::Bayer2x2, help_heading = "Options")]
     pub dither: Dither,
@@ -340,8 +341,8 @@ pub struct MapArgs {
     #[arg(short = 'F', long, help_heading = "Options")]
     pub no_flip: bool,
     /// Quantize (match tiles to the closest subpalette)
-    #[arg(short = 'Q', long, help_heading = "Options")]
-    pub quantize: bool,
+    #[arg(short = 'Q', long, value_name = "METHOD", value_enum, num_args = 0..=1, default_missing_value = "incremental", help_heading = "Options")]
+    pub quantize: Option<Method>,
     /// Dithering to apply if quantizing
     #[arg(long, value_enum, default_value_t = Dither::Bayer2x2, help_heading = "Options")]
     pub dither: Dither,

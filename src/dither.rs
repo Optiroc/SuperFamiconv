@@ -1,5 +1,7 @@
 //! Dithering implementation.
 
+use std::collections::HashMap;
+
 use clap::ValueEnum;
 
 use crate::color::{CandidateColor, NormalizedColor, ReducedColor, eq_rgb, oklab_sqdist};
@@ -23,15 +25,41 @@ pub enum Dither {
     Bayer8x8,
     /// Checkerboard dithering.
     Checker,
-    /// Horizontal stippled dithering.
-    StippleH,
     /// Vertical stippled dithering.
     StippleV,
+    /// Horizontal stippled dithering.
+    StippleH,
+    /// Vertical line dithering.
+    LineV,
+    /// Horizontal line dithering.
+    LineH,
     /// Atkinson error-diffusion dithering.
     Atkinson,
     /// Floyd-Steinberg error-diffusion dithering.
     #[clap(name = "fs")]
     FloydSteinberg,
+}
+
+impl std::fmt::Display for Dither {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        let m = match self {
+            Dither::Off => "none",
+            Dither::Bayer2x2 => "Bayer 2x2",
+            Dither::Bayer4x4 => "Bayer 4x4",
+            Dither::Bayer8x8 => "Bayer 8x8",
+            Dither::Checker => "checkerboard",
+            Dither::StippleV => "vertical stipple",
+            Dither::StippleH => "horizontal stipple",
+            Dither::LineV => "vertical line",
+            Dither::LineH => "horizontal line",
+            Dither::Atkinson => "Atkinson",
+            Dither::FloydSteinberg => "Floyd-Steinberg",
+        };
+        write!(f, "{m}")
+    }
 }
 
 /// Max number of candidates to consider for `nearest_two``.
@@ -70,17 +98,27 @@ const CHECKER_MATRIX: [[u8; 2]; 2] = [
 ];
 
 #[rustfmt::skip]
-const STIPPLE_H_MATRIX: [[u8; 2]; 4] = [
-    [0, 6],
-    [4, 2],
-    [1, 7],
-    [5, 3],
+const STIPPLE_V_MATRIX: [[u8; 2]; 2] = [
+    [3, 0],
+    [2, 1],
 ];
 
 #[rustfmt::skip]
-const STIPPLE_V_MATRIX: [[u8; 4]; 2] = [
-    [0, 4, 1, 5],
-    [6, 2, 7, 3],
+const STIPPLE_H_MATRIX: [[u8; 2]; 2] = [
+    [3, 2],
+    [0, 1],
+];
+
+#[rustfmt::skip]
+const LINE_V_MATRIX: [[u8; 2]; 2] = [
+    [1, 0],
+    [1, 0],
+];
+
+#[rustfmt::skip]
+const LINE_H_MATRIX: [[u8; 2]; 2] = [
+    [1, 1],
+    [0, 0],
 ];
 
 /// An error-diffusion kernel: (dx, dy, diffusion factor).
@@ -135,15 +173,23 @@ pub fn quantize_pixels(
     (indexed_data, data)
 }
 
+/// Tile grid and per-tile color limit for `dither_to_mode`.
+#[derive(Debug, Clone, Copy)]
+pub(super) struct TileBudget {
+    pub width: u32,
+    pub height: u32,
+    pub max_colors: usize,
+}
+
 /// Quantizes `image` constrained to `mode`'s color depth, applying `dither`.
-pub fn dither_to_mode(
+pub(super) fn dither_to_mode(
     image: &Image,
     mode: Mode,
     dither: Dither,
     rounding: ColorRounding,
     color_zero: Option<ReducedColor>,
-    max_colors_per_subpalette: usize,
-) -> Image {
+    budget: TileBudget,
+) -> Option<Image> {
     let candidates = candidate_colors_in(image, mode, rounding);
     let size = (image.width * image.height) as usize;
     let mut data = vec![NormalizedColor::TRANSPARENT; size];
@@ -153,30 +199,94 @@ pub fn dither_to_mode(
         image.src_y,
         image.width,
         image.height,
-        bracket_width(mode, max_colors_per_subpalette),
+        bracket_width(mode, budget.max_colors),
     );
 
-    for (i, out) in data.iter_mut().enumerate() {
+    let error_diffusion = matches!(dither, Dither::Atkinson | Dither::FloydSteinberg);
+    let width = bracket_width(mode, budget.max_colors);
+    let mut brackets: HashMap<NormalizedColor, Bracket> = HashMap::new();
+
+    let mut dither_pixel = |i: usize| -> Option<ReducedColor> {
         let nc = image.color_at(i);
         let rc = mode.reduce_color(nc, rounding);
         if rc.is_transparent() {
-            continue;
+            return None;
         }
-
         let chosen = if color_zero.is_some_and(|cz| eq_rgb(rc, cz)) {
             // Leave color-zero pixels untouched, same as the final palette-based dither pass
             rc
         } else {
             let x = image.src_x + (i as u32) % image.width;
             let y = image.src_y + (i as u32) / image.width;
-            ditherer.color_at(x, y, nc, &candidates)
+            if error_diffusion {
+                ditherer.color_at(x, y, nc, &candidates)
+            } else {
+                brackets
+                    .entry(nc)
+                    .or_insert_with(|| match dither {
+                        Dither::Off => Bracket::solid(nearest(&candidates, nc).reduced),
+                        _ => ordered_bracket(nc, &candidates, width),
+                    })
+                    .pick(dither, x, y)
+            }
         };
-        *out = mode.normalize_color(chosen);
+        data[i] = mode.normalize_color(chosen);
+        Some(chosen)
+    };
+
+    let mut tile_colors: Vec<ReducedColor> = Vec::with_capacity(budget.max_colors + 1);
+    if error_diffusion {
+        let mut chosen: Vec<Option<ReducedColor>> = vec![None; size];
+        for tile_y in (0..image.height).step_by(budget.height as usize) {
+            let y_end = (tile_y + budget.height).min(image.height);
+            for y in tile_y..y_end {
+                for x in 0..image.width {
+                    let i = (y * image.width + x) as usize;
+                    chosen[i] = dither_pixel(i);
+                }
+            }
+            for tile_x in (0..image.width).step_by(budget.width as usize) {
+                let x_end = (tile_x + budget.width).min(image.width);
+                tile_colors.clear();
+                for y in tile_y..y_end {
+                    for x in tile_x..x_end {
+                        let Some(c) = chosen[(y * image.width + x) as usize] else {
+                            continue;
+                        };
+                        if !tile_colors.contains(&c) {
+                            tile_colors.push(c);
+                        }
+                        if tile_colors.len() > budget.max_colors {
+                            return None;
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        for tile_y in (0..image.height).step_by(budget.height as usize) {
+            for tile_x in (0..image.width).step_by(budget.width as usize) {
+                tile_colors.clear();
+                for y in tile_y..(tile_y + budget.height).min(image.height) {
+                    for x in tile_x..(tile_x + budget.width).min(image.width) {
+                        let Some(chosen) = dither_pixel((y * image.width + x) as usize) else {
+                            continue;
+                        };
+                        if !tile_colors.contains(&chosen) {
+                            tile_colors.push(chosen);
+                        }
+                        if tile_colors.len() > budget.max_colors {
+                            return None;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     let colors = image::colors_in(&data);
 
-    Image {
+    Some(Image {
         width: image.width,
         height: image.height,
         src_x: image.src_x,
@@ -185,7 +295,7 @@ pub fn dither_to_mode(
         indexed_data: Vec::new(),
         palette: Vec::new(),
         colors,
-    }
+    })
 }
 
 /// Distinct candidate colors in `image`.
@@ -219,8 +329,10 @@ const fn ordered_threshold(
         Dither::Bayer4x4 => (BAYER_4X4_MATRIX[(y & 3) as usize][(x & 3) as usize] as f32 + 0.5) / 16.0,
         Dither::Bayer8x8 => (BAYER_8X8_MATRIX[(y & 7) as usize][(x & 7) as usize] as f32 + 0.5) / 64.0,
         Dither::Checker => (CHECKER_MATRIX[(y & 1) as usize][(x & 1) as usize] as f32 + 0.5) / 2.0,
-        Dither::StippleH => (STIPPLE_H_MATRIX[(y & 3) as usize][(x & 1) as usize] as f32 + 0.5) / 8.0,
-        Dither::StippleV => (STIPPLE_V_MATRIX[(y & 1) as usize][(x & 3) as usize] as f32 + 0.5) / 8.0,
+        Dither::StippleV => (STIPPLE_V_MATRIX[(y & 1) as usize][(x & 1) as usize] as f32 + 0.5) / 4.0,
+        Dither::StippleH => (STIPPLE_H_MATRIX[(y & 1) as usize][(x & 1) as usize] as f32 + 0.5) / 4.0,
+        Dither::LineV => (LINE_V_MATRIX[(y & 1) as usize][(x & 1) as usize] as f32 + 0.5) / 2.0,
+        Dither::LineH => (LINE_H_MATRIX[(y & 1) as usize][(x & 1) as usize] as f32 + 0.5) / 2.0,
         Dither::Off | Dither::Atkinson | Dither::FloydSteinberg => {
             panic!("ordered_threshold called for non-ordered dither")
         }
@@ -275,8 +387,10 @@ impl Ditherer {
             | Dither::Bayer4x4
             | Dither::Bayer8x8
             | Dither::Checker
+            | Dither::StippleV
             | Dither::StippleH
-            | Dither::StippleV => ordered_color_at(x, y, color, candidates, self.dither, self.bracket_width),
+            | Dither::LineV
+            | Dither::LineH => ordered_color_at(x, y, color, candidates, self.dither, self.bracket_width),
             Dither::Atkinson | Dither::FloydSteinberg => {
                 self.diffusion_color_at(x - self.origin_x, y - self.origin_y, color, candidates, self.dither)
             }
@@ -342,15 +456,61 @@ fn ordered_color_at(
     dither: Dither,
     bracket_width: usize,
 ) -> ReducedColor {
+    ordered_bracket(color, candidates, bracket_width).pick(dither, x, y)
+}
+
+/// The two colors an ordered dither alternates between for one source color.
+#[derive(Clone, Copy)]
+struct Bracket {
+    dark: ReducedColor,
+    light: ReducedColor,
+    /// Share of `light` in the mix.
+    ratio: f32,
+}
+
+impl Bracket {
+    fn solid(color: ReducedColor) -> Self {
+        Bracket {
+            dark: color,
+            light: color,
+            ratio: 0.0,
+        }
+    }
+
+    fn pick(
+        self,
+        dither: Dither,
+        x: u32,
+        y: u32,
+    ) -> ReducedColor {
+        if self.dark != self.light && self.ratio > ordered_threshold(dither, x, y) {
+            self.light
+        } else {
+            self.dark
+        }
+    }
+}
+
+fn ordered_bracket(
+    color: NormalizedColor,
+    candidates: &[CandidateColor],
+    bracket_width: usize,
+) -> Bracket {
     let (a, b) = nearest_two(color, candidates, bracket_width);
     let Some(b) = b else {
-        return a.reduced;
+        return Bracket::solid(a.reduced);
     };
+
     let t = lerp(a.normalized, b.normalized, color, true);
-    if t > ordered_threshold(dither, x, y) {
-        b.reduced
+    let (dark, light, ratio) = if b.oklab.l >= a.oklab.l {
+        (a, b, t)
     } else {
-        a.reduced
+        (b, a, 1.0 - t)
+    };
+    Bracket {
+        dark: dark.reduced,
+        light: light.reduced,
+        ratio,
     }
 }
 
@@ -454,7 +614,7 @@ pub fn lerp(
     }
 }
 
-/// Squared error from `color` after mixing `a` and `b` at `t`.
+/// Squared error against `color` after mixing `a` and `b` at `t`.
 fn mix_residual(
     a: NormalizedColor,
     b: NormalizedColor,

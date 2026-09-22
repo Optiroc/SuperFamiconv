@@ -2,7 +2,6 @@
 
 mod first_fit_decreasing;
 mod overload_and_remove;
-mod prng;
 
 use std::collections::BTreeSet;
 
