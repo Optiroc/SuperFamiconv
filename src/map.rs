@@ -528,17 +528,20 @@ impl Map {
             serde_json::Value::Object(fields)
         };
 
-        let groups: Vec<Vec<serde_json::Value>> = self
+        let maps: Vec<Vec<serde_json::Value>> = self
             .collect_entries(split_w, split_h, column_order)
             .iter()
             .map(|g| g.iter().map(entry_to_json_value).collect())
             .collect();
 
-        let json = if groups.len() > 1 {
-            serde_json::json!({ "maps": groups })
-        } else {
-            serde_json::json!({ "map": groups.into_iter().next().unwrap_or_default() })
-        };
+        let json = serde_json::json!({
+            "maps": maps,
+            "width": self.width,
+            "height": self.height,
+            "tile_width": self.tile_height,
+            "tile_height": self.tile_height,
+        });
+
         serde_json::to_string_pretty(&json).unwrap()
     }
 
