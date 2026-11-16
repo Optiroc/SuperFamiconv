@@ -3,6 +3,7 @@
 use crate::color::NormalizedColor;
 use crate::dither::Dither;
 use crate::image::Image;
+use crate::logger::Logger;
 use crate::mode::{Mode, color::ColorRounding, map::ModeMap};
 use crate::palette::Palette;
 use crate::quant::Method;
@@ -119,15 +120,18 @@ impl Map {
 
         self.entries[index] = match found {
             None => {
-                eprintln!("> No matching tile for position ({}, {})", image.src_x, image.src_y);
+                Logger::error(format!(
+                    "> No matching tile for position ({}, {})",
+                    image.src_x, image.src_y
+                ));
                 status = false;
                 Mapentry::default()
             }
             Some((tileset_index, _, _)) if tileset_index >= self.max_tile_count as usize => {
-                eprintln!(
+                Logger::error(format!(
                     "> Mapped tile exceeds allowed map index at position ({}, {})",
                     image.src_x, image.src_y
-                );
+                ));
                 status = false;
                 Mapentry::default()
             }
