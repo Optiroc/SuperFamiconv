@@ -1,17 +1,17 @@
 //! Resolve CLI arguments into library settings.
 
-use superfamiconv::logger::{Logger, Verbosity};
-use superfamiconv::mode::color::ColorRounding;
-use superfamiconv::operation;
-use superfamiconv::operation::convert::ConvertSettings;
-use superfamiconv::operation::map::MapSettings;
-use superfamiconv::operation::palette::PaletteSettings;
-use superfamiconv::operation::tiles::TilesSettings;
-use superfamiconv::palette::palette_size_at_bpp;
+use crate::logger::{Logger, Verbosity};
+use crate::mode::color::ColorRounding;
+use crate::operation;
+use crate::operation::convert::ConvertSettings;
+use crate::operation::map::MapSettings;
+use crate::operation::palette::PaletteSettings;
+use crate::operation::tiles::TilesSettings;
+use crate::palette::palette_size_at_bpp;
 
-use crate::cli::{ConvertArgs, MapArgs, PaletteArgs, TilesArgs};
+use super::{ConvertArgs, MapArgs, PaletteArgs, TilesArgs};
 
-pub fn resolve_convert(args: ConvertArgs) -> Result<ConvertSettings, String> {
+pub(crate) fn resolve_convert(args: ConvertArgs) -> Result<ConvertSettings, String> {
     let (mode, sprite_mode) = operation::resolve_sprite_mode(args.mode, args.sprite_mode);
     let bpp = args.bpp.unwrap_or_else(|| mode.default_bpp());
     let palettes = args.palettes.unwrap_or_else(|| mode.default_palette_count());
@@ -67,7 +67,7 @@ pub fn resolve_convert(args: ConvertArgs) -> Result<ConvertSettings, String> {
     })
 }
 
-pub fn resolve_palette(args: PaletteArgs) -> Result<PaletteSettings, String> {
+pub(crate) fn resolve_palette(args: PaletteArgs) -> Result<PaletteSettings, String> {
     let mode = args.mode;
     let palettes = args.palettes.unwrap_or_else(|| mode.default_palette_count());
     let colors = args.colors.unwrap_or_else(|| palette_size_at_bpp(mode.default_bpp()));
@@ -100,7 +100,7 @@ pub fn resolve_palette(args: PaletteArgs) -> Result<PaletteSettings, String> {
     })
 }
 
-pub fn resolve_tiles(args: TilesArgs) -> Result<TilesSettings, String> {
+pub(crate) fn resolve_tiles(args: TilesArgs) -> Result<TilesSettings, String> {
     if args.in_image.is_none() && args.in_data.is_none() {
         return Err("Input image or native data required".into());
     }
@@ -149,7 +149,7 @@ pub fn resolve_tiles(args: TilesArgs) -> Result<TilesSettings, String> {
     })
 }
 
-pub fn resolve_map(args: MapArgs) -> Result<MapSettings, String> {
+pub(crate) fn resolve_map(args: MapArgs) -> Result<MapSettings, String> {
     let mode = args.mode;
 
     let default_size = mode

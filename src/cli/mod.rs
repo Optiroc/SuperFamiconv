@@ -1,13 +1,23 @@
 //! SuperFamiconv command line interface.
+//!
+//! `run` takes the same arguments as the `superfamiconv` binary, so other tools can embed it.
+//! It reads relative paths from a directory of the caller's choosing.
 
-use std::path::PathBuf;
+mod resolve;
+
+use std::ffi::OsString;
+use std::path::{Path, PathBuf};
 
 use clap::builder::styling::{self, Style};
 use clap::{Args, Parser, Subcommand};
-use superfamiconv::color::{self, NormalizedColor};
-use superfamiconv::dither::Dither;
-use superfamiconv::mode::Mode;
-use superfamiconv::quant::Method;
+
+use crate::color::{self, NormalizedColor};
+use crate::dither::Dither;
+use crate::mode::Mode;
+use crate::operation::{convert, map, palette, tiles};
+use crate::quant::Method;
+
+use resolve::{resolve_convert, resolve_map, resolve_palette, resolve_tiles};
 
 const STYLES: styling::Styles = styling::Styles::styled()
     .header(Style::new().bold())
@@ -35,6 +45,82 @@ pub struct Cli {
     /// Print version
     #[arg(short = 'V', long = "version", action = clap::ArgAction::Version, help_heading = "Info")]
     version: Option<bool>,
+}
+
+/// Parses `args` (without the program name) and runs the command.
+/// - Relative paths are read from `dir` (`""` for the working directory).
+/// - Parse errors, help and version requests come back as `Err` with clap's plain-text message.
+pub fn run<I, T>(
+    dir: &Path,
+    args: I,
+) -> Result<(), String>
+where
+    I: IntoIterator<Item = T>,
+    T: Into<OsString> + Clone,
+{
+    let argv = std::iter::once(OsString::from("superfamiconv")).chain(args.into_iter().map(Into::into));
+    let mut cli = Cli::try_parse_from(argv).map_err(|err| err.render().to_string())?;
+    for path in cli.command.paths() {
+        *path = dir.join(&*path);
+    }
+    execute(cli)
+}
+
+/// Runs a parsed command line.
+pub fn execute(cli: Cli) -> Result<(), String> {
+    match cli.command {
+        Command::Convert(args) => resolve_convert(args).and_then(convert::execute),
+        Command::Palette(args) => resolve_palette(args).and_then(palette::execute),
+        Command::Tiles(args) => resolve_tiles(args).and_then(tiles::execute),
+        Command::Map(args) => resolve_map(args).and_then(map::execute),
+    }
+}
+
+impl Command {
+    /// Returns every file path the command line specified.
+    fn paths(&mut self) -> Vec<&mut PathBuf> {
+        match self {
+            Command::Convert(a) => (a.in_image.iter_mut())
+                .chain(&mut a.in_attribute_map)
+                .chain(&mut a.out_palette)
+                .chain(&mut a.out_tiles)
+                .chain(&mut a.out_map)
+                .chain(&mut a.out_palette_map)
+                .chain(&mut a.out_tile_map)
+                .chain(&mut a.out_attribute_map)
+                .chain(&mut a.out_mode7_data)
+                .chain(&mut a.out_palette_image)
+                .chain(&mut a.out_tile_image)
+                .chain(&mut a.out_preview_image)
+                .chain(&mut a.out_palette_act)
+                .collect(),
+            Command::Palette(a) => (a.in_image.iter_mut())
+                .chain(&mut a.out_data)
+                .chain(&mut a.out_image)
+                .chain(&mut a.out_json)
+                .chain(&mut a.out_act)
+                .collect(),
+            Command::Tiles(a) => (a.in_image.iter_mut().flatten())
+                .chain(&mut a.in_data)
+                .chain(&mut a.in_palette)
+                .chain(&mut a.out_data)
+                .chain(&mut a.out_image)
+                .collect(),
+            Command::Map(a) => (a.in_image.iter_mut())
+                .chain(&mut a.in_data)
+                .chain(&mut a.in_palette)
+                .chain(&mut a.in_tiles)
+                .chain(&mut a.in_attribute_map)
+                .chain(&mut a.out_data)
+                .chain(&mut a.out_json)
+                .chain(&mut a.out_image)
+                .chain(&mut a.out_palette_map)
+                .chain(&mut a.out_tile_map)
+                .chain(&mut a.out_attribute_map)
+                .chain(&mut a.out_mode7_data)
+                .collect(),
+        }
+    }
 }
 
 #[derive(Subcommand, Debug)]

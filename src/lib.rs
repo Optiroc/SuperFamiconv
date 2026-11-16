@@ -1,6 +1,9 @@
 //! SuperFamiconv library.
 
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub mod binpack;
+pub mod cli;
 pub mod color;
 pub mod dither;
 pub mod image;
